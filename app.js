@@ -41,6 +41,8 @@
     role: null,
     partyScope: 'ALL',
     activeFilter: 'all',
+    zeroDayMode: false,
+    searchField: 'all',
     searchTerm: '',
     selectedVoter: null
   };
@@ -120,39 +122,94 @@
     document.getElementById('refreshBtn').addEventListener('click', loadRows);
 
     const searchInput = document.getElementById('searchInput');
+    const searchField = document.getElementById('searchField');
+    const houseSelect = document.getElementById('houseSelect');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const zeroDayBtn = document.getElementById('zeroDayBtn');
+    if (zeroDayBtn) {
+      zeroDayBtn.addEventListener('click', () => {
+        state.zeroDayMode = true;
+        state.activeFilter = 'all';
+        state.searchField = 'all';
+        state.searchTerm = '';
+        if (searchInput) searchInput.value = '';
+        if (searchField) searchField.value = 'all';
+        if (houseSelect) houseSelect.value = '';
+        renderDashboard();
+        document.querySelector('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    if (searchField) {
+      searchField.addEventListener('change', (event) => {
+        state.searchField = event.target.value;
+        state.zeroDayMode = false;
+        if (state.searchTerm) state.activeFilter = 'all';
+        if (state.searchField !== 'house' && houseSelect) houseSelect.value = '';
+        renderDashboard();
+      });
+    }
+    if (houseSelect) {
+      houseSelect.addEventListener('change', (event) => {
+        const value = event.target.value;
+        state.zeroDayMode = false;
+        state.searchField = value ? 'house' : 'all';
+        state.searchTerm = value;
+        state.activeFilter = 'all';
+        if (searchField) searchField.value = state.searchField;
+        if (searchInput) searchInput.value = event.target.selectedOptions[0]?.dataset.label || '';
+        renderDashboard();
+      });
+    }
     if (searchInput) {
       searchInput.addEventListener('input', (event) => {
         state.searchTerm = event.target.value.trim().toLowerCase();
+        state.zeroDayMode = false;
         if (state.searchTerm) state.activeFilter = 'all';
+        if (state.searchField !== 'house' && houseSelect) houseSelect.value = '';
         renderDashboard();
       });
     }
     if (clearSearchBtn) {
       clearSearchBtn.addEventListener('click', () => {
+        state.zeroDayMode = false;
+        state.searchField = 'all';
         state.searchTerm = '';
         searchInput.value = '';
-        renderGrid();
+        if (searchField) searchField.value = 'all';
+        if (houseSelect) houseSelect.value = '';
+        renderDashboard();
       });
     }
 
     document.addEventListener('click', (event) => {
       const filterButton = event.target.closest('[data-filter]');
       if (filterButton) {
+        state.zeroDayMode = false;
         state.activeFilter = filterButton.dataset.filter;
+        state.searchField = 'all';
         state.searchTerm = '';
         const input = document.getElementById('searchInput');
         if (input) input.value = '';
+        const select = document.getElementById('searchField');
+        if (select) select.value = 'all';
+        const house = document.getElementById('houseSelect');
+        if (house) house.value = '';
         renderDashboard();
         return;
       }
 
       const houseButton = event.target.closest('[data-house-filter]');
       if (houseButton) {
+        state.zeroDayMode = false;
         state.activeFilter = 'all';
-        state.searchTerm = houseButton.dataset.houseFilter.toLowerCase();
+        state.searchField = 'house';
+        state.searchTerm = houseButton.dataset.houseFilter;
         const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = houseButton.dataset.houseFilter;
+        if (searchInput) searchInput.value = houseButton.dataset.houseLabel || houseButton.dataset.houseFilter;
+        const field = document.getElementById('searchField');
+        if (field) field.value = 'house';
+        const house = document.getElementById('houseSelect');
+        if (house) house.value = houseButton.dataset.houseFilter;
         renderDashboard();
         return;
       }
@@ -224,6 +281,7 @@
 
   function renderDashboard() {
     renderShell();
+    renderSearchControls();
     renderStats();
     renderTabs();
     renderInsights();
@@ -234,7 +292,7 @@
     document.getElementById('summary').innerHTML = filters.map((filter) => {
       const value = countFor(filter.key);
       return `
-        <button class="stat-card ${filter.tone} ${state.activeFilter === filter.key ? 'active' : ''}" data-filter="${filter.key}" type="button">
+        <button class="stat-card ${filter.tone} ${!state.zeroDayMode && state.activeFilter === filter.key ? 'active' : ''}" data-filter="${filter.key}" type="button">
           <span class="stat-icon">${filter.icon}</span>
           <span class="stat-text">
             <strong>${number(value)}</strong>
@@ -247,10 +305,26 @@
 
   function renderTabs() {
     document.getElementById('sections').innerHTML = filters.map((filter) => `
-      <button class="tab ${state.activeFilter === filter.key ? 'active' : ''}" data-filter="${filter.key}" type="button">
+      <button class="tab ${!state.zeroDayMode && state.activeFilter === filter.key ? 'active' : ''}" data-filter="${filter.key}" type="button">
         ${escapeHtml(filter.label)}
         <span>${number(countFor(filter.key))}</span>
       </button>
+    `).join('');
+  }
+
+  function renderSearchControls() {
+    const zeroDayBtn = document.getElementById('zeroDayBtn');
+    const searchField = document.getElementById('searchField');
+    const houseSelect = document.getElementById('houseSelect');
+    if (zeroDayBtn) zeroDayBtn.classList.toggle('active', state.zeroDayMode);
+    if (searchField) searchField.value = state.searchField;
+    if (!houseSelect) return;
+
+    const selected = state.searchField === 'house' ? state.searchTerm : '';
+    houseSelect.innerHTML = '<option value="">All houses</option>' + houseOptions(state.rows).map((item) => `
+      <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.house)}" ${item.search === selected ? 'selected' : ''}>
+        ${escapeHtml(item.house)} (${number(item.count)})
+      </option>
     `).join('');
   }
 
@@ -298,8 +372,11 @@
     const houses = topHouses(state.rows);
     topHousesEl.innerHTML = houses.length
       ? houses.map((item, index) => `
-        <button class="house-row" type="button" data-house-filter="${escapeAttr(item.house)}">
-          <span>${index + 1}. ${escapeHtml(item.house)}</span>
+        <button class="house-row" type="button" data-house-filter="${escapeAttr(item.search)}" data-house-label="${escapeAttr(item.house)}">
+          <span class="house-main">
+            <span>${index + 1}. ${escapeHtml(item.house)}</span>
+            <small>${escapeHtml(item.status)} · ${number(item.needCall)} need call · ${number(item.followUp)} follow-up</small>
+          </span>
           <strong>${number(item.count)}</strong>
         </button>
       `).join('')
@@ -308,12 +385,22 @@
 
   function renderGrid() {
     const filter = getFilter(state.activeFilter);
-    const allSectionRows = state.searchTerm ? state.rows : getRows(state.activeFilter);
-    const rows = applySearch(allSectionRows);
-    document.getElementById('sectionTitle').textContent = state.searchTerm ? 'Search Results' : filter.label;
-    document.getElementById('sectionFilter').textContent = state.searchTerm
-      ? `Searching all ${state.partyScope} voters. Showing ${number(rows.length)} matches.`
-      : filter.rule;
+    const allSectionRows = state.zeroDayMode
+      ? zeroDayRows(state.rows)
+      : state.searchTerm
+        ? state.rows
+        : getRows(state.activeFilter);
+    const rows = state.zeroDayMode ? allSectionRows : applySearch(allSectionRows);
+    document.getElementById('sectionTitle').textContent = state.zeroDayMode
+      ? 'Zero Day Priority'
+      : state.searchTerm
+        ? 'Search Results'
+        : filter.label;
+    document.getElementById('sectionFilter').textContent = state.zeroDayMode
+      ? 'Call-first house priority: need-call, follow-up, pending, no-phone, and transport status.'
+      : state.searchTerm
+        ? `Searching ${state.searchField === 'all' ? 'all fields' : label(state.searchField)} across ${state.partyScope} voters. Showing ${number(rows.length)} matches.`
+        : filter.rule;
     document.getElementById('sectionTotal').textContent = `${number(rows.length)} voters`;
     document.getElementById('voterList').innerHTML = rows.length
       ? rows.map(renderVoterCard).join('')
@@ -558,14 +645,103 @@
   }
 
   function topHouses(rows) {
-    const counts = new Map();
+    const groups = new Map();
     rows.forEach((row) => {
-      const house = clean(row.house) || 'Unknown house';
-      counts.set(house, (counts.get(house) || 0) + 1);
+      const house = houseGroupName(row.house);
+      const item = groups.get(house) || {
+        house,
+        search: house.toLowerCase(),
+        count: 0,
+        needCall: 0,
+        followUp: 0,
+        pending: 0,
+        noPhone: 0,
+        transport: 0,
+        score: 0
+      };
+      item.count += 1;
+      item.needCall += row.phone_status === 'need-call' && hasPhone(row) ? 1 : 0;
+      item.followUp += isFollowUp(row) ? 1 : 0;
+      item.pending += row.vote_status === 'pending' ? 1 : 0;
+      item.noPhone += row.phone_status === 'no-phone' || !hasPhone(row) ? 1 : 0;
+      item.transport += row.transport_status === 'need-transport' ? 1 : 0;
+      item.score += voterPriority(row);
+      groups.set(house, item);
     });
-    return Array.from(counts, ([house, count]) => ({ house, count }))
+    return Array.from(groups.values()).map((item) => ({
+      ...item,
+      status: housePriorityStatus(item)
+    }))
       .sort((a, b) => b.count - a.count || a.house.localeCompare(b.house))
-      .slice(0, 5);
+      .slice(0, 10);
+  }
+
+  function houseOptions(rows) {
+    return topHouses(rows)
+      .concat(extraHouseOptions(rows))
+      .filter((item, index, list) => list.findIndex((other) => other.search === item.search) === index)
+      .sort((a, b) => a.house.localeCompare(b.house));
+  }
+
+  function extraHouseOptions(rows) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const house = houseGroupName(row.house);
+      const item = groups.get(house) || { house, search: house.toLowerCase(), count: 0 };
+      item.count += 1;
+      groups.set(house, item);
+    });
+    return Array.from(groups.values());
+  }
+
+  function zeroDayRows(rows) {
+    const houseScores = new Map();
+    rows.forEach((row) => {
+      const key = houseGroupName(row.house).toLowerCase();
+      houseScores.set(key, (houseScores.get(key) || 0) + voterPriority(row));
+    });
+    return rows
+      .filter((row) => voterPriority(row) > 0)
+      .sort((a, b) => {
+        const houseDiff = (houseScores.get(houseGroupName(b.house).toLowerCase()) || 0)
+          - (houseScores.get(houseGroupName(a.house).toLowerCase()) || 0);
+        if (houseDiff) return houseDiff;
+        const priorityDiff = voterPriority(b) - voterPriority(a);
+        if (priorityDiff) return priorityDiff;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
+  }
+
+  function voterPriority(row) {
+    if (row.phone_status === 'need-call' && hasPhone(row)) return 100;
+    if (isFollowUp(row)) return 85;
+    if (row.vote_status === 'pending') return 65;
+    if (row.transport_status === 'need-transport') return 55;
+    if (row.phone_status === 'no-phone' || !hasPhone(row)) return 35;
+    return 0;
+  }
+
+  function housePriorityStatus(item) {
+    if (item.needCall) return 'Call first';
+    if (item.followUp) return 'Follow-up';
+    if (item.pending) return 'Pending';
+    if (item.noPhone) return 'Find phone';
+    if (item.transport) return 'Transport';
+    return 'Stable';
+  }
+
+  function houseGroupName(value) {
+    const house = clean(value) || 'Unknown house';
+    const normalized = house.toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/['`’.-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const compact = normalized.replace(/\s+/g, '');
+    if (/^df\d*/.test(compact) || compact.startsWith('dhafthar') || compact.startsWith('dafthar')) return 'Dhafthar';
+    if (compact.includes('sinamale') || compact.includes('sinamle')) return 'Sinamale';
+    return house;
   }
 
   function applySearch(rows) {
@@ -574,15 +750,18 @@
   }
 
   function searchText(row) {
-    return [
-      row.name,
-      row.national_id,
-      row.phone,
-      row.house,
-      row.election_box,
-      row.party,
-      row.lives_in
-    ].map((value) => String(value || '').toLowerCase()).join(' ');
+    const fields = {
+      name: [row.name],
+      national_id: [row.national_id],
+      phone: [row.phone],
+      house: [row.house, houseGroupName(row.house)],
+      election_box: [row.election_box],
+      party: [row.party]
+    };
+    const values = state.searchField === 'all'
+      ? [row.name, row.national_id, row.phone, row.house, houseGroupName(row.house), row.election_box, row.party, row.lives_in]
+      : fields[state.searchField] || [];
+    return values.map((value) => String(value || '').toLowerCase()).join(' ');
   }
 
   function getRows(key) {
