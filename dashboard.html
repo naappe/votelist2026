@@ -12,8 +12,8 @@
     <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
     <nav class="toolbar">
       <a class="btn light" href="index.html">Home</a>
+      <a id="dashboardLink" class="btn light" href="dashboard.html">Dashboard</a>
       <a id="votersLink" class="btn light" href="voters.html">Voters</a>
-      <a id="zeroDayLink" class="btn light" href="zero-day.html">Zero Day</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -76,8 +76,8 @@
   <script>
     const partyParam = new URLSearchParams(location.search).get('party');
     if (partyParam) {
+      document.getElementById('dashboardLink').href = 'dashboard.html?party=' + encodeURIComponent(partyParam);
       document.getElementById('votersLink').href = 'voters.html?party=' + encodeURIComponent(partyParam);
-      document.getElementById('zeroDayLink').href = 'zero-day.html?party=' + encodeURIComponent(partyParam);
     }
   </script>
   <script src="app.js?v=20260705-15"></script>
