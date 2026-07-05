@@ -27,6 +27,10 @@
 .metric strong{line-height:1!important}
 .metric span{line-height:1.2!important}
 .voter-panel{margin-top:14px!important}
+body[data-view="analytics"] #sections,body[data-view="analytics"] .panel[aria-label="Search voters"],body[data-view="analytics"] .sync-notice,body[data-view="analytics"] .voter-panel{display:none!important}
+body[data-view="analytics"] .insight-grid{margin-top:14px!important}
+body[data-view="management"] .insight-grid{display:none!important}
+body[data-view="management"] #summary{display:none!important}
 .impact-strip{display:none!important}
 .logic-box,.rating-box p,.house-main small{display:none!important}
 .house-main{display:block;min-width:0}
