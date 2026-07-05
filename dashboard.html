@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css?v=20260705-11">
+  <link rel="stylesheet" href="style.css?v=20260705-13">
+  <link rel="stylesheet" href="dashboard-cleanup.css?v=20260705-13">
 </head>
 <body data-page="dashboard">
   <header class="topbar">
@@ -47,8 +48,8 @@
     <div id="syncNotice" class="sync-notice" role="status" hidden></div>
 
     <section class="insight-grid" aria-label="Campaign target and focus">
-      <article class="panel"><div class="panel-head"><div><h2>Target To Win</h2><p>Opponent baseline 428 votes, target 429.</p></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article>
-      <article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2><p>Highest voter count with priority status.</p></div></div><div id="topHouses" class="house-list"></div></article>
+      <article class="panel"><div class="panel-head"><div><h2>Target To Win</h2></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article>
+      <article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2></div></div><div id="topHouses" class="house-list"></div></article>
     </section>
 
     <section class="panel voter-panel">
@@ -75,6 +76,7 @@
     const partyParam = new URLSearchParams(location.search).get('party');
     if (partyParam) document.getElementById('zeroDayLink').href = 'zero-day.html?party=' + encodeURIComponent(partyParam);
   </script>
-  <script src="app.js?v=20260705-11"></script>
+  <script src="app.js?v=20260705-13"></script>
+  <script src="dashboard-cleanup.js?v=20260705-13"></script>
 </body>
 </html>
