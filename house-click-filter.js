@@ -40,6 +40,7 @@
     const house = document.getElementById('houseSelect');
     const box = document.getElementById('boxSelect');
     if (!search) return;
+    if (item.search === '__dhafthar__' && house && !house.querySelector('option[value="__dhafthar__"]')) return;
 
     sessionStorage.removeItem(storageKey);
     if (box) box.value = '';
@@ -82,6 +83,6 @@
   const timer = setInterval(() => {
     applyPendingHouse();
     tries += 1;
-    if (tries > 30 || !sessionStorage.getItem(storageKey)) clearInterval(timer);
+    if (tries > 40 || !sessionStorage.getItem(storageKey)) clearInterval(timer);
   }, 300);
 })();
