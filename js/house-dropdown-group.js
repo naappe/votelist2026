@@ -1,18 +1,13 @@
 (function () {
-  let latestDhaftharCount = 0;
-  let countLoaded = false;
-  let groupingScheduled = false;
-
-  function countFromOption(text) {
-    const match = String(text || '').match(/\((\d+)\)\s*$/);
-    return match ? Number(match[1]) : 0;
-  }
+  let cachedRows = null;
+  let applying = false;
+  let scheduled = false;
 
   function compactText(value) {
     return String(value || '').toLowerCase()
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/['`’.\-]/g, '')
+      .replace(/['`'.-]/g, '')
       .replace(/\s+/g, '');
   }
 
@@ -20,6 +15,7 @@
     const raw = String(value || '').toLowerCase();
     const compact = compactText(value);
     return raw.includes('dhaf')
+      || raw.includes('dhaft')
       || raw.includes('no dh r')
       || raw.includes('dh r')
       || /^df\d*/.test(compact)
@@ -27,7 +23,8 @@
       || /^nodhr\d*/.test(compact)
       || compact.startsWith('dhafthar')
       || compact.startsWith('dhaftharu')
-      || compact.startsWith('dafthar');
+      || compact.startsWith('dafthar')
+      || compact.startsWith('dhaftr');
   }
 
   function selectedParty() {
@@ -39,104 +36,194 @@
     const party = String(row.party || '').trim().toUpperCase();
     if (selected === 'ALL') return true;
     if (party === selected) return true;
-    return selected === 'PNC' && !party && isDhafthar(row.house);
+    return selected === 'PNC' && !party && isDhafthar([row.house, row.lives_in, row.living_place].join(' '));
   }
 
-  function setGroupedText(option, count) {
-    option.dataset.count = String(count || '');
-    option.textContent = count ? `House - Dhafthar (${count})` : 'House - Dhafthar';
+  function clean(value) {
+    const text = String(value || '').trim();
+    return text || '';
   }
 
-  function groupDhaftharDropdown() {
+  function sourceHouse(row) {
+    return clean(row.house) || clean(row.lives_in) || clean(row.living_place) || 'Unknown house';
+  }
+
+  function extractHouse(value) {
+    const original = clean(value);
+    if (!original) return 'Unknown house';
+
+    if (isDhafthar(original)) {
+      let house = original
+        .replace(/^dhaftharu?\.?\s*/i, '')
+        .replace(/^dhaftaru?\.?\s*/i, '')
+        .replace(/^daftharu?\.?\s*/i, '')
+        .replace(/^df\.?\s*/i, '')
+        .replace(/\brs\s*no\.?\s*/i, 'RS ')
+        .replace(/\bno\.?\s*/i, '')
+        .replace(/\bdh\s*r\b\.?\s*/i, 'DH R ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      house = house.replace(/^dh\s*r\s*/i, 'DH R ');
+      house = house.replace(/^rs\s*/i, 'RS ');
+      return house || 'Dhafthar';
+    }
+
+    return original.replace(/^v\.\s*/i, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function searchKey(house) {
+    return String(house || '').toLowerCase().trim();
+  }
+
+  function number(value) {
+    return new Intl.NumberFormat('en-US').format(value || 0);
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char]));
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value);
+  }
+
+  async function fetchRows() {
+    if (cachedRows) return cachedRows;
+    const config = window.APP_CONFIG;
+    if (!window.supabase || !config) return [];
+    const client = window.__houseNormalizeClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+    window.__houseNormalizeClient = client;
+    const columns = 'house,lives_in,living_place,party,phone,phone_status,vote_status,d2d_status,support_level,transport_status';
+    let from = 0;
+    const pageSize = 1000;
+    const rows = [];
+
+    while (true) {
+      const { data, error } = await client.from(config.table).select(columns).range(from, from + pageSize - 1);
+      if (error) break;
+      rows.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+    }
+
+    cachedRows = rows.filter(partyAllowed);
+    return cachedRows;
+  }
+
+  function groupRows(rows) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const house = extractHouse(sourceHouse(row));
+      if (!house || house === 'Unknown house') return;
+      const key = searchKey(house);
+      const item = groups.get(key) || {
+        house,
+        search: key,
+        count: 0,
+        guaranteed: 0,
+        possible: 0,
+        followUp: 0,
+        needCall: 0,
+        noPhone: 0,
+        transport: 0
+      };
+      item.count += 1;
+      item.guaranteed += row.support_level === 'guaranteed' ? 1 : 0;
+      item.possible += ['pending', 'not-decided'].includes(row.vote_status) && row.support_level !== 'guaranteed' ? 1 : 0;
+      item.followUp += ['follow-up', 'not-home'].includes(row.d2d_status) ? 1 : 0;
+      item.needCall += row.phone_status === 'need-call' && clean(row.phone) ? 1 : 0;
+      item.noPhone += row.phone_status === 'no-phone' || !clean(row.phone) ? 1 : 0;
+      item.transport += row.transport_status === 'need-transport' ? 1 : 0;
+      groups.set(key, item);
+    });
+    return Array.from(groups.values());
+  }
+
+  function houseStatus(item) {
+    if (item.guaranteed) return 'Guaranteed votes';
+    if (item.possible) return 'Possible votes';
+    if (item.followUp) return 'D2D follow-up';
+    if (item.needCall) return 'Call first';
+    if (item.noPhone) return 'Find phone';
+    if (item.transport) return 'Transport';
+    return 'Stable';
+  }
+
+  function renderTopHouses(groups) {
+    const topHouses = document.getElementById('topHouses');
+    if (!topHouses || document.body.classList.contains('clean-read-view')) return;
+    const top = groups
+      .slice()
+      .sort((a, b) => b.count - a.count || a.house.localeCompare(b.house))
+      .slice(0, 10);
+
+    const html = top.length
+      ? top.map((item, index) => `
+        <button class="house-row" type="button" data-house-filter="${escapeAttr(item.search)}" data-house-label="${escapeAttr(item.house)}">
+          <span class="house-main">
+            <span>${index + 1}. ${escapeHtml(item.house)}</span>
+            <small>${escapeHtml(houseStatus(item))} · ${number(item.guaranteed)} guaranteed · ${number(item.possible)} possible · ${number(item.followUp)} D2D</small>
+          </span>
+          <strong>${number(item.count)}</strong>
+        </button>
+      `).join('')
+      : '<div class="empty small">No house data.</div>';
+    if (topHouses.innerHTML.trim() !== html.trim()) topHouses.innerHTML = html;
+  }
+
+  function renderDropdown(groups) {
     const select = document.getElementById('houseSelect');
     if (!select || document.activeElement === select) return;
-
-    let grouped = select.querySelector('option[value="__dhafthar__"]');
-    let count = countLoaded ? latestDhaftharCount : (grouped ? Number(grouped.dataset.count || countFromOption(grouped.textContent)) : 0);
-    let firstIndex = 1;
-
-    Array.from(select.options).forEach((option, index) => {
-      if (!option.value || option.value === '__dhafthar__') return;
-      const text = `${option.textContent || ''} ${option.value || ''} ${option.dataset.label || ''}`;
-      if (!isDhafthar(text)) return;
-      if (!countLoaded) count += countFromOption(option.textContent) || 1;
-      firstIndex = Math.max(1, Math.min(firstIndex || index, index));
-      option.remove();
-    });
-
-    if (!grouped) {
-      grouped = document.createElement('option');
-      grouped.value = '__dhafthar__';
-      grouped.dataset.label = 'Dhafthar';
-      select.insertBefore(grouped, select.options[firstIndex] || select.options[1] || null);
-    }
-
-    setGroupedText(grouped, count);
+    const selected = select.value;
+    const sorted = groups.slice().sort((a, b) => a.house.localeCompare(b.house));
+    const html = '<option value="">All houses</option>' + sorted.map((item) => `
+      <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.house)}" ${item.search === selected ? 'selected' : ''}>
+        ${escapeHtml(item.house)} (${number(item.count)})
+      </option>
+    `).join('');
+    if (select.innerHTML.trim() !== html.trim()) select.innerHTML = html;
   }
 
-  function scheduleGroup(delay) {
-    if (groupingScheduled) return;
-    groupingScheduled = true;
-    setTimeout(() => {
-      groupingScheduled = false;
-      groupDhaftharDropdown();
-    }, delay || 80);
-  }
-
-  async function loadDhaftharCount() {
+  async function applyHouseGrouping() {
+    if (applying) return;
+    applying = true;
     try {
-      const config = window.APP_CONFIG;
-      if (!window.supabase || !config) return;
-      const client = window.__dhaftharCountClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
-      window.__dhaftharCountClient = client;
-      const columns = 'house,lives_in,living_place,party';
-      let from = 0;
-      const pageSize = 1000;
-      let total = 0;
-
-      while (true) {
-        const { data, error } = await client.from(config.table).select(columns).range(from, from + pageSize - 1);
-        if (error) return;
-        (data || []).forEach((row) => {
-          if (partyAllowed(row) && isDhafthar([row.house, row.lives_in, row.living_place].join(' '))) total += 1;
-        });
-        if (!data || data.length < pageSize) break;
-        from += pageSize;
-      }
-
-      latestDhaftharCount = total;
-      countLoaded = true;
-      scheduleGroup(0);
-    } catch {
-      // Keep the local option count if Supabase is temporarily unavailable.
+      const rows = await fetchRows();
+      const groups = groupRows(rows);
+      renderTopHouses(groups);
+      renderDropdown(groups);
+    } finally {
+      applying = false;
     }
   }
 
-  function applyDhaftharSelection(event) {
-    if (event.target?.id !== 'houseSelect' || event.target.value !== '__dhafthar__') return;
-    const search = document.getElementById('searchInput');
-    const box = document.getElementById('boxSelect');
-    if (box) box.value = '';
-    if (search) search.value = 'Dhafthar';
-    scheduleGroup(250);
+  function scheduleApply(delay) {
+    if (scheduled) return;
+    scheduled = true;
+    setTimeout(() => {
+      scheduled = false;
+      applyHouseGrouping();
+    }, delay || 120);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    groupDhaftharDropdown();
-    loadDhaftharCount();
-  });
-  window.addEventListener('load', () => {
-    groupDhaftharDropdown();
-    loadDhaftharCount();
-  });
-  document.addEventListener('change', applyDhaftharSelection, true);
-  document.addEventListener('blur', (event) => {
-    if (event.target?.id === 'houseSelect') scheduleGroup(120);
+  document.addEventListener('DOMContentLoaded', () => scheduleApply(600));
+  window.addEventListener('load', () => scheduleApply(800));
+  document.addEventListener('change', (event) => {
+    if (event.target?.id === 'houseSelect') scheduleApply(300);
   }, true);
 
-  const observer = new MutationObserver(() => scheduleGroup(120));
+  const observer = new MutationObserver(() => scheduleApply(200));
   window.addEventListener('load', () => {
-    const select = document.getElementById('houseSelect');
-    if (select) observer.observe(select, { childList: true });
+    const topHouses = document.getElementById('topHouses');
+    const houseSelect = document.getElementById('houseSelect');
+    if (topHouses) observer.observe(topHouses, { childList: true });
+    if (houseSelect) observer.observe(houseSelect, { childList: true });
   });
 })();
