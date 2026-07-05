@@ -21,18 +21,49 @@ window.APP_CONFIG = {
   if (!/shared\.html$/i.test(location.pathname)) return;
 
   let lastTouchedRowId = '';
+  let lastSnapshot = null;
 
   function cssEscape(value) {
     if (window.CSS?.escape) return CSS.escape(String(value));
     return String(value).replace(/["\\]/g, '\\$&');
   }
 
-  function restoreToLastTouched(anchorId) {
-    const id = anchorId || lastTouchedRowId;
-    if (!id) return;
-    const card = document.querySelector(`[data-row-id="${cssEscape(id)}"]`);
-    if (!card) return;
-    card.scrollIntoView({ block: 'center', behavior: 'auto' });
+  function valueOf(id) {
+    return document.getElementById(id)?.value || '';
+  }
+
+  function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = value || '';
+  }
+
+  function captureSnapshot() {
+    lastSnapshot = {
+      search: valueOf('searchInput'),
+      house: valueOf('houseSelect'),
+      filter: valueOf('filterSelect') || 'all',
+      rowId: lastTouchedRowId,
+      scrollY: window.scrollY
+    };
+  }
+
+  function restoreToSnapshot(snapshot) {
+    const item = snapshot || lastSnapshot;
+    if (!item) return;
+
+    setValue('searchInput', item.search);
+    setValue('houseSelect', item.house);
+    setValue('filterSelect', item.filter || 'all');
+    document.getElementById('searchBtn')?.click();
+    document.getElementById('searchInput')?.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const card = item.rowId ? document.querySelector(`[data-row-id="${cssEscape(item.rowId)}"]`) : null;
+    if (card) {
+      card.scrollIntoView({ block: 'center', behavior: 'auto' });
+      return;
+    }
+    window.scrollTo({ top: item.scrollY || 0, left: 0, behavior: 'auto' });
   }
 
   document.addEventListener('change', (event) => {
@@ -42,9 +73,10 @@ window.APP_CONFIG = {
 
   document.addEventListener('click', (event) => {
     if (!event.target.closest?.('#saveChangesBtn, #confirmSaveBtn')) return;
-    const anchorId = lastTouchedRowId;
-    [120, 350, 800, 1400].forEach((delay) => {
-      setTimeout(() => restoreToLastTouched(anchorId), delay);
+    captureSnapshot();
+    const snapshot = lastSnapshot;
+    [120, 350, 800, 1400, 2400].forEach((delay) => {
+      setTimeout(() => restoreToSnapshot(snapshot), delay);
     });
   }, true);
 })();
