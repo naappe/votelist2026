@@ -54,9 +54,14 @@
         search.dispatchEvent(new Event('input', { bubbles: true }));
       }
     } else {
-      if (house) house.value = item.search || '';
       search.value = item.label || item.search || '';
-      search.dispatchEvent(new Event('input', { bubbles: true }));
+      if (house && house.querySelector(`option[value="${cssEscape(item.search || '')}"]`)) {
+        house.value = item.search || '';
+        house.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        if (house) house.value = item.search || '';
+        search.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     }
 
     setTimeout(() => {
@@ -67,6 +72,11 @@
         status.className = 'status-message ok';
       }
     }, 180);
+  }
+
+  function cssEscape(value) {
+    if (window.CSS?.escape) return CSS.escape(value);
+    return String(value || '').replace(/["\\]/g, '\\$&');
   }
 
   document.addEventListener('click', (event) => {
