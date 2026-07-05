@@ -20,6 +20,11 @@
 
   async function init() {
     bindEvents();
+    const initialQuery = new URLSearchParams(location.search).get('q');
+    if (initialQuery) {
+      state.term = initialQuery.trim().toLowerCase();
+      document.getElementById('searchInput').value = initialQuery;
+    }
     const { data } = await client.auth.getSession();
     if (!data.session) {
       location.href = 'login.html?next=' + encodeURIComponent(location.pathname + location.search);
@@ -185,7 +190,7 @@
     prediction.className = committed >= targetVotes ? 'prediction good' : 'prediction warn';
     document.getElementById('topHouses').innerHTML = topHouses(zeroRows()).map((item, index) => `
       <button class="house-row" type="button" data-house-filter="${esc(item.search)}" data-house-label="${esc(item.house)}">
-        <span class="house-main"><span>${index + 1}. ${esc(item.house)}</span><small>${num(item.notVoted)} not voted · ${num(item.transport)} transport · ${num(item.guaranteed)} guaranteed</small></span>
+        <span class="house-main"><span>${index + 1}. ${esc(item.house)}</span></span>
         <strong>${num(item.count)}</strong>
       </button>
     `).join('') || '<div class="empty small">No house data.</div>';
@@ -303,13 +308,13 @@
     document.getElementById('modalPhoto').src = voter.photo_url || '';
     document.getElementById('modalPhoto').alt = voter.name || 'Voter photo';
     document.getElementById('voterForm').innerHTML = `
-      <div class="logic-box"><strong>✓ Zero Day Function</strong><p>Mark if the committed voter has voted. Keep transport, working phone, support level, and remarks aligned.</p></div>
       ${priorityPicker(voter)}
       ${choiceGroup('zero_day_action', [['pending', 'Not Voted Yet'], ['voted', 'Voted ✓'], ['not-voted', 'Not Voted']], zeroAction(voter))}
       <label>Working Phone<input name="phone" value="${esc(voter.phone || '')}" placeholder="Phone number"></label>
       ${choiceGroup('call_result', [['called', 'Called'], ['busy', 'Busy'], ['switched-off', 'Switched Off'], ['disconnected', 'Disconnected'], ['wrong-number', 'Wrong Number'], ['no-phone', 'No Phone']], voter.phone_status || 'need-call')}
       <label>Support Level${select('support_level', ['normal', 'guaranteed'], voter.support_level || 'normal')}</label>
       <label>Transport Status${select('transport_status', ['not-needed', 'need-transport', 'arranged', 'picked-up'], voter.transport_status || 'not-needed')}</label>
+      <label>D2D Status${select('d2d_status', ['not-visited', 'visited', 'not-home', 'follow-up'], voter.d2d_status || 'not-visited')}</label>
       <label>Remarks<textarea name="remarks" placeholder="Short campaign note">${esc(stripZero(voter.remarks || ''))}</textarea></label>
       <div class="modal-actions"><button class="btn light" type="button" data-close-modal>Cancel</button><button class="btn whatsapp" type="button" data-whatsapp-alert>WhatsApp Alert</button><button class="btn" type="submit">Save Zero Day</button></div>
     `;
@@ -371,6 +376,7 @@
       reach_status: data.call_result === 'called' ? 'reached' : voter.reach_status || 'reached',
       support_level: priority === 5 ? 'guaranteed' : data.support_level || voter.support_level || 'normal',
       transport_status: data.transport_status || voter.transport_status || 'not-needed',
+      d2d_status: data.d2d_status || voter.d2d_status || 'not-visited',
       phone_status: data.call_result || voter.phone_status || 'need-call',
       remarks: mergePriority(mergeZero(data.remarks || voter.remarks || '', data.zero_day_action || 'pending'), priority),
       vote_assigned_by: state.user.email,
@@ -590,7 +596,7 @@
   function whatsapp() {
     const voter = state.selected;
     if (!voter) return;
-    const text = ['Zero Day alert', `Name: ${voter.name || '-'}`, `House: ${voter.house || '-'}`, `Phone: ${voter.phone || 'No phone'}`, `Party: ${voter.party || '-'}`, `Vote: ${label(voter.vote_status)}`, `Zero Day: ${label(zeroAction(voter))}`].join('\n');
+    const text = ['Candidate Name: Shaam Ali Yoosuf / V. Micron', 'Please vote for Shaam.', '', `Voter: ${voter.name || '-'}`, `House: ${voter.house || '-'}`, `Phone: ${voter.phone || 'No phone'}`, `Party: ${voter.party || '-'}`].join('\n');
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 
