@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Login | Villimale Campaign Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="login">
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
+    <a class="btn light" href="index.html">Home</a>
+  </header>
+
+  <main class="login-wrap">
+    <section class="login-card">
+      <p class="eyebrow">Secure access</p>
+      <h1>Admin Login</h1>
+      <p class="muted">Use your campaign username and password to open the live Supabase dashboard.</p>
+
+      <form id="loginForm" class="form">
+        <label>
+          Username
+          <input name="username" autocomplete="username" placeholder="5654" required>
+        </label>
+        <label>
+          Password
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <div id="loginMessage" class="message" role="alert"></div>
+        <button class="btn full" type="submit">Login</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
