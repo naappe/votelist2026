@@ -17,16 +17,28 @@
 
   function removeBoxText() {
     document.querySelectorAll('.voter-info p,#modalMeta').forEach((node) => {
-      const next = stripBoxPart(node.textContent || '');
+      const next = stripHiddenMetaParts(node.textContent || '');
       if (next && next !== node.textContent) node.textContent = next;
     });
   }
 
-  function stripBoxPart(text) {
+  function stripHiddenMetaParts(text) {
     const parts = String(text || '').split(/[·|]/).map((part) => part.trim()).filter(Boolean);
     if (parts.length <= 1) return text;
-    const cleaned = parts.filter((part) => !/^box\s*\d+/i.test(part) && !/^box$/i.test(part));
+    const cleaned = parts.filter((part) => !isHiddenMetaPart(part));
     return cleaned.join(' · ');
+  }
+
+  function isHiddenMetaPart(part) {
+    const value = String(part || '').trim();
+    const compact = value.toLowerCase().replace(/['’`\s.-]/g, '');
+    return /^box\s*\d*$/i.test(value)
+      || /^box\s*\d+/i.test(value)
+      || /^villimale['’]?\s*-?\s*\d+$/i.test(value)
+      || /^villimale\s*\d+$/i.test(value)
+      || /^villingili\s*-?\s*\d+$/i.test(value)
+      || /^villimal[e]?\s*-?\s*\d+$/i.test(value)
+      || compact.startsWith('villimale') && /\d$/.test(compact);
   }
 
   function renameReachedToD2D() {
@@ -95,7 +107,7 @@
       const { error } = await client.from(window.APP_CONFIG.table).update(updates).eq('id', voterId);
       if (error) throw error;
       document.getElementById('voterModal').hidden = true;
-      showStatus('Saved. Voter removed from Will Vote.');
+      showStatus('Saved. Voter moved to the correct section.');
       setTimeout(() => location.reload(), 450);
     } catch (error) {
       showStatus(error.message || 'Save failed. Please try again.', true);
@@ -121,8 +133,14 @@
     if (transport) updates.transport_status = transport;
     if (callResult) {
       updates.phone_status = callResult;
-      updates.reach_status = callResult === 'called' ? 'reached' : 'not-reached';
-      if (callResult !== 'called' && !form.elements.d2d_status?.value) updates.d2d_status = 'follow-up';
+      if (['need-call', 'pending'].includes(callResult)) {
+        // Keep voter waiting; do not turn a pending call into reached/follow-up.
+      } else if (callResult === 'called') {
+        updates.reach_status = 'reached';
+      } else {
+        updates.reach_status = 'not-reached';
+        if (!form.elements.d2d_status?.value) updates.d2d_status = 'follow-up';
+      }
     }
     if (updates.d2d_status === 'visited') updates.reach_status = 'reached';
     if (['not-home', 'follow-up'].includes(updates.d2d_status)) updates.reach_status = 'not-reached';
