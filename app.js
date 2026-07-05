@@ -41,6 +41,7 @@
     role: null,
     partyScope: 'ALL',
     activeFilter: 'all',
+    searchTerm: '',
     selectedVoter: null
   };
 
@@ -117,6 +118,22 @@
     });
 
     document.getElementById('refreshBtn').addEventListener('click', loadRows);
+
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if (searchInput) {
+      searchInput.addEventListener('input', (event) => {
+        state.searchTerm = event.target.value.trim().toLowerCase();
+        renderGrid();
+      });
+    }
+    if (clearSearchBtn) {
+      clearSearchBtn.addEventListener('click', () => {
+        state.searchTerm = '';
+        searchInput.value = '';
+        renderGrid();
+      });
+    }
 
     document.addEventListener('click', (event) => {
       const filterButton = event.target.closest('[data-filter]');
@@ -224,9 +241,12 @@
 
   function renderGrid() {
     const filter = getFilter(state.activeFilter);
-    const rows = getRows(state.activeFilter);
+    const allSectionRows = getRows(state.activeFilter);
+    const rows = applySearch(allSectionRows);
     document.getElementById('sectionTitle').textContent = filter.label;
-    document.getElementById('sectionFilter').textContent = filter.rule;
+    document.getElementById('sectionFilter').textContent = state.searchTerm
+      ? `${filter.rule} Showing ${number(rows.length)} search matches.`
+      : filter.rule;
     document.getElementById('sectionTotal').textContent = `${number(rows.length)} voters`;
     document.getElementById('voterList').innerHTML = rows.length
       ? rows.map(renderVoterCard).join('')
@@ -468,6 +488,23 @@
 
   function countFor(key) {
     return getRows(key).length;
+  }
+
+  function applySearch(rows) {
+    if (!state.searchTerm) return rows;
+    return rows.filter((row) => searchText(row).includes(state.searchTerm));
+  }
+
+  function searchText(row) {
+    return [
+      row.name,
+      row.national_id,
+      row.phone,
+      row.house,
+      row.election_box,
+      row.party,
+      row.lives_in
+    ].map((value) => String(value || '').toLowerCase()).join(' ');
   }
 
   function getRows(key) {
