@@ -104,7 +104,7 @@ These files remain only so old script tags or old links do not break. They shoul
 | `css/dashboard-cleanup.css` | Dashboard polish and helper UI styling. |
 | `css/mobile-modal-fixes.css` | Mobile popup and responsive fixes. |
 | `css/voter-hotfix.css` | Voter page specific fixes. |
-| `css/pro-ui.css` | Professional profile-card voter theme, Assign/View actions, and medium gallery-style modal photo. |
+| `css/pro-ui.css` | Professional profile-card voter theme, Assign/View actions, and matching profile-style modal photo/card spacing. |
 
 ## Supabase Map
 
@@ -132,8 +132,9 @@ vote_assigned_by, vote_assigned_at
 | House dropdown | Controlled by `house-sync.js`; selected house is locked by `house-filter-lock.js` while filtering/saving. |
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
-| Popup voter photo | `pro-ui.css` keeps the modal voter photo medium gallery-size for easier identification. |
-| Voter card spacing | `pro-ui.css` uses a profile-card theme with larger circular photos, centered text, soft gray page spacing, and Pick share checkboxes. |
+| Popup voter photo | `pro-ui.css` uses a larger circular profile photo inside a soft white modal card for easier identification. |
+| Voter card spacing | `pro-ui.css` uses a profile-card theme with larger circular photos, centered text, soft gray page spacing, footer action buttons, and Pick share checkboxes. |
+| Voter card meta | `pro-ui.js` cleans the visible card and popup text to `house · phone`, hiding helper text like `(Box 392 | Villimale'-2)` without changing saved data. |
 | Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
 | Save from All voters | `save-state-fix.js` restores the saved voter card or previous scroll after the list rebuilds, so middle-list saves do not jump to the top. |
 | Save after assign filter | `save-state-fix.js` restores Assign/filter view and scroll position after saving. |
@@ -157,6 +158,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Cleaned voter card/popup meta to hide bracket helper text and extended the profile-card theme to the voter popup. |
 | 2026-07-06 | Applied profile-card voter theme inspired by the reference: larger circular photos, centered typography, softer spacing, and footer action buttons. |
 | 2026-07-06 | Cleaned voter card spacing and share-link UX: share checkboxes now say Pick, long names wrap, and self-assign links show Copy/Open buttons. |
 | 2026-07-06 | Fixed All voters save position: `save-state-fix.js` syntax was repaired and cache keys were bumped to restore same-card scroll after save. |
@@ -209,7 +211,7 @@ Important structure:
 - js/house-filter-lock.js keeps selected house active when status filters or saves rebuild the voter list.
 - js/assign-share.js owns short assignment share links and Copy/Open share panel.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
-- js/pro-ui.js owns clean card buttons and Assign focus; css/pro-ui.css owns the profile-card voter theme, large circular card photos, modal photo, and spacing.
+- js/pro-ui.js owns clean card buttons, Assign focus, and display-only meta cleanup; css/pro-ui.css owns the profile-card voter theme, large circular card photos, modal photo/card styling, and spacing.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
 When changing the app:
