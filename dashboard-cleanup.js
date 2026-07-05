@@ -1,4 +1,5 @@
 (function () {
+  const selectedVoters = new Set();
   const d2dOptions = [
     ['not-visited', 'Not Visited'],
     ['visited', 'Visited'],
@@ -18,6 +19,7 @@
     hideMainBoxFilter();
     ensureZeroDayBoxTabs();
     ensurePanelTools();
+    ensureShareSelection();
     ensureD2DField();
     document.querySelectorAll('.logic-box, .rating-box p, .house-main small').forEach((node) => node.remove());
 
@@ -98,8 +100,25 @@
     if (!head || head.querySelector('.panel-tools')) return;
     const tools = document.createElement('div');
     tools.className = 'panel-tools';
-    tools.innerHTML = '<button class="btn light compact" type="button" data-jump-search>Filter / Search</button><button class="btn light compact" type="button" data-share-read-view>Share Read View</button>';
+    tools.innerHTML = '<button class="btn light compact" type="button" data-jump-search>Filter / Search</button><button class="btn light compact" type="button" data-share-selected>Share Selected <span id="shareSelectedCount">0</span></button><button class="btn light compact" type="button" data-share-read-view>Share Read View</button>';
     head.appendChild(tools);
+  }
+
+  function ensureShareSelection() {
+    document.querySelectorAll('.voter-card[data-open-voter]').forEach((card) => {
+      const id = card.dataset.openVoter;
+      if (!id || card.querySelector('[data-share-select]')) return;
+      const label = document.createElement('label');
+      label.className = 'share-pick';
+      label.innerHTML = `<input type="checkbox" data-share-select value="${escapeAttr(id)}" ${selectedVoters.has(id) ? 'checked' : ''}><span>Select</span>`;
+      card.appendChild(label);
+    });
+    updateShareCount();
+  }
+
+  function updateShareCount() {
+    const count = document.getElementById('shareSelectedCount');
+    if (count) count.textContent = String(selectedVoters.size);
   }
 
   function ensureD2DField() {
@@ -121,9 +140,115 @@
     form.insertBefore(label, remarks || form.querySelector('.modal-actions'));
   }
 
-  document.addEventListener('click', (event) => {
+  async function shareSelected() {
+    const ids = Array.from(selectedVoters);
+    if (!ids.length) {
+      showStatus('Select voters first.');
+      return;
+    }
+    const rows = await selectedRows(ids);
+    if (!rows.length) {
+      showStatus('Could not prepare selected voters.', true);
+      return;
+    }
+    const url = new URL('shared.html', location.href);
+    url.searchParams.set('list', encodePayload(rows));
+    navigator.clipboard?.writeText(url.toString()).then(() => {
+      showStatus(`Read-only link copied for ${rows.length} selected voters.`);
+    }).catch(() => {
+      history.replaceState(null, '', url);
+      showStatus('Read-only selected voter link ready in address bar.');
+    });
+  }
+
+  async function selectedRows(ids) {
+    const fallback = ids.map((id) => rowFromCard(id)).filter(Boolean);
+    try {
+      const config = window.APP_CONFIG;
+      if (!window.supabase || !config) return fallback;
+      const client = window.__shareClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      window.__shareClient = client;
+      const { data, error } = await client
+        .from(config.table)
+        .select('id,national_id,name,house,phone')
+        .in('id', ids);
+      if (error || !data) return fallback;
+      const byId = new Map(data.map((row) => [String(row.id), row]));
+      return ids.map((id) => {
+        const row = byId.get(String(id));
+        const backup = rowFromCard(id) || {};
+        return {
+          id: row?.national_id || backup.id || id,
+          name: row?.name || backup.name || '',
+          house: row?.house || backup.house || '',
+          mobile: row?.phone || backup.mobile || ''
+        };
+      });
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function rowFromCard(id) {
+    const card = document.querySelector(`.voter-card[data-open-voter="${cssEscape(id)}"]`);
+    if (!card) return null;
+    const meta = (card.querySelector('.voter-info p')?.textContent || '').split('·').map((item) => item.trim());
+    return {
+      id,
+      name: card.querySelector('h3')?.textContent.trim() || '',
+      house: meta[0] || '',
+      mobile: meta[2] || ''
+    };
+  }
+
+  function encodePayload(rows) {
+    const json = JSON.stringify(rows.map((row) => ({
+      id: String(row.id || ''),
+      name: String(row.name || ''),
+      house: String(row.house || ''),
+      mobile: String(row.mobile || '')
+    })));
+    return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function showStatus(message, isError) {
+    const el = document.getElementById('statusMessage');
+    if (el) {
+      el.textContent = message;
+      el.className = `status-message ${isError ? 'error' : 'ok'}`;
+      return;
+    }
+    alert(message);
+  }
+
+  function escapeAttr(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[char]));
+  }
+
+  function cssEscape(value) {
+    if (window.CSS?.escape) return CSS.escape(String(value));
+    return String(value).replace(/["\\]/g, '\\$&');
+  }
+
+  document.addEventListener('click', async (event) => {
+    if (event.target.closest('.share-pick')) {
+      event.stopPropagation();
+      return;
+    }
     if (event.target.closest('[data-jump-search]')) {
       scrollToSearch();
+      return;
+    }
+    if (event.target.closest('[data-share-selected]')) {
+      event.preventDefault();
+      event.stopPropagation();
+      await shareSelected();
       return;
     }
     if (event.target.closest('[data-share-read-view]')) {
@@ -150,7 +275,17 @@
     setTimeout(tidyDashboard, 0);
   }, true);
 
-  document.addEventListener('change', tidyDashboard, true);
+  document.addEventListener('change', (event) => {
+    const checkbox = event.target.closest('[data-share-select]');
+    if (checkbox) {
+      if (checkbox.checked) selectedVoters.add(checkbox.value);
+      else selectedVoters.delete(checkbox.value);
+      updateShareCount();
+      event.stopPropagation();
+      return;
+    }
+    tidyDashboard();
+  }, true);
   new MutationObserver(tidyDashboard).observe(document.documentElement, { childList: true, subtree: true });
   tidyDashboard();
 })();
