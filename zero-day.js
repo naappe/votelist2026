@@ -323,31 +323,30 @@
   }
 
   function quickCallVoter(voter) {
-    if (voter.phone) window.location.href = `tel:${String(voter.phone).replace(/\s+/g, '')}`;
-    quickUpdate(voter, { phone_status: 'called', reach_status: 'reached', vote_status: 'will-vote', vote_assigned_by: state.user.email, vote_assigned_at: new Date().toISOString() }, 'C saved: call marked reached.');
+    quickUpdate(voter, {
+      phone_status: 'called',
+      reach_status: 'reached',
+      vote_status: 'will-vote',
+      vote_assigned_by: state.user.email,
+      vote_assigned_at: new Date().toISOString()
+    }, 'C saved: call marked reached.');
+    if (voter.phone) setTimeout(() => {
+      window.location.href = `tel:${String(voter.phone).replace(/\s+/g, '')}`;
+    }, 120);
   }
 
   function quickAssignVoter(voter) {
-    quickUpdate(voter, { vote_status: 'will-vote', reach_status: 'reached', support_level: 'guaranteed', vote_assigned_by: state.user.email, vote_assigned_at: new Date().toISOString() }, 'A saved: voter assigned guaranteed.');
+    quickUpdate(voter, {
+      vote_status: 'will-vote',
+      reach_status: 'reached',
+      support_level: 'guaranteed',
+      vote_assigned_by: state.user.email,
+      vote_assigned_at: new Date().toISOString()
+    }, 'A saved: voter assigned guaranteed.');
   }
 
-  async function quickUpdate(voter, updates, message) {
-    if (!navigator.onLine) {
-      saveOffline(voter, updates);
-      status(`${message} Offline sync pending.`);
-      return;
-    }
-    let query = client.from(config.table).update(updates).eq('id', voter.id);
-    if (state.party !== 'ALL') query = query.eq('party', state.party);
-    const { data, error } = await query.select(columns).single();
-    if (error) {
-      status(error.message, true);
-      return;
-    }
-    state.rows = state.rows.map((row) => row.id === voter.id ? data : row);
-    writeJson(storageKey('rows'), state.rows);
-    render();
-    status(message);
+  function quickUpdate(voter, updates, message) {
+    queueLocalSave(voter, updates, `${message} Saved offline. Sync queued.`, false);
   }
 
   async function saveModal(event) {
@@ -360,35 +359,20 @@
     button.textContent = 'Saving...';
     const data = Object.fromEntries(new FormData(form).entries());
     const updates = buildUpdates(voter, data);
-    if (!navigator.onLine) {
-      saveOffline(voter, updates);
-      return;
-    }
-    let query = client.from(config.table).update(updates).eq('id', voter.id);
-    if (state.party !== 'ALL') query = query.eq('party', state.party);
-    const { data: saved, error } = await query.select(columns).single();
     button.disabled = false;
     button.textContent = 'Save Zero Day';
-    if (error) {
-      status(error.message, true);
-      return;
-    }
-    state.rows = state.rows.map((row) => row.id === voter.id ? saved : row);
-    writeJson(storageKey('rows'), state.rows);
-    closeModal();
-    render();
-    status('Zero Day saved.');
+    queueLocalSave(voter, updates, 'Saved offline. Sync queued.', true);
   }
 
   function buildUpdates(voter, data) {
-    const rating = Number(data.priority_rating || priorityRating(voter));
+    const priority = Number(data.priority_rating || priorityRating(voter));
     const updates = {
       vote_status: 'will-vote',
       reach_status: data.call_result === 'called' ? 'reached' : voter.reach_status || 'reached',
-      support_level: rating === 5 ? 'guaranteed' : data.support_level || voter.support_level || 'normal',
+      support_level: priority === 5 ? 'guaranteed' : data.support_level || voter.support_level || 'normal',
       transport_status: data.transport_status || voter.transport_status || 'not-needed',
       phone_status: data.call_result || voter.phone_status || 'need-call',
-      remarks: mergePriority(mergeZero(data.remarks || voter.remarks || '', data.zero_day_action || 'pending'), rating),
+      remarks: mergePriority(mergeZero(data.remarks || voter.remarks || '', data.zero_day_action || 'pending'), priority),
       vote_assigned_by: state.user.email,
       vote_assigned_at: new Date().toISOString()
     };
@@ -402,18 +386,24 @@
     return updates;
   }
 
-  function saveOffline(voter, updates) {
+  function queueLocalSave(voter, updates, message, closeAfterSave) {
     state.rows = state.rows.map((row) => row.id === voter.id ? { ...row, ...updates } : row);
     const pending = readJson(storageKey('pending'), []);
     const found = pending.find((item) => item.id === voter.id);
-    if (found) found.updates = { ...found.updates, ...updates };
-    else pending.push({ id: voter.id, updates, party: state.party });
+    const queuedAt = new Date().toISOString();
+    if (found) {
+      found.updates = { ...found.updates, ...updates };
+      found.queuedAt = queuedAt;
+    } else {
+      pending.push({ id: voter.id, updates, party: state.party, queuedAt });
+    }
     writeJson(storageKey('pending'), pending);
     writeJson(storageKey('rows'), state.rows);
-    closeModal();
+    if (closeAfterSave) closeModal();
     render();
-    status('Saved offline. It will sync when online.');
+    status(message || 'Saved offline. Sync queued.');
     renderSync();
+    if (navigator.onLine) syncPending(true);
   }
 
   async function syncPending(silent) {
@@ -428,17 +418,21 @@
     for (const item of pending) {
       let query = client.from(config.table).update(item.updates).eq('id', item.id);
       if (item.party && item.party !== 'ALL') query = query.eq('party', item.party);
-      const { error } = await query;
+      const { data, error } = await query.select(columns).single();
       if (error) left.push(item);
+      else if (data) state.rows = state.rows.map((row) => row.id === data.id ? data : row);
     }
     writeJson(storageKey('pending'), left);
+    writeJson(storageKey('rows'), state.rows);
     state.syncing = false;
-    if (!silent) status(left.length ? `${num(left.length)} offline saves still waiting.` : 'Offline saves synced.');
+    if (!silent) status(left.length ? `${num(left.length)} offline saves still waiting.` : 'Sync complete.');
     renderSync();
   }
 
   function zeroRows() {
-    return state.rows.filter((row) => row.vote_status === 'will-vote' || row.support_level === 'guaranteed').sort((a, b) => priority(b) - priority(a) || String(a.name || '').localeCompare(String(b.name || '')));
+    return state.rows
+      .filter((row) => row.vote_status === 'will-vote' || row.support_level === 'guaranteed')
+      .sort((a, b) => priority(b) - priority(a) || String(a.name || '').localeCompare(String(b.name || '')));
   }
 
   function filterRows(key) {
@@ -461,7 +455,8 @@
   }
 
   function searchText(row) {
-    return [row.name, row.national_id, row.phone, row.house, houseGroup(row.house), row.election_box, boxAlias(row.election_box), row.party, row.lives_in].map((value) => String(value || '').toLowerCase()).join(' ');
+    return [row.name, row.national_id, row.phone, row.house, houseGroup(row.house), row.election_box, boxAlias(row.election_box), row.party, row.lives_in]
+      .map((value) => String(value || '').toLowerCase()).join(' ');
   }
 
   function topHouses(rows) {
@@ -526,7 +521,18 @@
 
   function priorityPicker(voter) {
     const active = priorityRating(voter) || starRating(voter) || 3;
-    return `<div class="rating-box"><strong>Priority Rating</strong><input type="hidden" name="priority_rating" value="${esc(active)}"><div class="star-picker" role="radiogroup" aria-label="Priority rating">${[1, 2, 3, 4, 5].map((value) => `<button class="star-btn ${value <= active ? 'active' : ''}" type="button" data-priority-star="${value}" title="${esc(priorityLabel(value))}">★</button>`).join('')}</div><p><strong class="priority-label">${esc(priorityLabel(active))}</strong> · 1 low priority, 5 guaranteed.</p></div>`;
+    return `
+      <div class="rating-box">
+        <strong>Priority Rating</strong>
+        <input type="hidden" name="priority_rating" value="${esc(active)}">
+        <div class="star-picker" role="radiogroup" aria-label="Priority rating">
+          ${[1, 2, 3, 4, 5].map((value) => `
+            <button class="star-btn ${value <= active ? 'active' : ''}" type="button" data-priority-star="${value}" title="${esc(priorityLabel(value))}">★</button>
+          `).join('')}
+        </div>
+        <p><strong class="priority-label">${esc(priorityLabel(active))}</strong> · 1 low priority, 5 guaranteed.</p>
+      </div>
+    `;
   }
 
   function priorityRating(row) {
@@ -535,7 +541,13 @@
   }
 
   function priorityLabel(value) {
-    return { 1: '1 Star · Low', 2: '2 Stars · Watch', 3: '3 Stars · Possible', 4: '4 Stars · Strong', 5: '5 Stars · Guaranteed' }[Number(value)] || '3 Stars · Possible';
+    return {
+      1: '1 Star · Low',
+      2: '2 Stars · Watch',
+      3: '3 Stars · Possible',
+      4: '4 Stars · Strong',
+      5: '5 Stars · Guaranteed'
+    }[Number(value)] || '3 Stars · Possible';
   }
 
   function zeroAction(row) {
@@ -551,7 +563,10 @@
   }
 
   function stripZero(value) {
-    return String(value || '').replace(/\s*\[Zero Day: [^\]]+\]\s*/i, ' ').replace(/\s*\[Priority: [1-5]\]\s*/i, ' ').trim();
+    return String(value || '')
+      .replace(/\s*\[Zero Day: [^\]]+\]\s*/i, ' ')
+      .replace(/\s*\[Priority: [1-5]\]\s*/i, ' ')
+      .trim();
   }
 
   function mergeZero(remarks, action) {
@@ -659,6 +674,10 @@
 
   function chip(value, color) {
     return value ? `<span class="chip ${color || ''}">${label(value)}</span>` : '';
+  }
+
+  function stars(count) {
+    return '★★★★★'.slice(0, count || 0) || '-';
   }
 
   function hasPhone(row) {
