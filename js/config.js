@@ -16,3 +16,35 @@ window.APP_CONFIG = {
     { key: 'follow-up', label: 'Follow-up', field: 'd2d_status', value: 'follow-up' }
   ]
 };
+
+(function () {
+  if (!/shared\.html$/i.test(location.pathname)) return;
+
+  let lastTouchedRowId = '';
+
+  function cssEscape(value) {
+    if (window.CSS?.escape) return CSS.escape(String(value));
+    return String(value).replace(/["\\]/g, '\\$&');
+  }
+
+  function restoreToLastTouched(anchorId) {
+    const id = anchorId || lastTouchedRowId;
+    if (!id) return;
+    const card = document.querySelector(`[data-row-id="${cssEscape(id)}"]`);
+    if (!card) return;
+    card.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }
+
+  document.addEventListener('change', (event) => {
+    const toggle = event.target.closest?.('[data-toggle-assign]');
+    if (toggle?.dataset?.toggleAssign) lastTouchedRowId = toggle.dataset.toggleAssign;
+  }, true);
+
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest?.('#saveChangesBtn, #confirmSaveBtn')) return;
+    const anchorId = lastTouchedRowId;
+    [120, 350, 800, 1400].forEach((delay) => {
+      setTimeout(() => restoreToLastTouched(anchorId), delay);
+    });
+  }, true);
+})();
