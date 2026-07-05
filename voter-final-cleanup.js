@@ -4,6 +4,7 @@
 
   function runCleanup() {
     removeBoxControls();
+    removeBoxText();
     renameReachedToD2D();
     decorateVisibleCards();
   }
@@ -11,6 +12,20 @@
   function removeBoxControls() {
     document.getElementById('boxSelect')?.closest('label')?.remove();
     document.querySelectorAll('#boxQuickTabs,.box-tabs,.box-tab').forEach((node) => node.remove());
+  }
+
+  function removeBoxText() {
+    document.querySelectorAll('.voter-info p,#modalMeta').forEach((node) => {
+      const next = stripBoxPart(node.textContent || '');
+      if (next && next !== node.textContent) node.textContent = next;
+    });
+  }
+
+  function stripBoxPart(text) {
+    const parts = String(text || '').split(/[·|]/).map((part) => part.trim()).filter(Boolean);
+    if (parts.length <= 1) return text;
+    const cleaned = parts.filter((part) => !/^box\s*\d+/i.test(part) && !/^box$/i.test(part));
+    return cleaned.join(' · ');
   }
 
   function renameReachedToD2D() {
