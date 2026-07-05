@@ -31,9 +31,13 @@
     return raw.includes('dhaf')
       || raw.includes('no dh r')
       || raw.includes('dh r')
+      || raw.includes('no rs')
+      || raw.includes('rs no')
       || /^df\d*/.test(key)
       || /^dhr\d*/.test(key)
       || /^nodhr\d*/.test(key)
+      || /^nors\d*/.test(key)
+      || /^rsno\d*/.test(key)
       || key.startsWith('dhafthar')
       || key.startsWith('dhaftharu')
       || key.startsWith('dafthar');
@@ -146,7 +150,9 @@
   function renderTopHouses(groups) {
     const topHouses = document.getElementById('topHouses');
     if (!topHouses || topHouses.hidden || document.body.classList.contains('clean-read-view')) return;
-    const top = groups.slice().sort((a, b) => b.count - a.count || a.house.localeCompare(b.house)).slice(0, 10);
+    const top = groups
+      .filter((item) => ['Dhafthar', 'Sinamale'].includes(item.house))
+      .sort((a, b) => b.count - a.count || a.house.localeCompare(b.house));
     topHouses.innerHTML = top.length
       ? top.map((item, index) => `
         <button class="house-row" type="button" data-house-filter="${escapeAttr(item.search)}" data-house-label="${escapeAttr(item.house)}">
