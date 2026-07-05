@@ -36,7 +36,7 @@
     const party = String(row.party || '').trim().toUpperCase();
     if (selected === 'ALL') return true;
     if (party === selected) return true;
-    return selected === 'PNC' && !party && isDhafthar([row.house, row.lives_in, row.living_place].join(' '));
+    return selected === 'PNC' && !party && isDhafthar([row.house, row.lives_in].join(' '));
   }
 
   function clean(value) {
@@ -45,7 +45,7 @@
   }
 
   function sourceHouse(row) {
-    return clean(row.house) || clean(row.lives_in) || clean(row.living_place) || 'Unknown house';
+    return clean(row.house) || clean(row.lives_in) || 'Unknown house';
   }
 
   function extractHouse(value) {
@@ -100,7 +100,7 @@
     if (!window.supabase || !config) return [];
     const client = window.__houseNormalizeClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
     window.__houseNormalizeClient = client;
-    const columns = 'house,lives_in,living_place,party,phone,phone_status,vote_status,d2d_status,support_level,transport_status';
+    const columns = 'house,lives_in,party,phone,phone_status,vote_status,d2d_status,support_level,transport_status';
     let from = 0;
     const pageSize = 1000;
     const rows = [];
