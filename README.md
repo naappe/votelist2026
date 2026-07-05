@@ -102,7 +102,7 @@ These files remain only so old script tags or old links do not break. They shoul
 | `css/dashboard-cleanup.css` | Dashboard polish and helper UI styling. |
 | `css/mobile-modal-fixes.css` | Mobile popup and responsive fixes. |
 | `css/voter-hotfix.css` | Voter page specific fixes. |
-| `css/pro-ui.css` | Professional voter card and Assign/View action styling. |
+| `css/pro-ui.css` | Professional voter card, Assign/View actions, and medium gallery-style modal photo. |
 
 ## Supabase Map
 
@@ -130,6 +130,7 @@ vote_assigned_by, vote_assigned_at
 | House dropdown | Controlled by `house-sync.js`. |
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
+| Popup voter photo | `pro-ui.css` keeps the modal voter photo medium gallery-size for easier identification. |
 | Save after house filter | `save-state-fix.js` restores selected house/search/filter after saving, even if the list rebuilds or the browser reloads. |
 | Save after assign filter | `save-state-fix.js` restores Assign/filter view and scroll position after saving. |
 | Self assign page | Friends tick/untick voters, write name/mobile only when needed, then save. |
@@ -152,6 +153,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Increased popup voter photo to medium gallery size in `pro-ui.css` and bumped CSS cache keys. |
 | 2026-07-06 | Persisted `save-state-fix.js` state in sessionStorage so house/filter/scroll can recover even if the browser refreshes during save. |
 | 2026-07-06 | Bumped `save-state-fix.js` cache key to `v=20260706-2` on `dashboard.html` and `voters.html`. |
 | 2026-07-06 | Strengthened `save-state-fix.js` so it watches voter-list rebuilds and restores house/filter/scroll after save. |
@@ -196,7 +198,7 @@ Important structure:
 - js/house-sync.js owns house dropdown, Dhafthar/Sinamale grouping, and Top Houses.
 - js/assign-share.js owns short assignment share links.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
-- js/pro-ui.js owns clean card buttons and Assign focus.
+- js/pro-ui.js owns clean card buttons, Assign focus, and medium gallery-style modal photo.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
 When changing the app:
