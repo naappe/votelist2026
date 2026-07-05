@@ -11,11 +11,9 @@
     return raw.includes('dhaf')
       || raw.includes('no dh r')
       || raw.includes('dh r')
-      || raw.includes('no rs')
       || /^df\d*/.test(compact)
       || /^dhr\d*/.test(compact)
       || /^nodhr\d*/.test(compact)
-      || /^nors\d*/.test(compact)
       || compact.startsWith('dhafthar')
       || compact.startsWith('dhaftharu')
       || compact.startsWith('dafthar');
