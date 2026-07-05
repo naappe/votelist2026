@@ -20,14 +20,22 @@
     });
   }
 
+  function client() {
+    const config = window.APP_CONFIG;
+    if (!window.supabase || !config) return null;
+    if (!window.__assignShareClient) {
+      window.__assignShareClient = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+    }
+    return window.__assignShareClient;
+  }
+
   async function fetchRows(ids) {
     const fallback = ids.map(rowFromCard).filter(Boolean);
     try {
+      const sb = client();
       const config = window.APP_CONFIG;
-      if (!window.supabase || !config || !ids.length) return fallback;
-      const client = window.__assignShareClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
-      window.__assignShareClient = client;
-      const { data, error } = await client
+      if (!sb || !config || !ids.length) return fallback;
+      const { data, error } = await sb
         .from(config.table)
         .select('id,national_id,name,house,phone,photo_url')
         .in('id', ids);
@@ -62,16 +70,21 @@
     };
   }
 
-  function encodePayload(rows) {
-    const safeRows = rows.map((row) => ({
-      id: String(row.id || ''),
-      name: String(row.name || ''),
-      house: String(row.house || ''),
-      mobile: String(row.mobile || ''),
-      photo: String(row.photo || '')
-    }));
-    const json = JSON.stringify(safeRows);
-    return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  function token() {
+    const random = new Uint32Array(2);
+    crypto.getRandomValues(random);
+    return `${Date.now().toString(36)}${random[0].toString(36)}${random[1].toString(36)}`.slice(0, 24);
+  }
+
+  async function saveShare(rows) {
+    const sb = client();
+    if (!sb) throw new Error('Supabase is not ready.');
+    const shareToken = token();
+    const { error } = await sb
+      .from('assignment_shares')
+      .insert({ token: shareToken, payload: rows });
+    if (error) throw error;
+    return shareToken;
   }
 
   async function shareAssignment(useVisible) {
@@ -81,25 +94,31 @@
       showStatus('Select voters to assign first.', true);
       return;
     }
+
     const rows = await fetchRows(finalIds);
     if (!rows.length) {
       showStatus('Could not prepare assignment link.', true);
       return;
     }
 
-    const url = new URL('shared.html', location.href);
-    url.username = '';
-    url.password = '';
-    url.search = '';
-    url.hash = '';
-    url.searchParams.set('list', encodePayload(rows));
-    const link = url.toString();
-
     try {
-      await navigator.clipboard.writeText(link);
-      showLink(link, `Assignment link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. No login needed.`);
-    } catch {
-      showLink(link, `Assignment link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. No login needed.`);
+      const shareToken = await saveShare(rows);
+      const url = new URL('shared.html', location.href);
+      url.username = '';
+      url.password = '';
+      url.search = '';
+      url.hash = '';
+      url.searchParams.set('s', shareToken);
+      const link = url.toString();
+
+      try {
+        await navigator.clipboard.writeText(link);
+        showLink(link, `Short assignment link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. No login needed.`);
+      } catch {
+        showLink(link, `Short assignment link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. No login needed.`);
+      }
+    } catch (error) {
+      showStatus(error.message || 'Could not create short assignment link.', true);
     }
   }
 
