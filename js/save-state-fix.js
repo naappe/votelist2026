@@ -1,34 +1,9 @@
 (function () {
-  let lastMainSnapshot = null;
-  let lastSharedSnapshot = null;
-
-  function snapshotMain() {
-    const activeFilter = document.querySelector('[data-filter].active')?.dataset.filter || '';
-    const assignActive = Boolean(document.querySelector('[data-assign-filter="assigned"].active'));
-    const openCardId = document.querySelector('.modal:not([hidden])') ? window.__lastOpenedVoterId || '' : '';
-    return {
-      type: 'main',
-      activeFilter,
-      assignActive,
-      search: valueOf('searchInput'),
-      house: valueOf('houseSelect'),
-      houseLabel: selectedLabel('houseSelect'),
-      box: valueOf('boxSelect'),
-      scrollY: window.scrollY,
-      cardId: openCardId
-    };
-  }
-
-  function snapshotShared() {
-    return {
-      type: 'shared',
-      search: valueOf('searchInput'),
-      house: valueOf('houseSelect'),
-      filter: valueOf('filterSelect'),
-      scrollY: window.scrollY,
-      rowId: window.__lastTouchedAssignRow || ''
-    };
-  }
+  let mainSnapshot = null;
+  let sharedSnapshot = null;
+  let restoreMainUntil = 0;
+  let restoreSharedUntil = 0;
+  let restoring = false;
 
   function valueOf(id) {
     return document.getElementById(id)?.value || '';
@@ -36,7 +11,9 @@
 
   function selectedLabel(id) {
     const el = document.getElementById(id);
-    return el?.selectedOptions?.[0]?.dataset?.label || el?.selectedOptions?.[0]?.textContent?.replace(/\s*\([^)]*\)\s*$/, '').trim() || '';
+    return el?.selectedOptions?.[0]?.dataset?.label
+      || el?.selectedOptions?.[0]?.textContent?.replace(/\s*\([^)]*\)\s*$/, '').trim()
+      || '';
   }
 
   function cssEscape(value) {
@@ -51,9 +28,40 @@
     return true;
   }
 
-  function restoreScroll(cardSelector, fallbackY) {
+  function captureMain() {
+    mainSnapshot = {
+      activeFilter: document.querySelector('[data-filter].active')?.dataset.filter || '',
+      assignActive: Boolean(document.querySelector('[data-assign-filter="assigned"].active)),
+      search: valueOf('searchInput'),
+      house: valueOf('houseSelect'),
+      houseLabel: selectedLabel('houseSelect'),
+      box: valueOf('boxSelect'),
+      scrollY: window.scrollY,
+      cardId: window.__lastOpenedVoterId || document.querySelector('.voter-card[data-open-voter]')?.dataset.openVoter || ''
+    };
+    return mainSnapshot;
+  }
+
+  function captureShared() {
+    sharedSnapshot = {
+      search: valueOf('searchInput'),
+      house: valueOf('houseSelect'),
+      filter: valueOf('filterSelect') || 'all',
+      scrollY: window.scrollY,
+      rowId: window.__lastTouchedAssignRow || ''
+    };
+    return sharedSnapshot;
+  }
+
+  function dispatch(id, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dispatchEvent(new Event(type, { bubbles: true }));
+  }
+
+  function restoreScroll(selector, fallbackY) {
     requestAnimationFrame(() => {
-      const card = cardSelector ? document.querySelector(cardSelector) : null;
+      const card = selector ? document.querySelector(selector) : null;
       if (card) {
         card.scrollIntoView({ block: 'center', behavior: 'auto' });
         return;
@@ -63,39 +71,66 @@
   }
 
   function restoreMain(snapshot) {
-    if (!snapshot) return;
+    const item = snapshot || mainSnapshot;
+    if (!item || restoring) return;
+    restoring = true;
 
-    if (snapshot.house && setValue('houseSelect', snapshot.house)) {
-      const search = document.getElementById('searchInput');
-      if (search) search.value = snapshot.houseLabel || snapshot.search || '';
-      document.getElementById('houseSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
-    } else if (snapshot.box && setValue('boxSelect', snapshot.box)) {
-      document.getElementById('boxSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
-    } else if (snapshot.search && setValue('searchInput', snapshot.search)) {
-      document.getElementById('searchInput')?.dispatchEvent(new Event('input', { bubbles: true }));
-    } else if (snapshot.assignActive) {
+    if (item.house) {
+      const select = document.getElementById('houseSelect');
+      const hasOption = Boolean(select?.querySelector(`option[value="${cssEscape(item.house)}"]`));
+      if (hasOption) {
+        setValue('houseSelect', item.house);
+        const search = document.getElementById('searchInput');
+        if (search) search.value = item.houseLabel || item.search || '';
+        dispatch('houseSelect', 'change');
+      } else if (item.houseLabel || item.search) {
+        setValue('searchInput', item.houseLabel || item.search);
+        dispatch('searchInput', 'input');
+      }
+    } else if (item.box) {
+      setValue('boxSelect', item.box);
+      dispatch('boxSelect', 'change');
+    } else if (item.search) {
+      setValue('searchInput', item.search);
+      dispatch('searchInput', 'input');
+    } else if (item.assignActive) {
       document.querySelector('[data-assign-filter="assigned"]')?.click();
-    } else if (snapshot.activeFilter) {
-      document.querySelector(`[data-filter="${cssEscape(snapshot.activeFilter)}"]`)?.click();
+    } else if (item.activeFilter) {
+      document.querySelector(`[data-filter="${cssEscape(item.activeFilter)}"]`)?.click();
     }
 
-    const selector = snapshot.cardId ? `.voter-card[data-open-voter="${cssEscape(snapshot.cardId)}"]` : '';
-    setTimeout(() => restoreScroll(selector, snapshot.scrollY), 160);
-    setTimeout(() => restoreScroll(selector, snapshot.scrollY), 500);
-    setTimeout(() => restoreScroll(selector, snapshot.scrollY), 1100);
+    const selector = item.cardId ? `.voter-card[data-open-voter="${cssEscape(item.cardId)}"]` : '';
+    restoreScroll(selector, item.scrollY);
+    setTimeout(() => { restoring = false; }, 80);
   }
 
   function restoreShared(snapshot) {
-    if (!snapshot) return;
-    setValue('searchInput', snapshot.search);
-    setValue('houseSelect', snapshot.house);
-    setValue('filterSelect', snapshot.filter || 'all');
-    document.getElementById('searchBtn')?.click();
-    document.getElementById('searchInput')?.dispatchEvent(new Event('input', { bubbles: true }));
-    const selector = snapshot.rowId ? `[data-row-id="${cssEscape(snapshot.rowId)}"]` : '';
-    setTimeout(() => restoreScroll(selector, snapshot.scrollY), 160);
-    setTimeout(() => restoreScroll(selector, snapshot.scrollY), 500);
-    setTimeout(() => restoreScroll(selector, snapshot.scrollY), 1100);
+    const item = snapshot || sharedSnapshot;
+    if (!item || restoring) return;
+    restoring = true;
+    setValue('searchInput', item.search);
+    setValue('houseSelect', item.house);
+    setValue('filterSelect', item.filter || 'all');
+    dispatch('searchInput', 'input');
+    dispatch('houseSelect', 'change');
+    dispatch('filterSelect', 'change');
+    const selector = item.rowId ? `[data-row-id="${cssEscape(item.rowId)}"]` : '';
+    restoreScroll(selector, item.scrollY);
+    setTimeout(() => { restoring = false; }, 80);
+  }
+
+  function scheduleMainRestore(snapshot) {
+    restoreMainUntil = Date.now() + 3500;
+    [80, 220, 500, 900, 1500, 2400, 3400].forEach((delay) => {
+      setTimeout(() => restoreMain(snapshot), delay);
+    });
+  }
+
+  function scheduleSharedRestore(snapshot) {
+    restoreSharedUntil = Date.now() + 3500;
+    [80, 220, 500, 900, 1500, 2400, 3400].forEach((delay) => {
+      setTimeout(() => restoreShared(snapshot), delay);
+    });
   }
 
   document.addEventListener('click', (event) => {
@@ -105,20 +140,40 @@
     const toggle = event.target.closest?.('[data-toggle-assign]');
     if (toggle?.dataset?.toggleAssign) window.__lastTouchedAssignRow = toggle.dataset.toggleAssign;
 
+    if (event.target.closest?.('[data-filter], [data-house-filter], [data-assign-filter]')) captureMain();
+
     if (event.target.closest?.('#saveChangesBtn, #confirmSaveBtn')) {
-      lastSharedSnapshot = snapshotShared();
-      [180, 600, 1300, 2200].forEach((delay) => setTimeout(() => restoreShared(lastSharedSnapshot), delay));
+      const snapshot = captureShared();
+      scheduleSharedRestore(snapshot);
     }
+  }, true);
+
+  document.addEventListener('input', (event) => {
+    if (event.target?.id === 'searchInput') captureMain();
   }, true);
 
   document.addEventListener('change', (event) => {
     const toggle = event.target.closest?.('[data-toggle-assign]');
     if (toggle?.dataset?.toggleAssign) window.__lastTouchedAssignRow = toggle.dataset.toggleAssign;
+    if (['houseSelect', 'boxSelect', 'filterSelect'].includes(event.target?.id)) {
+      captureMain();
+      captureShared();
+    }
   }, true);
 
   document.addEventListener('submit', (event) => {
     if (event.target?.id !== 'voterForm') return;
-    lastMainSnapshot = snapshotMain();
-    [250, 700, 1400, 2400].forEach((delay) => setTimeout(() => restoreMain(lastMainSnapshot), delay));
+    const snapshot = captureMain();
+    scheduleMainRestore(snapshot);
   }, true);
+
+  const observer = new MutationObserver(() => {
+    if (Date.now() < restoreMainUntil) restoreMain(mainSnapshot);
+    if (Date.now() < restoreSharedUntil) restoreShared(sharedSnapshot);
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const list = document.getElementById('voterList') || document.getElementById('content');
+    if (list) observer.observe(list, { childList: true, subtree: false });
+  });
 })();
