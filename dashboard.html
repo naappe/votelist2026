@@ -47,10 +47,10 @@
     </section>
     <div id="syncNotice" class="sync-notice" role="status" hidden></div>
 
-    <section class="insight-grid" aria-label="Campaign target and focus">
+    <section class="insight-grid" aria-label="Campaign target">
       <article class="panel"><div class="panel-head"><div><h2>Target To Win</h2></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article>
-      <article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2></div></div><div id="topHouses" class="house-list"></div></article>
     </section>
+    <div id="topHouses" class="house-list" hidden></div>
 
     <section class="panel voter-panel">
       <div class="panel-head"><div><h2 id="sectionTitle">All</h2><p id="sectionFilter">Sections filter voters only. Open a voter card to work.</p></div><span id="sectionTotal" class="status-pill">0 voters</span></div>
@@ -85,10 +85,11 @@
   <script src="js/dhafthar-force-filter.js?v=20260705-8"></script>
   <script src="js/dashboard-cleanup.js?v=20260705-25"></script>
   <script src="js/top-house-stabilizer.js?v=20260705-1"></script>
-  <script src="js/house-dropdown-group.js?v=20260705-7"></script>
+  <script src="js/house-sync.js?v=20260705-1"></script>
   <script src="js/house-click-filter.js?v=20260705-3"></script>
   <script src="js/pro-ui.js?v=20260705-2"></script>
   <script src="js/voter-final-cleanup.js?v=20260705-5"></script>
+  <script src="js/d2d-count-fix.js?v=20260705-1"></script>
   <script src="js/voter-hotfix.js?v=20260705-3"></script>
 </body>
 </html>
