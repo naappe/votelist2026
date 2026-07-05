@@ -38,6 +38,7 @@
     ensurePanelTools();
     ensureShareSelection();
     ensureD2DField();
+    ensureCallResultField();
     ensureTargetMath();
     ensureModalBackGuard();
     ensureGroupedTopHouses();
@@ -446,6 +447,36 @@
     label.appendChild(select);
     const remarks = form.querySelector('textarea[name="remarks"]')?.closest('label');
     form.insertBefore(label, remarks || form.querySelector('.modal-actions'));
+  }
+
+  function ensureCallResultField() {
+    const form = document.getElementById('voterForm');
+    const modal = document.getElementById('voterModal');
+    if (!form || !modal || modal.hidden || form.elements.call_result) return;
+
+    const modalSection = document.getElementById('modalSection')?.textContent || '';
+    const voteSelect = form.querySelector('select[name="vote_status"]');
+    const shouldShow = /Pending|Reached|Will Vote/i.test(modalSection) || voteSelect?.value === 'pending';
+    if (!shouldShow) return;
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <input type="hidden" name="call_result" value="called">
+      <div>
+        <label>Call Result</label>
+        <div class="choice-grid">
+          <button class="choice-btn active" type="button" data-name="call_result" data-choice="called">Called</button>
+          <button class="choice-btn" type="button" data-name="call_result" data-choice="busy">Busy</button>
+          <button class="choice-btn" type="button" data-name="call_result" data-choice="switched-off">Switched Off</button>
+          <button class="choice-btn" type="button" data-name="call_result" data-choice="disconnected">Disconnected</button>
+          <button class="choice-btn" type="button" data-name="call_result" data-choice="wrong-number">Wrong Number</button>
+          <button class="choice-btn" type="button" data-name="call_result" data-choice="no-phone">No Phone</button>
+        </div>
+      </div>
+    `;
+
+    const voteLabel = form.querySelector('select[name="vote_status"]')?.closest('label');
+    form.insertBefore(wrap, voteLabel || form.querySelector('.modal-actions'));
   }
 
   async function shareSelected() {
