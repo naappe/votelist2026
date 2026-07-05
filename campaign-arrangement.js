@@ -6,6 +6,7 @@
     ['not-decided', 'Not Decided', { vote_status: 'not-decided', support_level: 'normal' }]
   ];
   const callOptions = [
+    ['need-call', 'Pending', { call_result: 'need-call' }],
     ['called', 'Connected', { call_result: 'called' }],
     ['out-of-range', 'Out of Coverage', { call_result: 'out-of-range', d2d_status: 'follow-up' }],
     ['busy', 'Busy', { call_result: 'busy', d2d_status: 'follow-up' }],
@@ -30,7 +31,7 @@
 
     ensureField(form, 'vote_status', 'not-decided');
     ensureField(form, 'support_level', 'normal');
-    ensureField(form, 'call_result', 'called');
+    ensureField(form, 'call_result', 'need-call');
     ensureField(form, 'transport_status', 'not-needed');
     ensureField(form, 'd2d_status', 'not-visited');
 
@@ -49,7 +50,7 @@
           : 'not-decided';
 
     renderGroup(form, 'vote', 'Vote', voteOptions, voteValue);
-    renderGroup(form, 'call', 'Call Center', callOptions, form.elements.call_result.value || 'called');
+    renderGroup(form, 'call', 'Call Center', callOptions, form.elements.call_result.value || 'need-call');
     renderGroup(form, 'transport', 'Transportation', transportOptions, form.elements.transport_status.value || 'not-needed');
     renderGroup(form, 'd2d', 'D2D', d2dOptions, form.elements.d2d_status.value || 'not-visited');
   }
