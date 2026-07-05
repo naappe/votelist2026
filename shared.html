@@ -34,6 +34,8 @@
     </section>
     <section id="content" class="grid"></section>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=20260705-11"></script>
   <script>
     function decodePayload(value) {
       try {
@@ -58,20 +60,43 @@
     function photo(row) {
       return row.photo ? `<img src="${esc(row.photo)}" alt="${esc(row.name || 'Voter photo')}" loading="lazy">` : esc(initials(row.name));
     }
-    const rows = decodePayload(new URLSearchParams(location.search).get('list'))
-      .filter((row) => row && (row.id || row.name || row.house || row.mobile || row.photo));
-    document.getElementById('count').textContent = rows.length ? `${rows.length} assigned voter${rows.length === 1 ? '' : 's'}` : 'No voters selected';
-    document.getElementById('content').innerHTML = rows.length ? rows.map((row) => `
-      <article class="card">
-        <div class="photo">${photo(row)}</div>
-        <div class="info">
-          <div class="name">${esc(row.name)}</div>
-          <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
-          <div class="line"><span class="label">Address</span><span>${esc(row.house)}</span></div>
-          <div class="line"><span class="label">ID Card</span><span>${esc(row.id)}</span></div>
-        </div>
-      </article>
-    `).join('') : '<div class="empty">This assignment link has no selected voter data.</div>';
+    function render(rows) {
+      document.getElementById('count').textContent = rows.length ? `${rows.length} assigned voter${rows.length === 1 ? '' : 's'}` : 'No voters selected';
+      document.getElementById('content').innerHTML = rows.length ? rows.map((row) => `
+        <article class="card">
+          <div class="photo">${photo(row)}</div>
+          <div class="info">
+            <div class="name">${esc(row.name)}</div>
+            <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
+            <div class="line"><span class="label">Address</span><span>${esc(row.house)}</span></div>
+            <div class="line"><span class="label">ID Card</span><span>${esc(row.id)}</span></div>
+          </div>
+        </article>
+      `).join('') : '<div class="empty">This assignment link has no selected voter data.</div>';
+    }
+    async function loadShare() {
+      const params = new URLSearchParams(location.search);
+      const token = params.get('s');
+      if (!token) {
+        const rows = decodePayload(params.get('list')).filter((row) => row && (row.id || row.name || row.house || row.mobile || row.photo));
+        render(rows);
+        return;
+      }
+      try {
+        const client = window.supabase.createClient(window.APP_CONFIG.supabaseUrl, window.APP_CONFIG.supabaseKey);
+        const { data, error } = await client
+          .from('assignment_shares')
+          .select('payload')
+          .eq('token', token)
+          .maybeSingle();
+        if (error) throw error;
+        render(Array.isArray(data?.payload) ? data.payload : []);
+      } catch (error) {
+        document.getElementById('count').textContent = 'Could not open link';
+        document.getElementById('content').innerHTML = `<div class="empty">${esc(error.message || 'This assignment link could not be loaded.')}</div>`;
+      }
+    }
+    loadShare();
   </script>
 </body>
 </html>
