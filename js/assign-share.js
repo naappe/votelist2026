@@ -3,11 +3,10 @@
     return Array.from(document.querySelectorAll('[data-share-select]:checked')).map((input) => input.value).filter(Boolean);
   }
 
-  function visibleIds(limit) {
+  function visibleIds() {
     return Array.from(document.querySelectorAll('.voter-card[data-open-voter]'))
       .map((card) => card.dataset.openVoter)
-      .filter(Boolean)
-      .slice(0, limit || 30);
+      .filter(Boolean);
   }
 
   function labelAssignButtons() {
@@ -37,7 +36,7 @@
       if (!sb || !config || !ids.length) return fallback;
       const { data, error } = await sb
         .from(config.table)
-        .select('id,national_id,name,house,phone,photo_url')
+        .select('id,national_id,name,house,phone,photo_url,vote_assigned_by')
         .in('id', ids);
       if (error || !data) return fallback;
       const byId = new Map(data.map((row) => [String(row.id), row]));
@@ -45,11 +44,13 @@
         const row = byId.get(String(id));
         const backup = rowFromCard(id) || {};
         return {
-          id: row?.national_id || backup.id || id,
+          row_id: String(row?.id || backup.row_id || id),
+          id: row?.national_id || backup.id || '',
           name: row?.name || backup.name || '',
           house: row?.house || backup.house || '',
           mobile: row?.phone || backup.mobile || '',
-          photo: row?.photo_url || backup.photo || ''
+          photo: row?.photo_url || backup.photo || '',
+          assigned_by: row?.vote_assigned_by || backup.assigned_by || ''
         };
       });
     } catch {
@@ -62,11 +63,13 @@
     if (!card) return null;
     const meta = (card.querySelector('.voter-info p')?.textContent || '').split('·').map((item) => item.trim()).filter(Boolean);
     return {
-      id,
+      row_id: String(id),
+      id: '',
       name: card.querySelector('h3')?.textContent.trim() || '',
       house: meta[0] || '',
       mobile: meta[meta.length - 1] || '',
-      photo: card.querySelector('.voter-photo img')?.src || ''
+      photo: card.querySelector('.voter-photo img')?.src || '',
+      assigned_by: ''
     };
   }
 
@@ -89,7 +92,7 @@
 
   async function shareAssignment(useVisible) {
     const ids = selectedIds();
-    const finalIds = ids.length ? ids : (useVisible ? visibleIds(30) : []);
+    const finalIds = ids.length ? ids : (useVisible ? visibleIds() : []);
     if (!finalIds.length) {
       showStatus('Select voters to assign first.', true);
       return;
@@ -113,9 +116,9 @@
 
       try {
         await navigator.clipboard.writeText(link);
-        showLink(link, `Short assignment link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. No login needed.`);
+        showLink(link, `Self-assign link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`);
       } catch {
-        showLink(link, `Short assignment link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. No login needed.`);
+        showLink(link, `Self-assign link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`);
       }
     } catch (error) {
       showStatus(error.message || 'Could not create short assignment link.', true);
