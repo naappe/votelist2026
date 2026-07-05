@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Villimale Campaign Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
+    <a class="btn dark" href="login.html">Admin Login</a>
+  </header>
+
+  <main class="home-wrap">
+    <section class="home-hero">
+      <p class="eyebrow">Campaign dashboard</p>
+      <h1>Select party work area</h1>
+      <p>Each party opens the same dashboard engine, but every section filters and saves only that party's campaign work.</p>
+    </section>
+
+    <section class="party-grid">
+      <a class="party-card mdp" href="dashboard.html?party=MDP">
+        <span class="party-label">MDP</span>
+        <strong>Open MDP Dashboard</strong>
+        <small>Need call, reached, will vote, pending, no phone, transport and follow-up.</small>
+      </a>
+      <a class="party-card pnc" href="dashboard.html?party=PNC">
+        <span class="party-label">PNC</span>
+        <strong>Open PNC Dashboard</strong>
+        <small>Same sections, only PNC voters and PNC graphs.</small>
+      </a>
+      <a class="party-card admin" href="login.html">
+        <span class="party-label">Admin</span>
+        <strong>Admin Login</strong>
+        <small>See all voters, MDP, PNC, no party and total graphs.</small>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
