@@ -73,12 +73,13 @@
     });
 
     const active = search.value.trim().toLowerCase();
-    tabs.innerHTML = [
+    const nextHtml = [
       `<button class="box-tab ${active ? '' : 'active'}" type="button" data-box-search="">All Boxes</button>`,
       ...Array.from(groups.values())
         .sort((a, b) => a.number - b.number || a.label.localeCompare(b.label))
         .map((item) => `<button class="box-tab ${active === item.search ? 'active' : ''}" type="button" data-box-search="${item.search}">${item.label}${item.count ? ` <span>${item.count}</span>` : ''}</button>`)
     ].join('');
+    if (tabs.innerHTML !== nextHtml) tabs.innerHTML = nextHtml;
   }
 
   function normalizeBox(text) {
