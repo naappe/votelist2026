@@ -58,7 +58,7 @@
     if (!isMainPage()) return mainSnapshot;
     mainSnapshot = {
       activeFilter: document.querySelector('[data-filter].active')?.dataset.filter || '',
-      assignActive: Boolean(document.querySelector('[data-assign-filter="assigned"].active)),
+      assignActive: Boolean(document.querySelector('[data-assign-filter="assigned"].active')),
       search: valueOf('searchInput'),
       house: valueOf('houseSelect'),
       houseLabel: selectedLabel('houseSelect'),
