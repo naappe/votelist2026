@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Self Assign Voters</title>
   <style>
-    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--dark:#101828;--soft:#eef4ff;--green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fef2f2;--shadow:0 16px 40px rgba(16,24,40,.08)}
+    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--dark:#101828;--soft:#eef4ff;--green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fef2f2;--amber-bg:#fffbeb;--amber:#92400e;--shadow:0 16px 40px rgba(16,24,40,.08)}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .wrap{width:min(860px,calc(100% - 24px));margin:14px auto 44px}
+    .wrap{width:min(900px,calc(100% - 24px));margin:14px auto 44px}
     .top,.tools,.card,.modal-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
     .top{padding:16px;margin-bottom:12px}
     h1{margin:0 0 6px;font-size:25px;letter-spacing:-.03em;line-height:1.08}
     p{margin:0;color:var(--muted);line-height:1.4;font-weight:700}
     .count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}
-    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 180px 140px auto auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
+    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 180px 140px auto auto auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
     label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
     input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
     button{border:0;border-radius:11px;min-height:40px;padding:9px 13px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}
@@ -22,7 +22,8 @@
     button.danger{background:var(--red);color:#fff}
     button:disabled{opacity:.55;cursor:not-allowed}
     .grid{display:grid;gap:10px}
-    .card{display:grid;grid-template-columns:104px 1fr auto;gap:12px;align-items:center;padding:12px;text-align:left}
+    .card{display:grid;grid-template-columns:42px 104px 1fr;gap:12px;align-items:center;padding:12px;text-align:left}
+    .check{width:28px;height:28px;accent-color:var(--blue);justify-self:center}
     .photo{width:104px;height:104px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eef4ff;display:grid;place-items:center;color:#1d4ed8;font-size:26px;font-weight:950;letter-spacing:-.04em}
     .photo img{width:100%;height:100%;object-fit:cover;display:block}
     .card-main{min-width:0}
@@ -32,28 +33,28 @@
     .status{display:inline-flex;width:max-content;max-width:100%;margin-top:9px;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:950;white-space:normal}
     .status.done{background:var(--green-bg);color:#166534}
     .status.full{background:var(--red-bg);color:#991b1b}
+    .status.pending{background:var(--amber-bg);color:var(--amber)}
     .empty{padding:28px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:14px}
     .message{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-weight:900;border:1px solid #bfdbfe}
     .message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
     .modal{position:fixed;inset:0;z-index:20;display:grid;place-items:end center;padding:12px;background:rgba(15,23,42,.45)}
     .modal[hidden]{display:none}
-    .modal-card{width:min(540px,100%);padding:16px;border-radius:18px;max-height:calc(100vh - 24px);overflow:auto}
+    .modal-card{width:min(520px,100%);padding:16px;border-radius:18px;max-height:calc(100vh - 24px);overflow:auto}
     .modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:12px}
     .modal-head h2{margin:0;font-size:22px;line-height:1.1;letter-spacing:-.02em}
-    .modal-photo{width:160px;height:160px;border-radius:18px;margin:0 auto 12px;font-size:38px}
-    .modal-meta{display:grid;gap:4px;margin:10px 0 14px;padding:10px;border-radius:12px;background:#f8fafc;border:1px solid var(--line)}
     .modal-form{display:grid;gap:10px}
     .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
     .modal-actions .wide{grid-column:1 / -1}
-    @media(max-width:860px){.tools{grid-template-columns:1fr 1fr}.tools button{width:100%}.card{grid-template-columns:96px 1fr}.card button{grid-column:1 / -1;width:100%}.photo{width:96px;height:96px}}
-    @media(max-width:560px){.tools{grid-template-columns:1fr;position:static}.wrap{width:min(100% - 18px,860px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:92px 1fr}.photo{width:92px;height:112px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}.modal-photo{width:150px;height:150px}}
+    @media(max-width:980px){.tools{grid-template-columns:1fr 1fr 1fr}.tools button{width:100%}}
+    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.card{grid-template-columns:36px 96px 1fr}.photo{width:96px;height:96px}}
+    @media(max-width:560px){.wrap{width:min(100% - 18px,900px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:34px 92px 1fr}.check{width:26px;height:26px}.photo{width:92px;height:112px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="top">
       <h1>Self Assign Voters</h1>
-      <p>Search a voter, check the photo, tap assign, then enter your name and mobile in the popup. Other assigners are kept private.</p>
+      <p>Tick voters to assign yourself. Untick your own saved voters to remove. Other assigners are kept private.</p>
       <div id="count" class="count">Loading...</div>
     </section>
 
@@ -67,12 +68,14 @@
       <label>Filter
         <select id="filterSelect">
           <option value="all">All</option>
-          <option value="open">Not assigned</option>
+          <option value="open">Available</option>
+          <option value="mine">My ticks</option>
           <option value="assigned">Assigned</option>
           <option value="full">Full</option>
         </select>
       </label>
       <button id="searchBtn" type="button">Search</button>
+      <button id="saveChangesBtn" type="button">Save Changes</button>
       <button id="clearBtn" class="light" type="button">Clear</button>
     </section>
 
@@ -80,28 +83,25 @@
     <section id="content" class="grid"></section>
   </main>
 
-  <section id="assignModal" class="modal" hidden>
+  <section id="identityModal" class="modal" hidden>
     <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head">
         <div>
-          <h2 id="modalTitle">Assign voter</h2>
-          <p id="modalAssigned">Available</p>
+          <h2 id="modalTitle">Save changes</h2>
+          <p id="modalHelp">Write your details once. This phone remembers them for next time.</p>
         </div>
         <button id="closeModalBtn" class="light" type="button">Close</button>
       </div>
-      <div id="modalPhoto" class="photo modal-photo"></div>
-      <div id="modalMeta" class="modal-meta"></div>
       <div class="modal-form">
-        <label>Your name
+        <label id="nameLabel">Your name
           <input id="assigneeName" type="text" placeholder="Write your name" autocomplete="name">
         </label>
         <label>Your mobile
           <input id="assigneePhone" type="tel" placeholder="Mobile number" autocomplete="tel" inputmode="tel">
         </label>
         <div class="modal-actions">
-          <button id="removeAssignBtn" class="danger" type="button">Remove my assignment</button>
-          <button id="saveAssignBtn" type="button">Save assignment</button>
-          <button id="cancelAssignBtn" class="light wide" type="button">Cancel</button>
+          <button id="confirmSaveBtn" type="button">Save</button>
+          <button id="cancelSaveBtn" class="light" type="button">Cancel</button>
         </div>
       </div>
     </article>
@@ -113,8 +113,10 @@
     const params = new URLSearchParams(location.search);
     const token = params.get('s') || '';
     let rows = [];
-    let activeRowId = '';
     let client = null;
+    let myAssigned = new Set();
+    let pendingAdd = new Set();
+    let pendingRemove = new Set();
 
     function decodePayload(value) {
       try {
@@ -126,11 +128,7 @@
     }
     function esc(value) {
       return String(value || '').replace(/[&<>"']/g, (char) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
       }[char]));
     }
     function privateCount(row) {
@@ -159,11 +157,51 @@
     function assignedCount(row) {
       return Math.max(0, Number(row.assigned_count || 0));
     }
+    function rowById(rowId) {
+      return rows.find((row) => row.row_id === String(rowId));
+    }
+    function storageKey(name) {
+      return `self_assign:${token || 'old'}:${name}`;
+    }
+    function loadMyAssigned() {
+      try { myAssigned = new Set(JSON.parse(localStorage.getItem(storageKey('mine')) || '[]').map(String)); } catch { myAssigned = new Set(); }
+    }
+    function saveMyAssigned() {
+      try { localStorage.setItem(storageKey('mine'), JSON.stringify(Array.from(myAssigned))); } catch {}
+    }
+    function isMine(rowId) {
+      return myAssigned.has(String(rowId));
+    }
+    function isChecked(row) {
+      const id = String(row.row_id);
+      if (pendingAdd.has(id)) return true;
+      if (pendingRemove.has(id)) return false;
+      return isMine(id);
+    }
+    function displayCount(row) {
+      const id = String(row.row_id);
+      let count = assignedCount(row);
+      if (pendingAdd.has(id) && !isMine(id)) count += 1;
+      if (pendingRemove.has(id) && isMine(id)) count = Math.max(0, count - 1);
+      return count;
+    }
     function statusText(row) {
+      const id = String(row.row_id);
+      if (pendingAdd.has(id)) return 'Will assign to you';
+      if (pendingRemove.has(id)) return 'Will remove yours';
+      if (isMine(id)) return 'Assigned to you';
       const count = assignedCount(row);
       if (count >= 3) return 'Full';
       if (count > 0) return 'Assigned';
       return 'Available';
+    }
+    function statusClass(row) {
+      const id = String(row.row_id);
+      if (pendingAdd.has(id) || pendingRemove.has(id)) return 'pending';
+      const count = assignedCount(row);
+      if (count >= 3) return 'full';
+      if (count > 0 || isMine(id)) return 'done';
+      return '';
     }
     function setMessage(text, isError) {
       const el = document.getElementById('message');
@@ -192,8 +230,11 @@
         document.getElementById('assigneePhone').value = localStorage.getItem('assigner_phone') || '';
       } catch {}
     }
-    function rowById(rowId) {
-      return rows.find((row) => row.row_id === String(rowId));
+    function hasIdentityForSave() {
+      return !pendingAdd.size || (nameValue().length >= 2 && phoneDigits().length >= 5);
+    }
+    function hasPhoneForRemove() {
+      return !pendingRemove.size || phoneDigits().length >= 5;
     }
     function houseKey(value) {
       return String(value || '').trim().toLowerCase();
@@ -218,14 +259,22 @@
       const house = document.getElementById('houseSelect').value;
       const filter = document.getElementById('filterSelect').value;
       return rows.filter((row) => {
-        const count = assignedCount(row);
+        const count = displayCount(row);
+        const mine = isChecked(row);
         if (house && houseKey(row.house || 'No house') !== house) return false;
         if (filter === 'open' && count !== 0) return false;
+        if (filter === 'mine' && !mine) return false;
         if (filter === 'assigned' && count === 0) return false;
         if (filter === 'full' && count < 3) return false;
         if (!term) return true;
         return [row.name, row.id, row.house, row.mobile].some((value) => String(value || '').toLowerCase().includes(term));
       });
+    }
+    function updateSaveButton() {
+      const total = pendingAdd.size + pendingRemove.size;
+      const button = document.getElementById('saveChangesBtn');
+      button.textContent = total ? `Save ${total} Change${total === 1 ? '' : 's'}` : 'Save Changes';
+      button.disabled = !total;
     }
     function renderKeepPosition() {
       const scrollY = window.scrollY;
@@ -236,147 +285,160 @@
       const visible = filteredRows();
       document.getElementById('count').textContent = `${visible.length} of ${rows.length} voter${rows.length === 1 ? '' : 's'} showing`;
       document.getElementById('content').innerHTML = visible.length ? visible.map((row) => {
-        const count = assignedCount(row);
-        const statusClass = count >= 3 ? 'full' : count > 0 ? 'done' : '';
-        const buttonText = count >= 3 ? 'Full' : count > 0 ? 'Add or remove' : 'Assign';
+        const count = displayCount(row);
+        const fullForOthers = count >= 3 && !isChecked(row);
         return `
           <article class="card" data-row-id="${esc(row.row_id)}">
+            <input class="check" type="checkbox" data-toggle-assign="${esc(row.row_id)}" ${isChecked(row) ? 'checked' : ''} ${fullForOthers ? 'disabled' : ''} aria-label="Tick ${esc(row.name || 'voter')}">
             <div class="photo">${photoHtml(row)}</div>
             <div class="card-main">
               <div class="name">${esc(row.name || 'Unknown voter')}</div>
               <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
               <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
               <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
-              <span class="status ${statusClass}">${esc(statusText(row))}</span>
+              <span class="status ${statusClass(row)}">${esc(statusText(row))}</span>
             </div>
-            <button type="button" data-open-assign="${esc(row.row_id)}">${esc(buttonText)}</button>
           </article>
         `;
       }).join('') : '<div class="empty">No voters match this search.</div>';
+      updateSaveButton();
     }
-    function validateIdentity() {
-      if (!nameValue()) {
-        setMessage('Write your name first.', true);
-        document.getElementById('assigneeName').focus();
+    function toggleRow(rowId, checked) {
+      const id = String(rowId);
+      const row = rowById(id);
+      if (!row) return;
+      if (checked) {
+        if (isMine(id)) pendingRemove.delete(id);
+        else {
+          if (assignedCount(row) >= 3) {
+            setMessage('This voter is already full.', true);
+            return;
+          }
+          pendingAdd.add(id);
+        }
+      } else {
+        pendingAdd.delete(id);
+        if (isMine(id)) pendingRemove.add(id);
+      }
+      setMessage('', false);
+      renderKeepPosition();
+    }
+    function openIdentityModal() {
+      loadIdentity();
+      const addCount = pendingAdd.size;
+      const removeCount = pendingRemove.size;
+      document.getElementById('nameLabel').hidden = addCount === 0;
+      document.getElementById('modalTitle').textContent = 'Save changes';
+      document.getElementById('modalHelp').textContent = addCount
+        ? 'Name and mobile are needed to assign voters to you. This phone remembers them next time.'
+        : 'Mobile is needed only to remove your own assignment.';
+      document.getElementById('identityModal').hidden = false;
+      setTimeout(() => (addCount ? document.getElementById('assigneeName') : document.getElementById('assigneePhone')).focus(), 80);
+    }
+    function closeModal() {
+      document.getElementById('identityModal').hidden = true;
+    }
+    function identityReady() {
+      if (!hasIdentityForSave()) {
+        openIdentityModal();
         return false;
       }
-      if (phoneDigits().length < 5) {
-        setMessage('Write your mobile number first.', true);
-        document.getElementById('assigneePhone').focus();
+      if (!hasPhoneForRemove()) {
+        openIdentityModal();
         return false;
       }
       return true;
     }
     function setBusy(isBusy) {
-      ['saveAssignBtn', 'removeAssignBtn', 'cancelAssignBtn', 'closeModalBtn'].forEach((id) => {
+      ['saveChangesBtn', 'confirmSaveBtn', 'cancelSaveBtn', 'closeModalBtn', 'searchBtn', 'clearBtn'].forEach((id) => {
         const button = document.getElementById(id);
         if (button) button.disabled = isBusy;
       });
     }
-    function openModal(rowId) {
-      const row = rowById(rowId);
-      if (!row) return;
-      activeRowId = String(rowId);
+    async function saveChanges() {
+      if (!pendingAdd.size && !pendingRemove.size) {
+        setMessage('Tick or untick voters first.', true);
+        return;
+      }
       loadIdentity();
-      const count = assignedCount(row);
-      document.getElementById('modalTitle').textContent = row.name || 'Unknown voter';
-      document.getElementById('modalAssigned').textContent = statusText(row);
-      document.getElementById('modalPhoto').innerHTML = photoHtml(row);
-      document.getElementById('modalMeta').innerHTML = `
-        <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
-        <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
-        <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
-      `;
-      document.getElementById('saveAssignBtn').textContent = count >= 3 ? 'Full' : count > 0 ? 'Add my name' : 'Assign to me';
-      document.getElementById('saveAssignBtn').disabled = !token || count >= 3;
-      document.getElementById('removeAssignBtn').disabled = !token || count === 0;
-      document.getElementById('assignModal').hidden = false;
-      setTimeout(() => document.getElementById('assigneeName').focus(), 80);
-    }
-    function closeModal() {
-      activeRowId = '';
-      document.getElementById('assignModal').hidden = true;
-    }
-    async function saveAssignment() {
-      if (!validateIdentity()) return;
-      const row = rowById(activeRowId);
-      if (!token || !row) {
-        setMessage('This old link is read-only. Ask for a new assignment link.', true);
-        return;
-      }
-      setBusy(true);
+      if (!identityReady()) return;
       saveIdentity();
-      const { data, error } = await client.rpc('claim_assignment', {
-        p_token: token,
-        p_voter_row_id: Number(activeRowId),
-        p_assignee_name: nameValue(),
-        p_assignee_phone: phoneValue()
-      });
-      setBusy(false);
-      if (error) {
-        setMessage(error.message || 'Could not save assignment.', true);
-        return;
+      setBusy(true);
+      let saved = 0;
+      let failed = 0;
+
+      for (const rowId of Array.from(pendingAdd)) {
+        try {
+          const { data, error } = await client.rpc('claim_assignment', {
+            p_token: token,
+            p_voter_row_id: Number(rowId),
+            p_assignee_name: nameValue(),
+            p_assignee_phone: phoneValue()
+          });
+          if (error) throw error;
+          const row = Array.isArray(data) ? data[0] : data;
+          rows = rows.map((item) => item.row_id === rowId ? { ...item, assigned_count: Number(row?.assigned_count || item.assigned_count || 0) } : item);
+          myAssigned.add(rowId);
+          pendingAdd.delete(rowId);
+          saved += 1;
+        } catch (error) {
+          failed += 1;
+          setMessage(error.message || 'Some assignments could not be saved.', true);
+        }
       }
-      const saved = Array.isArray(data) ? data[0] : data;
-      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_count: Number(saved?.assigned_count || item.assigned_count || 0) } : item);
+
+      for (const rowId of Array.from(pendingRemove)) {
+        try {
+          const { data, error } = await client.rpc('unclaim_assignment', {
+            p_token: token,
+            p_voter_row_id: Number(rowId),
+            p_assignee_phone: phoneValue()
+          });
+          if (error) throw error;
+          const row = Array.isArray(data) ? data[0] : data;
+          rows = rows.map((item) => item.row_id === rowId ? { ...item, assigned_count: Number(row?.assigned_count || 0) } : item);
+          myAssigned.delete(rowId);
+          pendingRemove.delete(rowId);
+          saved += 1;
+        } catch (error) {
+          failed += 1;
+          setMessage(error.message || 'Some removals could not be saved.', true);
+        }
+      }
+
+      saveMyAssigned();
+      setBusy(false);
       closeModal();
       renderKeepPosition();
-      setMessage(`Saved. ${saved?.name || 'Voter'} assigned to you.`, false);
-    }
-    async function removeAssignment() {
-      if (phoneDigits().length < 5) {
-        setMessage('Write your mobile number to remove your assignment.', true);
-        document.getElementById('assigneePhone').focus();
-        return;
-      }
-      const row = rowById(activeRowId);
-      if (!token || !row) {
-        setMessage('This old link is read-only. Ask for a new assignment link.', true);
-        return;
-      }
-      setBusy(true);
-      saveIdentity();
-      const { data, error } = await client.rpc('unclaim_assignment', {
-        p_token: token,
-        p_voter_row_id: Number(activeRowId),
-        p_assignee_phone: phoneValue()
-      });
-      setBusy(false);
-      if (error) {
-        setMessage(error.message || 'Could not remove assignment.', true);
-        return;
-      }
-      const saved = Array.isArray(data) ? data[0] : data;
-      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_count: Number(saved?.assigned_count || 0) } : item);
-      closeModal();
-      renderKeepPosition();
-      setMessage(`Removed your assignment from ${saved?.name || 'this voter'}.`, false);
+      if (!failed) setMessage(`Saved ${saved} change${saved === 1 ? '' : 's'}.`, false);
     }
     async function loadShare() {
       document.getElementById('searchInput').addEventListener('input', render);
       document.getElementById('houseSelect').addEventListener('change', render);
       document.getElementById('filterSelect').addEventListener('change', render);
       document.getElementById('searchBtn').addEventListener('click', render);
+      document.getElementById('saveChangesBtn').addEventListener('click', saveChanges);
       document.getElementById('clearBtn').addEventListener('click', () => {
         document.getElementById('searchInput').value = '';
         document.getElementById('houseSelect').value = '';
         document.getElementById('filterSelect').value = 'all';
         render();
       });
-      document.getElementById('saveAssignBtn').addEventListener('click', saveAssignment);
-      document.getElementById('removeAssignBtn').addEventListener('click', removeAssignment);
-      document.getElementById('cancelAssignBtn').addEventListener('click', closeModal);
+      document.getElementById('confirmSaveBtn').addEventListener('click', saveChanges);
+      document.getElementById('cancelSaveBtn').addEventListener('click', closeModal);
       document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-      document.getElementById('assignModal').addEventListener('click', (event) => {
-        if (event.target.id === 'assignModal') closeModal();
+      document.getElementById('identityModal').addEventListener('click', (event) => {
+        if (event.target.id === 'identityModal') closeModal();
       });
       document.getElementById('assigneeName').addEventListener('input', saveIdentity);
       document.getElementById('assigneePhone').addEventListener('input', saveIdentity);
-      document.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-open-assign]');
-        if (button) openModal(button.dataset.openAssign);
+      document.addEventListener('change', (event) => {
+        const toggle = event.target.closest('[data-toggle-assign]');
+        if (toggle) toggleRow(toggle.dataset.toggleAssign, toggle.checked);
       });
 
+      loadIdentity();
+      loadMyAssigned();
       if (!token) {
         rows = cleanRows(decodePayload(params.get('list')));
         renderHouseOptions();
