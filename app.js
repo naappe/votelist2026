@@ -143,6 +143,16 @@
         return;
       }
 
+      const houseButton = event.target.closest('[data-house-filter]');
+      if (houseButton) {
+        state.activeFilter = 'all';
+        state.searchTerm = houseButton.dataset.houseFilter.toLowerCase();
+        const input = document.getElementById('searchInput');
+        if (input) input.value = houseButton.dataset.houseFilter;
+        renderDashboard();
+        return;
+      }
+
       const voterCard = event.target.closest('[data-open-voter]');
       if (voterCard) {
         const voter = state.rows.find((row) => String(row.id) === voterCard.dataset.openVoter);
@@ -284,10 +294,10 @@
     const houses = topHouses(state.rows);
     topHousesEl.innerHTML = houses.length
       ? houses.map((item, index) => `
-        <div class="house-row">
+        <button class="house-row" type="button" data-house-filter="${escapeAttr(item.house)}">
           <span>${index + 1}. ${escapeHtml(item.house)}</span>
           <strong>${number(item.count)}</strong>
-        </div>
+        </button>
       `).join('')
       : '<div class="empty small">No house data.</div>';
   }
