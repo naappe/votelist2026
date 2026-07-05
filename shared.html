@@ -14,7 +14,7 @@
     h1{margin:0 0 6px;font-size:25px;letter-spacing:-.03em;line-height:1.08}
     p{margin:0;color:var(--muted);line-height:1.4;font-weight:700}
     .count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}
-    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
+    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 180px 140px auto auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
     label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
     input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
     button{border:0;border-radius:11px;min-height:40px;padding:9px 13px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}
@@ -45,21 +45,24 @@
     .modal-form{display:grid;gap:10px}
     .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
     .modal-actions .wide{grid-column:1 / -1}
-    @media(max-width:760px){.tools{grid-template-columns:1fr;position:static}.card{grid-template-columns:96px 1fr}.card button{grid-column:1 / -1;width:100%}.photo{width:96px;height:96px}}
-    @media(max-width:520px){.wrap{width:min(100% - 18px,860px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:92px 1fr}.photo{width:92px;height:112px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}.modal-photo{width:150px;height:150px}}
+    @media(max-width:860px){.tools{grid-template-columns:1fr 1fr}.tools button{width:100%}.card{grid-template-columns:96px 1fr}.card button{grid-column:1 / -1;width:100%}.photo{width:96px;height:96px}}
+    @media(max-width:560px){.tools{grid-template-columns:1fr;position:static}.wrap{width:min(100% - 18px,860px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:92px 1fr}.photo{width:92px;height:112px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}.modal-photo{width:150px;height:150px}}
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="top">
       <h1>Self Assign Voters</h1>
-      <p>Search a voter, check the photo, tap assign, then enter your name and mobile in the popup. No login is required.</p>
+      <p>Search a voter, check the photo, tap assign, then enter your name and mobile in the popup. Other assigners are kept private.</p>
       <div id="count" class="count">Loading...</div>
     </section>
 
     <section class="tools" aria-label="Search and filter voters">
       <label>Search voters
         <input id="searchInput" type="search" placeholder="Name, ID, address, mobile">
+      </label>
+      <label>House
+        <select id="houseSelect"><option value="">All houses</option></select>
       </label>
       <label>Filter
         <select id="filterSelect">
@@ -69,6 +72,7 @@
           <option value="full">Full</option>
         </select>
       </label>
+      <button id="searchBtn" type="button">Search</button>
       <button id="clearBtn" class="light" type="button">Clear</button>
     </section>
 
@@ -81,7 +85,7 @@
       <div class="modal-head">
         <div>
           <h2 id="modalTitle">Assign voter</h2>
-          <p id="modalAssigned">Not assigned yet</p>
+          <p id="modalAssigned">Available</p>
         </div>
         <button id="closeModalBtn" class="light" type="button">Close</button>
       </div>
@@ -129,6 +133,10 @@
         "'": '&#039;'
       }[char]));
     }
+    function privateCount(row) {
+      if (Number.isFinite(Number(row.assigned_count))) return Math.max(0, Number(row.assigned_count));
+      return String(row.assigned_by || row.vote_assigned_by || '').split(',').map((item) => item.trim()).filter(Boolean).length;
+    }
     function cleanRows(items) {
       return (Array.isArray(items) ? items : [])
         .filter((row) => row && (row.row_id || row.id || row.name || row.house || row.mobile))
@@ -139,7 +147,7 @@
           house: row.house || '',
           mobile: row.mobile || row.phone || '',
           photo: row.photo || row.photo_url || '',
-          assigned_by: row.assigned_by || row.vote_assigned_by || ''
+          assigned_count: privateCount(row)
         }));
     }
     function initials(name) {
@@ -148,11 +156,14 @@
     function photoHtml(row) {
       return row.photo ? `<img src="${esc(row.photo)}" alt="${esc(row.name || 'Voter photo')}" loading="lazy">` : esc(initials(row.name));
     }
-    function assignedList(value) {
-      return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
+    function assignedCount(row) {
+      return Math.max(0, Number(row.assigned_count || 0));
     }
-    function assignedCount(value) {
-      return assignedList(value).length;
+    function statusText(row) {
+      const count = assignedCount(row);
+      if (count >= 3) return 'Full';
+      if (count > 0) return 'Assigned';
+      return 'Available';
     }
     function setMessage(text, isError) {
       const el = document.getElementById('message');
@@ -184,16 +195,36 @@
     function rowById(rowId) {
       return rows.find((row) => row.row_id === String(rowId));
     }
+    function houseKey(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+    function renderHouseOptions() {
+      const selected = document.getElementById('houseSelect').value;
+      const counts = new Map();
+      rows.forEach((row) => {
+        const house = String(row.house || 'No house').trim();
+        const key = houseKey(house);
+        const current = counts.get(key) || { house, count: 0 };
+        current.count += 1;
+        counts.set(key, current);
+      });
+      const options = Array.from(counts.values()).sort((a, b) => a.house.localeCompare(b.house, undefined, { numeric: true }));
+      document.getElementById('houseSelect').innerHTML = '<option value="">All houses</option>' + options.map((item) => `
+        <option value="${esc(houseKey(item.house))}" ${houseKey(item.house) === selected ? 'selected' : ''}>${esc(item.house)} (${item.count})</option>
+      `).join('');
+    }
     function filteredRows() {
       const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      const house = document.getElementById('houseSelect').value;
       const filter = document.getElementById('filterSelect').value;
       return rows.filter((row) => {
-        const count = assignedCount(row.assigned_by);
+        const count = assignedCount(row);
+        if (house && houseKey(row.house || 'No house') !== house) return false;
         if (filter === 'open' && count !== 0) return false;
         if (filter === 'assigned' && count === 0) return false;
         if (filter === 'full' && count < 3) return false;
         if (!term) return true;
-        return [row.name, row.id, row.house, row.mobile, row.assigned_by].some((value) => String(value || '').toLowerCase().includes(term));
+        return [row.name, row.id, row.house, row.mobile].some((value) => String(value || '').toLowerCase().includes(term));
       });
     }
     function renderKeepPosition() {
@@ -205,10 +236,9 @@
       const visible = filteredRows();
       document.getElementById('count').textContent = `${visible.length} of ${rows.length} voter${rows.length === 1 ? '' : 's'} showing`;
       document.getElementById('content').innerHTML = visible.length ? visible.map((row) => {
-        const count = assignedCount(row.assigned_by);
-        const assignedText = row.assigned_by ? `Assigned: ${row.assigned_by}` : 'Not assigned yet';
-        const statusClass = count >= 3 ? 'full' : row.assigned_by ? 'done' : '';
-        const buttonText = count >= 3 ? 'Full' : row.assigned_by ? 'Add or remove' : 'Assign';
+        const count = assignedCount(row);
+        const statusClass = count >= 3 ? 'full' : count > 0 ? 'done' : '';
+        const buttonText = count >= 3 ? 'Full' : count > 0 ? 'Add or remove' : 'Assign';
         return `
           <article class="card" data-row-id="${esc(row.row_id)}">
             <div class="photo">${photoHtml(row)}</div>
@@ -217,7 +247,7 @@
               <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
               <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
               <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
-              <span class="status ${statusClass}">${esc(assignedText)}</span>
+              <span class="status ${statusClass}">${esc(statusText(row))}</span>
             </div>
             <button type="button" data-open-assign="${esc(row.row_id)}">${esc(buttonText)}</button>
           </article>
@@ -248,18 +278,18 @@
       if (!row) return;
       activeRowId = String(rowId);
       loadIdentity();
-      const count = assignedCount(row.assigned_by);
+      const count = assignedCount(row);
       document.getElementById('modalTitle').textContent = row.name || 'Unknown voter';
-      document.getElementById('modalAssigned').textContent = row.assigned_by ? `Assigned: ${row.assigned_by}` : 'Not assigned yet';
+      document.getElementById('modalAssigned').textContent = statusText(row);
       document.getElementById('modalPhoto').innerHTML = photoHtml(row);
       document.getElementById('modalMeta').innerHTML = `
         <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
         <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
         <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
       `;
-      document.getElementById('saveAssignBtn').textContent = count >= 3 ? 'Full' : row.assigned_by ? 'Add my name' : 'Assign to me';
+      document.getElementById('saveAssignBtn').textContent = count >= 3 ? 'Full' : count > 0 ? 'Add my name' : 'Assign to me';
       document.getElementById('saveAssignBtn').disabled = !token || count >= 3;
-      document.getElementById('removeAssignBtn').disabled = !token || !row.assigned_by;
+      document.getElementById('removeAssignBtn').disabled = !token || count === 0;
       document.getElementById('assignModal').hidden = false;
       setTimeout(() => document.getElementById('assigneeName').focus(), 80);
     }
@@ -288,10 +318,10 @@
         return;
       }
       const saved = Array.isArray(data) ? data[0] : data;
-      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_by: saved?.vote_assigned_by || item.assigned_by } : item);
+      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_count: Number(saved?.assigned_count || item.assigned_count || 0) } : item);
       closeModal();
       renderKeepPosition();
-      setMessage(`Saved. ${saved?.name || 'Voter'} assigned to ${nameValue()} (${phoneDigits()}).`, false);
+      setMessage(`Saved. ${saved?.name || 'Voter'} assigned to you.`, false);
     }
     async function removeAssignment() {
       if (phoneDigits().length < 5) {
@@ -317,16 +347,19 @@
         return;
       }
       const saved = Array.isArray(data) ? data[0] : data;
-      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_by: saved?.vote_assigned_by || '' } : item);
+      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_count: Number(saved?.assigned_count || 0) } : item);
       closeModal();
       renderKeepPosition();
       setMessage(`Removed your assignment from ${saved?.name || 'this voter'}.`, false);
     }
     async function loadShare() {
       document.getElementById('searchInput').addEventListener('input', render);
+      document.getElementById('houseSelect').addEventListener('change', render);
       document.getElementById('filterSelect').addEventListener('change', render);
+      document.getElementById('searchBtn').addEventListener('click', render);
       document.getElementById('clearBtn').addEventListener('click', () => {
         document.getElementById('searchInput').value = '';
+        document.getElementById('houseSelect').value = '';
         document.getElementById('filterSelect').value = 'all';
         render();
       });
@@ -346,6 +379,7 @@
 
       if (!token) {
         rows = cleanRows(decodePayload(params.get('list')));
+        renderHouseOptions();
         setMessage('This old link is read-only. Ask for a new assignment link to save names.', true);
         render();
         return;
@@ -359,6 +393,7 @@
           .maybeSingle();
         if (error) throw error;
         rows = cleanRows(data?.payload);
+        renderHouseOptions();
         render();
       } catch (error) {
         document.getElementById('count').textContent = 'Could not open link';
