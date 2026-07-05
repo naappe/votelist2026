@@ -124,6 +124,7 @@
     const searchInput = document.getElementById('searchInput');
     const searchField = document.getElementById('searchField');
     const houseSelect = document.getElementById('houseSelect');
+    const boxSelect = document.getElementById('boxSelect');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const zeroDayBtn = document.getElementById('zeroDayBtn');
     if (zeroDayBtn) {
@@ -135,6 +136,7 @@
         if (searchInput) searchInput.value = '';
         if (searchField) searchField.value = 'all';
         if (houseSelect) houseSelect.value = '';
+        if (boxSelect) boxSelect.value = '';
         renderDashboard();
         document.querySelector('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
@@ -145,6 +147,7 @@
         state.zeroDayMode = false;
         if (state.searchTerm) state.activeFilter = 'all';
         if (state.searchField !== 'house' && houseSelect) houseSelect.value = '';
+        if (state.searchField !== 'election_box' && boxSelect) boxSelect.value = '';
         renderDashboard();
       });
     }
@@ -157,6 +160,20 @@
         state.activeFilter = 'all';
         if (searchField) searchField.value = state.searchField;
         if (searchInput) searchInput.value = event.target.selectedOptions[0]?.dataset.label || '';
+        if (boxSelect) boxSelect.value = '';
+        renderDashboard();
+      });
+    }
+    if (boxSelect) {
+      boxSelect.addEventListener('change', (event) => {
+        const value = event.target.value;
+        state.zeroDayMode = false;
+        state.searchField = value ? 'election_box' : 'all';
+        state.searchTerm = value;
+        state.activeFilter = 'all';
+        if (searchField) searchField.value = state.searchField;
+        if (searchInput) searchInput.value = event.target.selectedOptions[0]?.dataset.label || '';
+        if (houseSelect) houseSelect.value = '';
         renderDashboard();
       });
     }
@@ -166,6 +183,7 @@
         state.zeroDayMode = false;
         if (state.searchTerm) state.activeFilter = 'all';
         if (state.searchField !== 'house' && houseSelect) houseSelect.value = '';
+        if (state.searchField !== 'election_box' && boxSelect) boxSelect.value = '';
         renderDashboard();
       });
     }
@@ -177,6 +195,7 @@
         searchInput.value = '';
         if (searchField) searchField.value = 'all';
         if (houseSelect) houseSelect.value = '';
+        if (boxSelect) boxSelect.value = '';
         renderDashboard();
       });
     }
@@ -194,6 +213,8 @@
         if (select) select.value = 'all';
         const house = document.getElementById('houseSelect');
         if (house) house.value = '';
+        const box = document.getElementById('boxSelect');
+        if (box) box.value = '';
         renderDashboard();
         return;
       }
@@ -210,6 +231,8 @@
         if (field) field.value = 'house';
         const house = document.getElementById('houseSelect');
         if (house) house.value = houseButton.dataset.houseFilter;
+        const box = document.getElementById('boxSelect');
+        if (box) box.value = '';
         renderDashboard();
         return;
       }
@@ -316,16 +339,27 @@
     const zeroDayBtn = document.getElementById('zeroDayBtn');
     const searchField = document.getElementById('searchField');
     const houseSelect = document.getElementById('houseSelect');
+    const boxSelect = document.getElementById('boxSelect');
     if (zeroDayBtn) zeroDayBtn.classList.toggle('active', state.zeroDayMode);
     if (searchField) searchField.value = state.searchField;
-    if (!houseSelect) return;
 
-    const selected = state.searchField === 'house' ? state.searchTerm : '';
-    houseSelect.innerHTML = '<option value="">All houses</option>' + houseOptions(state.rows).map((item) => `
-      <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.house)}" ${item.search === selected ? 'selected' : ''}>
-        ${escapeHtml(item.house)} (${number(item.count)})
-      </option>
-    `).join('');
+    if (houseSelect) {
+      const selectedHouse = state.searchField === 'house' ? state.searchTerm : '';
+      houseSelect.innerHTML = '<option value="">All houses</option>' + houseOptions(state.rows).map((item) => `
+        <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.house)}" ${item.search === selectedHouse ? 'selected' : ''}>
+          ${escapeHtml(item.house)} (${number(item.count)})
+        </option>
+      `).join('');
+    }
+
+    if (boxSelect) {
+      const selectedBox = state.searchField === 'election_box' ? state.searchTerm : '';
+      boxSelect.innerHTML = '<option value="">All boxes</option>' + boxOptions(state.rows).map((item) => `
+        <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.box)}" ${item.search === selectedBox ? 'selected' : ''}>
+          ${escapeHtml(item.box)} (${number(item.count)})
+        </option>
+      `).join('');
+    }
   }
 
   function renderInsights() {
@@ -683,6 +717,24 @@
       .sort((a, b) => a.house.localeCompare(b.house));
   }
 
+  function boxOptions(rows) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const box = clean(row.election_box) || 'No box';
+      const key = box.toLowerCase();
+      const item = groups.get(key) || { box, search: key, count: 0 };
+      item.count += 1;
+      groups.set(key, item);
+    });
+    return Array.from(groups.values())
+      .sort((a, b) => boxSortValue(a.box) - boxSortValue(b.box) || a.box.localeCompare(b.box));
+  }
+
+  function boxSortValue(value) {
+    const match = String(value || '').match(/\d+/);
+    return match ? Number(match[0]) : Number.MAX_SAFE_INTEGER;
+  }
+
   function extraHouseOptions(rows) {
     const groups = new Map();
     rows.forEach((row) => {
@@ -755,13 +807,21 @@
       national_id: [row.national_id],
       phone: [row.phone],
       house: [row.house, houseGroupName(row.house)],
-      election_box: [row.election_box],
+      election_box: [row.election_box, boxSearchAlias(row.election_box)],
       party: [row.party]
     };
     const values = state.searchField === 'all'
-      ? [row.name, row.national_id, row.phone, row.house, houseGroupName(row.house), row.election_box, row.party, row.lives_in]
+      ? [row.name, row.national_id, row.phone, row.house, houseGroupName(row.house), row.election_box, boxSearchAlias(row.election_box), row.party, row.lives_in]
       : fields[state.searchField] || [];
     return values.map((value) => String(value || '').toLowerCase()).join(' ');
+  }
+
+  function boxSearchAlias(value) {
+    const text = String(value || '');
+    const villimale = text.match(/villimale['’]?-?(\d+)/i);
+    if (villimale) return `box ${villimale[1]} villimale ${villimale[1]}`;
+    const firstNumber = text.match(/^\s*(\d+)/);
+    return firstNumber ? `box ${firstNumber[1]}` : '';
   }
 
   function getRows(key) {
