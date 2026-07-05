@@ -5,12 +5,28 @@
     removeOldAssignControls();
     document.querySelectorAll('.voter-card[data-open-voter]').forEach((card) => {
       card.classList.add('pro-voter-card');
+      card.classList.toggle('is-blank-party', isAdminAllView() && isBlankParty(card));
       if (isAssigned(card)) card.classList.add('is-assigned');
       const meta = card.querySelector('.voter-info p');
       if (meta) meta.classList.add('pro-meta-line');
       if (!card.querySelector('.card-actions')) addActions(card);
     });
     focusAssignInput();
+  }
+
+  function isAdminAllView() {
+    const party = (new URLSearchParams(location.search).get('party') || 'ALL').toUpperCase();
+    return party === 'ALL';
+  }
+
+  function isBlankParty(card) {
+    const tag = card.querySelector('.party-tag');
+    const text = String(tag?.textContent || '').trim().toLowerCase();
+    if (['', '-', 'not party', 'blank party', 'no party'].includes(text)) {
+      if (tag) tag.textContent = 'Blank party';
+      return true;
+    }
+    return false;
   }
 
   function removeOldAssignControls() {
