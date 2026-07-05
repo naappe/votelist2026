@@ -19,18 +19,20 @@ votelist2026/
 │   ├── style.css              # Main design system & layout
 │   ├── dashboard-cleanup.css  # Dashboard polish & helper UI
 │   ├── mobile-modal-fixes.css # Mobile responsiveness fixes
-│   └── voter-hotfix.css       # Voter page hotfix styling
+│   ├── voter-hotfix.css       # Voter page hotfix styling
+│   └── pro-ui.css             # Professional voter card & popup layer
 │
 ├── 📁 js/
 │   ├── app.js                 # Main dashboard engine
 │   ├── config.js              # Supabase config & user mapping
-│   ├── assign-filter.js       # Assignment count/filter logic
+│   ├── assign-filter.js       # Legacy assignment filter helper
 │   ├── assign-share.js        # Voter assignment share links
 │   ├── campaign-arrangement.js # Campaign popup controls
 │   ├── dashboard-cleanup.js   # Dashboard polish & helper UI
 │   ├── dhafthar-force-filter.js # Dhafthar house search/filter
 │   ├── house-click-filter.js  # Top-house click behavior
 │   ├── house-dropdown-group.js # House dropdown grouping
+│   ├── pro-ui.js              # Professional card actions & assign focus
 │   ├── voter-final-cleanup.js # Voter card/list cleanup
 │   ├── voter-hotfix.js        # Voter page fixes
 │   └── zero-day.js            # Legacy zero-day logic
