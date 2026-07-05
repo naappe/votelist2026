@@ -1,3 +1,4 @@
+.hero{display:none!important}
 .impact-strip{display:none!important}
 .insight-grid{grid-template-columns:1fr!important;align-items:start;gap:12px;margin-bottom:14px}
 .logic-box,.rating-box p,.house-main small{display:none!important}
