@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css?v=20260705-10">
+  <link rel="stylesheet" href="style.css?v=20260705-11">
 </head>
 <body data-page="dashboard">
   <header class="topbar">
@@ -31,19 +31,8 @@
 
     <section class="panel" aria-label="Search voters">
       <div class="form search-grid">
-        <label>Search by
-          <select id="searchField">
-            <option value="all">All fields</option>
-            <option value="name">Name</option>
-            <option value="national_id">ID</option>
-            <option value="phone">Phone</option>
-            <option value="house">House</option>
-            <option value="election_box">Box</option>
-            <option value="party">Party</option>
-          </select>
-        </label>
         <label>Search voters
-          <input id="searchInput" type="search" placeholder="Name, ID, phone, house, box, party">
+          <input id="searchInput" type="search" placeholder="Name, ID, phone, house, party">
         </label>
         <label>House
           <select id="houseSelect">
@@ -56,8 +45,10 @@
           </select>
         </label>
         <button id="clearSearchBtn" class="btn light" type="button">Clear Search</button>
+        <button id="shareViewBtn" class="btn light" type="button">Share Read View</button>
       </div>
     </section>
+    <div id="syncNotice" class="sync-notice" role="status" hidden></div>
 
     <section class="insight-grid" aria-label="Campaign target and focus">
       <article class="panel">
@@ -124,7 +115,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260705-10"></script>
-  <script src="app.js?v=20260705-10"></script>
+  <script src="config.js?v=20260705-11"></script>
+  <script src="app.js?v=20260705-11"></script>
 </body>
 </html>
