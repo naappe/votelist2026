@@ -52,11 +52,11 @@
     const party = String(row.party || '').trim().toUpperCase();
     if (selected === 'ALL') return true;
     if (party === selected) return true;
-    return selected === 'PNC' && !party && isDhafthar(row.house);
+    return selected === 'PNC' && !party && isDhafthar([row.house, row.lives_in].join(' '));
   }
 
   function cleanHouse(row) {
-    return String(row.house || row.lives_in || row.living_place || '-').trim() || '-';
+    return String(row.house || row.lives_in || '-').trim() || '-';
   }
 
   async function fetchRows() {
@@ -65,7 +65,7 @@
     if (!window.supabase || !config) return [];
     const client = window.__dhaftharClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
     window.__dhaftharClient = client;
-    const columns = 'id,photo_url,name,national_id,house,lives_in,living_place,phone,party,election_box,phone_status,reach_status,vote_status,transport_status,d2d_status,support_level';
+    const columns = 'id,photo_url,name,national_id,house,lives_in,phone,party,election_box,phone_status,reach_status,vote_status,transport_status,d2d_status,support_level';
     let from = 0;
     const pageSize = 1000;
     let rows = [];
@@ -153,7 +153,7 @@
     list.innerHTML = '<div class="empty">Loading Dhafthar voters...</div>';
 
     const rows = await fetchRows();
-    const voters = rows.filter((row) => partyAllowed(row) && isDhafthar([row.house, row.lives_in, row.living_place].join(' ')));
+    const voters = rows.filter((row) => partyAllowed(row) && isDhafthar([row.house, row.lives_in].join(' ')));
     const groups = groupedDhaftharRows(voters);
     total.textContent = `${new Intl.NumberFormat('en-US').format(voters.length)} voters`;
     list.innerHTML = groups.length
