@@ -287,6 +287,12 @@
     }
     tidyDashboard();
   }, true);
-  new MutationObserver(tidyDashboard).observe(document.documentElement, { childList: true, subtree: true });
+  let startupRuns = 0;
+  const startupTimer = setInterval(() => {
+    tidyDashboard();
+    startupRuns += 1;
+    if (startupRuns >= 20) clearInterval(startupTimer);
+  }, 500);
+  window.addEventListener('load', tidyDashboard);
   tidyDashboard();
 })();
