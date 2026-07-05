@@ -1,9 +1,19 @@
 (function () {
+  const MAIN_KEY = 'villimale_preserve_main_view_v3';
+  const SHARED_KEY = 'villimale_preserve_shared_view_v3';
   let mainSnapshot = null;
   let sharedSnapshot = null;
   let restoreMainUntil = 0;
   let restoreSharedUntil = 0;
   let restoring = false;
+
+  function isMainPage() {
+    return document.body?.dataset?.page === 'dashboard';
+  }
+
+  function isSharedPage() {
+    return /shared\.html$/i.test(location.pathname);
+  }
 
   function valueOf(id) {
     return document.getElementById(id)?.value || '';
@@ -28,7 +38,24 @@
     return true;
   }
 
+  function remember(key, snapshot) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ ...snapshot, savedAt: Date.now() }));
+    } catch {}
+  }
+
+  function recall(key) {
+    try {
+      const item = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (!item || Date.now() - Number(item.savedAt || 0) > 10 * 60 * 1000) return null;
+      return item;
+    } catch {
+      return null;
+    }
+  }
+
   function captureMain() {
+    if (!isMainPage()) return mainSnapshot;
     mainSnapshot = {
       activeFilter: document.querySelector('[data-filter].active')?.dataset.filter || '',
       assignActive: Boolean(document.querySelector('[data-assign-filter="assigned"].active)),
@@ -37,12 +64,14 @@
       houseLabel: selectedLabel('houseSelect'),
       box: valueOf('boxSelect'),
       scrollY: window.scrollY,
-      cardId: window.__lastOpenedVoterId || document.querySelector('.voter-card[data-open-voter]')?.dataset.openVoter || ''
+      cardId: window.__lastOpenedVoterId || document.querySelector('.modal:not([hidden])')?.dataset?.openVoter || ''
     };
+    remember(MAIN_KEY, mainSnapshot);
     return mainSnapshot;
   }
 
   function captureShared() {
+    if (!isSharedPage()) return sharedSnapshot;
     sharedSnapshot = {
       search: valueOf('searchInput'),
       house: valueOf('houseSelect'),
@@ -50,6 +79,7 @@
       scrollY: window.scrollY,
       rowId: window.__lastTouchedAssignRow || ''
     };
+    remember(SHARED_KEY, sharedSnapshot);
     return sharedSnapshot;
   }
 
@@ -66,13 +96,15 @@
         card.scrollIntoView({ block: 'center', behavior: 'auto' });
         return;
       }
-      window.scrollTo({ top: fallbackY || 0, left: 0, behavior: 'auto' });
+      if (Number.isFinite(Number(fallbackY))) {
+        window.scrollTo({ top: Number(fallbackY), left: 0, behavior: 'auto' });
+      }
     });
   }
 
   function restoreMain(snapshot) {
-    const item = snapshot || mainSnapshot;
-    if (!item || restoring) return;
+    const item = snapshot || mainSnapshot || recall(MAIN_KEY);
+    if (!item || !isMainPage() || restoring) return;
     restoring = true;
 
     if (item.house) {
@@ -101,12 +133,12 @@
 
     const selector = item.cardId ? `.voter-card[data-open-voter="${cssEscape(item.cardId)}"]` : '';
     restoreScroll(selector, item.scrollY);
-    setTimeout(() => { restoring = false; }, 80);
+    setTimeout(() => { restoring = false; }, 120);
   }
 
   function restoreShared(snapshot) {
-    const item = snapshot || sharedSnapshot;
-    if (!item || restoring) return;
+    const item = snapshot || sharedSnapshot || recall(SHARED_KEY);
+    if (!item || !isSharedPage() || restoring) return;
     restoring = true;
     setValue('searchInput', item.search);
     setValue('houseSelect', item.house);
@@ -116,19 +148,19 @@
     dispatch('filterSelect', 'change');
     const selector = item.rowId ? `[data-row-id="${cssEscape(item.rowId)}"]` : '';
     restoreScroll(selector, item.scrollY);
-    setTimeout(() => { restoring = false; }, 80);
+    setTimeout(() => { restoring = false; }, 120);
   }
 
   function scheduleMainRestore(snapshot) {
-    restoreMainUntil = Date.now() + 3500;
-    [80, 220, 500, 900, 1500, 2400, 3400].forEach((delay) => {
+    restoreMainUntil = Date.now() + 5000;
+    [80, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
       setTimeout(() => restoreMain(snapshot), delay);
     });
   }
 
   function scheduleSharedRestore(snapshot) {
-    restoreSharedUntil = Date.now() + 3500;
-    [80, 220, 500, 900, 1500, 2400, 3400].forEach((delay) => {
+    restoreSharedUntil = Date.now() + 5000;
+    [80, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
       setTimeout(() => restoreShared(snapshot), delay);
     });
   }
@@ -149,7 +181,10 @@
   }, true);
 
   document.addEventListener('input', (event) => {
-    if (event.target?.id === 'searchInput') captureMain();
+    if (event.target?.id === 'searchInput') {
+      captureMain();
+      captureShared();
+    }
   }, true);
 
   document.addEventListener('change', (event) => {
@@ -167,13 +202,33 @@
     scheduleMainRestore(snapshot);
   }, true);
 
+  window.addEventListener('beforeunload', () => {
+    captureMain();
+    captureShared();
+  });
+
   const observer = new MutationObserver(() => {
     if (Date.now() < restoreMainUntil) restoreMain(mainSnapshot);
     if (Date.now() < restoreSharedUntil) restoreShared(sharedSnapshot);
   });
 
+  function restoreSavedAfterLoad() {
+    const main = recall(MAIN_KEY);
+    const shared = recall(SHARED_KEY);
+    if (main) {
+      mainSnapshot = main;
+      scheduleMainRestore(main);
+    }
+    if (shared) {
+      sharedSnapshot = shared;
+      scheduleSharedRestore(shared);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const list = document.getElementById('voterList') || document.getElementById('content');
     if (list) observer.observe(list, { childList: true, subtree: false });
+    restoreSavedAfterLoad();
   });
+  window.addEventListener('load', restoreSavedAfterLoad);
 })();
