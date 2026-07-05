@@ -29,11 +29,12 @@
 
   function tidyDashboard() {
     applyCleanReadView();
-    hideMainBoxFilter();
-    ensureZeroDayBoxTabs();
+    hideBoxDropdown();
+    ensureBoxTabs();
     ensurePanelTools();
     ensureShareSelection();
     ensureD2DField();
+    ensureTargetMath();
     document.querySelectorAll('.logic-box, .rating-box p, .house-main small').forEach((node) => node.remove());
 
     document.querySelectorAll('.voter-card').forEach((card) => {
@@ -62,43 +63,49 @@
     document.querySelectorAll('.share-pick, .panel-tools, #shareViewBtn').forEach((node) => node.remove());
   }
 
-  function hideMainBoxFilter() {
-    if (document.body.dataset.page === 'zero-day') return;
+  function hideBoxDropdown() {
     const box = document.getElementById('boxSelect');
     const label = box?.closest('label');
     if (label) label.hidden = true;
   }
 
-  function ensureZeroDayBoxTabs() {
-    if (document.body.dataset.page !== 'zero-day') return;
+  function ensureBoxTabs() {
     const select = document.getElementById('boxSelect');
     const search = document.getElementById('searchInput');
     const panel = document.querySelector('[aria-label="Search voters"] .form');
     if (!select || !search || !panel) return;
 
-    let tabs = document.getElementById('zeroBoxTabs');
+    let tabs = document.getElementById('boxQuickTabs');
     if (!tabs) {
       tabs = document.createElement('div');
-      tabs.id = 'zeroBoxTabs';
+      tabs.id = 'boxQuickTabs';
       tabs.className = 'box-tabs';
       panel.after(tabs);
     }
 
-    const groups = new Map();
+    const groups = new Map([1, 2, 3, 4, 5].map((number) => [number, {
+      label: `Box ${number}`,
+      search: `box ${number}`,
+      value: '',
+      count: 0,
+      number
+    }]));
     Array.from(select.options).filter((option) => option.value).forEach((option) => {
       const box = normalizeBox(option.textContent + ' ' + option.value);
       if (!box) return;
-      const item = groups.get(box.search) || { ...box, count: 0 };
+      const item = groups.get(box.number) || { ...box, count: 0, value: '' };
       item.count += countFromOption(option.textContent);
-      groups.set(box.search, item);
+      item.value = item.value || option.value;
+      groups.set(box.number, item);
     });
 
-    const active = search.value.trim().toLowerCase();
+    const selectedBox = normalizeBox(select.selectedOptions[0]?.textContent + ' ' + select.value);
+    const activeNumber = selectedBox?.number || normalizeBox(search.value)?.number || 0;
     const nextHtml = [
-      `<button class="box-tab ${active ? '' : 'active'}" type="button" data-box-search="">All Boxes</button>`,
+      `<button class="box-tab ${activeNumber ? '' : 'active'}" type="button" data-box-search="" data-box-value="">All Boxes</button>`,
       ...Array.from(groups.values())
         .sort((a, b) => a.number - b.number || a.label.localeCompare(b.label))
-        .map((item) => `<button class="box-tab ${active === item.search ? 'active' : ''}" type="button" data-box-search="${item.search}">${item.label}${item.count ? ` <span>${item.count}</span>` : ''}</button>`)
+        .map((item) => `<button class="box-tab ${activeNumber === item.number ? 'active' : ''}" type="button" data-box-search="${item.search}" data-box-value="${escapeAttr(item.value)}">${item.label}</button>`)
     ].join('');
     if (tabs.innerHTML !== nextHtml) tabs.innerHTML = nextHtml;
   }
@@ -124,6 +131,89 @@
     tools.className = 'panel-tools';
     tools.innerHTML = '<button class="btn light compact" type="button" data-jump-search>Filter / Search</button><button class="btn light compact" type="button" data-share-selected>Share Selected <span id="shareSelectedCount">0</span></button><button class="btn light compact" type="button" data-share-read-view>Share Read View</button>';
     head.appendChild(tools);
+  }
+
+  function ensureTargetMath() {
+    const targetStats = document.getElementById('targetStats');
+    const prediction = document.getElementById('targetPrediction');
+    if (!targetStats || !prediction || !targetStats.querySelector('.metric')) return;
+
+    const panel = targetStats.closest('.panel');
+    if (!panel) return;
+    let control = document.getElementById('manualTargetControl');
+    if (!control) {
+      control = document.createElement('div');
+      control.id = 'manualTargetControl';
+      control.className = 'target-control';
+      control.innerHTML = '<label>Target Vote<input id="manualTargetVote" type="number" min="1" step="1" inputmode="numeric"></label><span>Math auto updates</span>';
+      panel.querySelector('.panel-head')?.after(control);
+      control.querySelector('input')?.addEventListener('input', updateTargetMath);
+    }
+
+    const input = document.getElementById('manualTargetVote');
+    if (!input) return;
+    const savedTarget = localStorage.getItem(targetStorageKey());
+    const currentTarget = metricValue('Target') || 429;
+    if (!input.value) input.value = savedTarget || String(currentTarget);
+    updateTargetMath();
+  }
+
+  function updateTargetMath() {
+    const input = document.getElementById('manualTargetVote');
+    if (!input) return;
+    const target = Math.max(1, Number(input.value || 0));
+    if (!target) return;
+    localStorage.setItem(targetStorageKey(), String(target));
+
+    const committed = metricValue('Committed');
+    const guaranteed = metricValue('Guaranteed');
+    const needMore = Math.max(0, target - committed);
+    const progress = Math.min(100, Math.round((committed / target) * 100));
+
+    setMetric('Opponent', Math.max(0, target - 1));
+    setMetric('Target', target);
+    setMetric('Need More', needMore);
+    setMetric('Progress', `${progress}%`);
+    if (guaranteed >= 0) setMetric('Guaranteed', guaranteed);
+
+    const bar = document.getElementById('targetProgressBar');
+    if (bar) bar.style.width = `${progress}%`;
+    const prediction = document.getElementById('targetPrediction');
+    if (prediction) {
+      prediction.textContent = committed >= target
+        ? 'Prediction: target reached if committed voters hold.'
+        : `Prediction: need ${formatNumber(needMore)} more committed voters to reach target.`;
+      prediction.className = committed >= target ? 'prediction good' : 'prediction warn';
+    }
+  }
+
+  function targetStorageKey() {
+    const params = new URLSearchParams(location.search);
+    return `villimale_manual_target:${document.body.dataset.page || 'dashboard'}:${params.get('party') || 'ALL'}`;
+  }
+
+  function metricValue(label) {
+    const metric = metricByLabel(label);
+    const raw = metric?.querySelector('strong')?.textContent || '';
+    const value = Number(raw.replace(/[^\d.-]/g, ''));
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function setMetric(label, value) {
+    const metric = metricByLabel(label);
+    const strong = metric?.querySelector('strong');
+    if (strong) strong.textContent = typeof value === 'number' ? formatNumber(value) : String(value);
+  }
+
+  function metricByLabel(label) {
+    return Array.from(document.querySelectorAll('#targetStats .metric')).find((metric) => {
+      const text = metric.querySelector('span')?.textContent.trim().toLowerCase();
+      return text === label.toLowerCase();
+    });
+  }
+
+  function formatNumber(value) {
+    return new Intl.NumberFormat('en-US').format(value || 0);
   }
 
   function ensureShareSelection() {
@@ -323,9 +413,18 @@
       const house = document.getElementById('houseSelect');
       const box = document.getElementById('boxSelect');
       if (house) house.value = '';
-      if (box) box.value = '';
-      if (search) {
-        search.value = boxTab.dataset.boxSearch || '';
+      if (box && boxTab.dataset.boxValue) {
+        box.value = boxTab.dataset.boxValue;
+        box.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        if (box) box.value = '';
+        if (search) {
+          search.value = boxTab.dataset.boxSearch || '';
+          search.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+      if (search && !boxTab.dataset.boxSearch) {
+        search.value = '';
         search.dispatchEvent(new Event('input', { bubbles: true }));
       }
       setTimeout(scrollToList, 80);
