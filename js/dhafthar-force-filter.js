@@ -34,6 +34,7 @@
       .replace(/^dhaftaru?\.?\s*/i, '')
       .replace(/^daftharu?\.?\s*/i, '')
       .replace(/^df\.?\s*/i, '')
+      .replace(/^[,/:;-]\s*/, '')
       .replace(/\brs\s*no\.?\s*/i, 'RS ')
       .replace(/\bno\.?\s*/i, '')
       .replace(/\bdh\s*r\b\.?\s*/i, 'DH R ')
@@ -55,7 +56,10 @@
   }
 
   function cleanHouse(row) {
-    return String(row.house || row.lives_in || '-').trim() || '-';
+    const house = String(row.house || '').trim();
+    const livesIn = String(row.lives_in || '').trim();
+    if (house && livesIn && isDhafthar(house) && extractHouse(house) === 'Dhafthar') return livesIn;
+    return String(house || livesIn || '-').trim() || '-';
   }
 
   async function fetchRows() {
