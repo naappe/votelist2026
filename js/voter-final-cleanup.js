@@ -102,8 +102,6 @@
     try {
       const client = window.__d2dCleanupClient || window.supabase.createClient(window.APP_CONFIG.supabaseUrl, window.APP_CONFIG.supabaseKey);
       window.__d2dCleanupClient = client;
-      const { data: userData } = await client.auth.getUser();
-      if (userData?.user?.email) updates.vote_assigned_by = userData.user.email;
       const { error } = await client.from(window.APP_CONFIG.table).update(updates).eq('id', voterId);
       if (error) throw error;
       document.getElementById('voterModal').hidden = true;
@@ -113,7 +111,7 @@
       showStatus(error.message || 'Save failed. Please try again.', true);
       if (button) {
         button.disabled = false;
-        button.textContent = 'Save Section';
+        button.textContent = 'Save Voter';
       }
     }
   }
@@ -121,11 +119,13 @@
   function buildVoteOverrideUpdates(form, voteStatus) {
     const d2d = form.elements.d2d_status?.value || 'follow-up';
     const callResult = form.elements.call_result?.value || '';
+    const assigner = clean(form.elements.vote_assigned_by?.value);
     const updates = {
       vote_status: voteStatus,
       support_level: 'normal',
       d2d_status: d2d,
-      vote_assigned_at: new Date().toISOString()
+      vote_assigned_by: assigner || null,
+      vote_assigned_at: assigner ? new Date().toISOString() : null
     };
     const remarks = clean(form.elements.remarks?.value);
     if (remarks) updates.remarks = remarks;
