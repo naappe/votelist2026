@@ -73,7 +73,7 @@ votelist2026/
 |---|---|
 | `js/app.js` | Main logged-in dashboard engine: auth check, Supabase load, stats, filters, voter modal, and save logic. |
 | `js/config.js` | Supabase URL/key, table name, login user mapping, shared-page scroll/filter guard. |
-| `js/assign-share.js` | Creates short public self-assign links through `assignment_shares`. |
+| `js/assign-share.js` | Creates short public self-assign links through `assignment_shares` and shows a Copy/Open link panel. |
 | `js/campaign-arrangement.js` | Campaign popup/control helper layer. |
 | `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, top-house presentation helpers. |
 | `js/d2d-count-fix.js` | Keeps D2D counts aligned with current D2D status logic. |
@@ -133,6 +133,7 @@ vote_assigned_by, vote_assigned_at
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
 | Popup voter photo | `pro-ui.css` keeps the modal voter photo medium gallery-size for easier identification. |
+| Voter card spacing | `pro-ui.css` lets long names wrap, removes the orphan top Assign stat, and labels share checkboxes as Pick. |
 | Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
 | Save from All voters | `save-state-fix.js` restores the saved voter card or previous scroll after the list rebuilds, so middle-list saves do not jump to the top. |
 | Save after assign filter | `save-state-fix.js` restores Assign/filter view and scroll position after saving. |
@@ -145,9 +146,9 @@ vote_assigned_by, vote_assigned_at
 ## Assignment Share Flow
 
 1. Admin filters voters on `dashboard.html` or `voters.html`.
-2. Admin selects voters with Assign checkboxes.
-3. Admin clicks `Share Assign Link`.
-4. `assign-share.js` saves a short payload in Supabase `assignment_shares`.
+2. Admin picks voters with small Pick checkboxes, or uses Create Self-Assign Link for the current visible list.
+3. `assign-share.js` saves a short payload in Supabase `assignment_shares`.
+4. Admin uses the Copy Link or Open Link button from the share panel.
 5. Friend opens `shared.html?s=TOKEN`.
 6. Friend searches/filters, ticks voters, writes name and mobile, then saves.
 7. Supabase RPC appends that person to `vote_assigned_by` without exposing other assigners publicly.
@@ -156,6 +157,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Cleaned voter card spacing and share-link UX: share checkboxes now say Pick, long names wrap, and self-assign links show Copy/Open buttons. |
 | 2026-07-06 | Fixed All voters save position: `save-state-fix.js` syntax was repaired and cache keys were bumped to restore same-card scroll after save. |
 | 2026-07-06 | Changed Pages workflow concurrency to queue deployments instead of cancelling in-progress Pages deploys. |
 | 2026-07-06 | Added `house-filter-lock.js` so selected house stays locked when choosing status filters or saving voter status. |
@@ -204,9 +206,9 @@ Important structure:
 - js/app.js owns main dashboard load, filters, modal save, and Supabase updates.
 - js/house-sync.js owns house dropdown, Dhafthar/Sinamale grouping, and Top Houses.
 - js/house-filter-lock.js keeps selected house active when status filters or saves rebuild the voter list.
-- js/assign-share.js owns short assignment share links.
+- js/assign-share.js owns short assignment share links and Copy/Open share panel.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
-- js/pro-ui.js owns clean card buttons, Assign focus, and medium gallery-style modal photo.
+- js/pro-ui.js owns clean card buttons, Assign focus, medium gallery-style modal photo, and voter card spacing.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
 When changing the app:
