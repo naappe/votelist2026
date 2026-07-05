@@ -11,11 +11,11 @@
 
   function labelAssignButtons() {
     document.querySelectorAll('.share-pick span').forEach((span) => {
-      if (span.textContent.trim() !== 'Assign') span.textContent = 'Assign';
+      if (span.textContent.trim() !== 'Pick') span.textContent = 'Pick';
     });
     document.querySelectorAll('[data-share-selected]').forEach((button) => {
-      const count = button.querySelector('#shareSelectedCount')?.outerHTML || '';
-      button.innerHTML = `Share Assign ${count}`;
+      const countText = button.querySelector('#shareSelectedCount')?.textContent || '0';
+      button.innerHTML = `Share Picked <span id="shareSelectedCount">${escapeHtml(countText)}</span>`;
     });
   }
 
@@ -144,11 +144,21 @@
     if (!box) {
       box = document.createElement('div');
       box.id = 'assignShareLinkBox';
-      box.style.cssText = 'display:grid;gap:8px;margin:0 0 14px;padding:12px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff;color:#1f3b66;font-weight:800';
+      box.style.cssText = 'display:grid;gap:10px;margin:0 0 14px;padding:14px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff;color:#1f3b66;font-weight:800';
       host.after(box);
     }
-    box.innerHTML = `<span>${escapeHtml(message)}</span><input readonly value="${escapeHtml(link)}" style="width:100%;min-height:38px;border:1px solid #bfdbfe;border-radius:10px;padding:8px;background:#fff;color:#111827;font-weight:700"><a href="${escapeHtml(link)}" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:950">Open assignment link</a>`;
-    box.querySelector('input')?.select();
+    box.innerHTML = `
+      <div style="display:grid;gap:3px">
+        <strong style="font-size:14px;color:#1e3a8a">Self-assign link ready</strong>
+        <span style="font-size:13px;color:#475467">${escapeHtml(message)}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn compact" type="button" data-copy-assign-link style="background:#2563eb;color:#fff;border:0">Copy Link</button>
+        <a class="btn compact light" href="${escapeHtml(link)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">Open Link</a>
+      </div>
+      <input readonly value="${escapeHtml(link)}" aria-label="Assignment link" style="width:100%;min-height:36px;border:1px solid #bfdbfe;border-radius:10px;padding:8px;background:#fff;color:#334155;font-size:12px;font-weight:700">
+    `;
+    box.dataset.assignLink = link;
   }
 
   function escapeHtml(value) {
@@ -167,6 +177,24 @@
   }
 
   document.addEventListener('click', async (event) => {
+    const copy = event.target.closest('[data-copy-assign-link]');
+    if (copy) {
+      event.preventDefault();
+      event.stopPropagation();
+      const box = document.getElementById('assignShareLinkBox');
+      const link = box?.dataset?.assignLink || box?.querySelector('input')?.value || '';
+      if (!link) return;
+      try {
+        await navigator.clipboard.writeText(link);
+        showStatus('Self-assign link copied.', false);
+      } catch {
+        const input = box.querySelector('input');
+        input?.select();
+        showStatus('Copy blocked. Link selected below.', true);
+      }
+      return;
+    }
+
     if (event.target.closest('[data-share-selected]')) {
       event.preventDefault();
       event.stopPropagation();
