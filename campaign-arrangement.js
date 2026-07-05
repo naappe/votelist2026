@@ -29,7 +29,7 @@
     const form = document.getElementById('voterForm');
     if (!modal || modal.hidden || !form) return;
 
-    ensureField(form, 'vote_status', 'not-decided');
+    ensureField(form, 'vote_status', initialVoteValue());
     ensureField(form, 'support_level', 'normal');
     ensureField(form, 'call_result', 'need-call');
     ensureField(form, 'transport_status', 'not-needed');
@@ -53,6 +53,12 @@
     renderGroup(form, 'call', 'Call Center', callOptions, form.elements.call_result.value || 'need-call');
     renderGroup(form, 'transport', 'Transportation', transportOptions, form.elements.transport_status.value || 'not-needed');
     renderGroup(form, 'd2d', 'D2D', d2dOptions, form.elements.d2d_status.value || 'not-visited');
+  }
+
+  function initialVoteValue() {
+    const section = document.getElementById('modalSection')?.textContent || '';
+    if (/will\s*vote/i.test(section)) return 'will-vote';
+    return 'not-decided';
   }
 
   function ensureField(form, name, value) {
