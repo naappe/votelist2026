@@ -1,6 +1,7 @@
 (function () {
   const d2dById = new Map();
   let loading = false;
+  let currentVoterId = '';
 
   function runCleanup() {
     removeBoxControls();
@@ -66,6 +67,68 @@
     });
   }
 
+  async function handleVoteOverride(event) {
+    const form = event.target;
+    if (!form || form.id !== 'voterForm') return;
+    const voteStatus = form.elements.vote_status?.value;
+    if (!['no-vote', 'not-decided'].includes(voteStatus)) return;
+
+    const voterId = currentVoterId || findOpenVoterId();
+    if (!voterId || !window.supabase || !window.APP_CONFIG) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    const button = form.querySelector('[type="submit"]');
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Saving...';
+    }
+
+    const updates = buildVoteOverrideUpdates(form, voteStatus);
+    try {
+      const client = window.__d2dCleanupClient || window.supabase.createClient(window.APP_CONFIG.supabaseUrl, window.APP_CONFIG.supabaseKey);
+      window.__d2dCleanupClient = client;
+      const { data: userData } = await client.auth.getUser();
+      if (userData?.user?.email) updates.vote_assigned_by = userData.user.email;
+      const { error } = await client.from(window.APP_CONFIG.table).update(updates).eq('id', voterId);
+      if (error) throw error;
+      document.getElementById('voterModal').hidden = true;
+      showStatus('Saved. Voter removed from Will Vote.');
+      setTimeout(() => location.reload(), 450);
+    } catch (error) {
+      showStatus(error.message || 'Save failed. Please try again.', true);
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Save Section';
+      }
+    }
+  }
+
+  function buildVoteOverrideUpdates(form, voteStatus) {
+    const d2d = form.elements.d2d_status?.value || 'follow-up';
+    const callResult = form.elements.call_result?.value || '';
+    const updates = {
+      vote_status: voteStatus,
+      support_level: 'normal',
+      d2d_status: d2d,
+      vote_assigned_at: new Date().toISOString()
+    };
+    const remarks = clean(form.elements.remarks?.value);
+    if (remarks) updates.remarks = remarks;
+    const transport = form.elements.transport_status?.value;
+    if (transport) updates.transport_status = transport;
+    if (callResult) {
+      updates.phone_status = callResult;
+      updates.reach_status = callResult === 'called' ? 'reached' : 'not-reached';
+      if (callResult !== 'called' && !form.elements.d2d_status?.value) updates.d2d_status = 'follow-up';
+    }
+    if (updates.d2d_status === 'visited') updates.reach_status = 'reached';
+    if (['not-home', 'follow-up'].includes(updates.d2d_status)) updates.reach_status = 'not-reached';
+    return updates;
+  }
+
   async function loadD2D(ids) {
     if (loading || !window.supabase || !window.APP_CONFIG) return;
     loading = true;
@@ -80,6 +143,30 @@
       loading = false;
       setTimeout(runCleanup, 60);
     }
+  }
+
+  function findOpenVoterId() {
+    const title = document.getElementById('modalTitle')?.textContent.trim();
+    if (!title) return '';
+    const card = Array.from(document.querySelectorAll('.voter-card[data-open-voter]')).find((item) => {
+      return item.querySelector('h3')?.textContent.trim() === title;
+    });
+    return card?.dataset.openVoter || '';
+  }
+
+  function showStatus(message, isError) {
+    const status = document.getElementById('statusMessage');
+    if (!status) {
+      alert(message);
+      return;
+    }
+    status.textContent = message;
+    status.className = `status-message ${isError ? 'error' : 'ok'}`;
+  }
+
+  function clean(value) {
+    const text = String(value || '').trim();
+    return text || null;
   }
 
   function d2dLabel(value) {
@@ -98,7 +185,12 @@
   }
 
   document.addEventListener('DOMContentLoaded', runCleanup);
-  document.addEventListener('click', () => setTimeout(runCleanup, 80), true);
+  document.addEventListener('submit', handleVoteOverride, true);
+  document.addEventListener('click', (event) => {
+    const card = event.target.closest('.voter-card[data-open-voter]');
+    if (card) currentVoterId = card.dataset.openVoter || '';
+    setTimeout(runCleanup, 80);
+  }, true);
   document.addEventListener('input', () => setTimeout(runCleanup, 80), true);
   document.addEventListener('change', () => setTimeout(runCleanup, 80), true);
   let runs = 0;
