@@ -69,6 +69,27 @@
 .assign-inline .btn{
   min-width:120px;
 }
+.assigner-filter{
+  grid-column:1/-1;
+  margin:0 0 4px!important;
+  padding:14px!important;
+  box-shadow:none!important;
+  border-color:#bfdbfe!important;
+  background:#eff6ff!important;
+}
+.assigner-filter-grid{
+  display:grid!important;
+  grid-template-columns:minmax(220px,1fr) auto!important;
+  gap:10px!important;
+  align-items:end!important;
+}
+.assigner-filter label{
+  color:#1d4ed8!important;
+}
+.assign-stat .stat-icon{
+  font-weight:950;
+  color:#1d4ed8;
+}
 .hotfix-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -92,6 +113,6 @@
   .modal-card{width:calc(100vw - 16px)!important;padding:16px!important;}
   .modal-head{display:grid!important;grid-template-columns:1fr!important;}
   .modal-photo{width:88px!important;height:88px!important;}
-  .hotfix-grid,.assign-inline{grid-template-columns:1fr!important;}
+  .hotfix-grid,.assign-inline,.assigner-filter-grid{grid-template-columns:1fr!important;}
   .modal-actions{grid-template-columns:1fr!important;}
 }
