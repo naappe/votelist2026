@@ -71,7 +71,7 @@ votelist2026/
 
 | File | Responsibility |
 |---|---|
-| `js/app.js` | Main logged-in dashboard engine: auth check, Supabase load, stats, filters, voter modal, save logic. |
+| `js/app.js` | Main logged-in dashboard engine: auth check, Supabase load, stats, filters, voter modal, and save logic. |
 | `js/config.js` | Supabase URL/key, table name, login user mapping, shared-page scroll/filter guard. |
 | `js/assign-share.js` | Creates short public self-assign links through `assignment_shares`. |
 | `js/campaign-arrangement.js` | Campaign popup/control helper layer. |
@@ -134,6 +134,7 @@ vote_assigned_by, vote_assigned_at
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
 | Popup voter photo | `pro-ui.css` keeps the modal voter photo medium gallery-size for easier identification. |
 | Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
+| Save from All voters | `save-state-fix.js` restores the saved voter card or previous scroll after the list rebuilds, so middle-list saves do not jump to the top. |
 | Save after assign filter | `save-state-fix.js` restores Assign/filter view and scroll position after saving. |
 | Self assign page | Friends tick/untick voters, write name/mobile only when needed, then save. |
 | Assignment privacy | Public shared links do not show other assignee names. They only show private assignment status/count. |
@@ -155,6 +156,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Fixed All voters save position: `save-state-fix.js` syntax was repaired and cache keys were bumped to restore same-card scroll after save. |
 | 2026-07-06 | Changed Pages workflow concurrency to queue deployments instead of cancelling in-progress Pages deploys. |
 | 2026-07-06 | Added `house-filter-lock.js` so selected house stays locked when choosing status filters or saving voter status. |
 | 2026-07-06 | Increased popup voter photo to medium gallery size in `pro-ui.css` and bumped CSS cache keys. |
