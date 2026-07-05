@@ -31,4 +31,9 @@
 .modal-actions .btn.light{background:#fff!important;color:#344054!important;border:1px solid #d8e0ee!important;box-shadow:0 2px 6px rgba(15,23,42,.08)}
 .modal-actions .btn:not(.light):not(.whatsapp){background:#1f3b66!important;color:#fff!important}
 .modal-actions .btn.whatsapp{background:#16a34a!important;color:#fff!important}
+body.clean-read-view .topbar,body.clean-read-view .hero,body.clean-read-view #summary,body.clean-read-view #sections,body.clean-read-view .panel[aria-label="Search voters"],body.clean-read-view .insight-grid,body.clean-read-view .sync-notice,body.clean-read-view .panel-tools,body.clean-read-view .share-pick{display:none!important}
+body.clean-read-view .page{margin-top:18px!important}
+body.clean-read-view .voter-panel{box-shadow:none!important;border-radius:14px!important}
+body.clean-read-view .voter-panel .panel-head{margin-bottom:14px!important}
+body.clean-read-view .voter-card{cursor:default!important}
 @media(max-width:760px){.panel-tools{justify-content:stretch}.panel-tools .btn{flex:1}}
