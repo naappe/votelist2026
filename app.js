@@ -409,7 +409,7 @@
         <button class="house-row" type="button" data-house-filter="${escapeAttr(item.search)}" data-house-label="${escapeAttr(item.house)}">
           <span class="house-main">
             <span>${index + 1}. ${escapeHtml(item.house)}</span>
-            <small>${escapeHtml(item.status)} · ${number(item.needCall)} need call · ${number(item.followUp)} follow-up</small>
+            <small>${stars(item.maxStars)} ${escapeHtml(item.status)} · ${number(item.guaranteed)} guaranteed · ${number(item.possible)} possible · ${number(item.followUp)} D2D</small>
           </span>
           <strong>${number(item.count)}</strong>
         </button>
@@ -431,7 +431,7 @@
         ? 'Search Results'
         : filter.label;
     document.getElementById('sectionFilter').textContent = state.zeroDayMode
-      ? 'Call-first house priority: need-call, follow-up, pending, no-phone, and transport status.'
+      ? 'Star priority from D2D status plus guaranteed and possible vote strength.'
       : state.searchTerm
         ? `Searching ${state.searchField === 'all' ? 'all fields' : label(state.searchField)} across ${state.partyScope} voters. Showing ${number(rows.length)} matches.`
         : filter.rule;
@@ -457,6 +457,7 @@
             ${chip(voter.vote_status, voter.vote_status === 'will-vote' ? 'green' : voter.vote_status === 'pending' ? 'amber' : '')}
             ${chip(voter.phone_status, voter.phone_status === 'called' ? 'green' : voter.phone_status === 'no-phone' ? 'red' : 'blue')}
             ${chip(voter.support_level, voter.support_level === 'guaranteed' ? 'green' : '')}
+            ${state.zeroDayMode ? priorityChip(voter) : ''}
           </div>
           <div class="section-label ${section.tone}">${section.icon} ${escapeHtml(section.label)}</div>
         </div>
@@ -691,6 +692,9 @@
         pending: 0,
         noPhone: 0,
         transport: 0,
+        guaranteed: 0,
+        possible: 0,
+        maxStars: 0,
         score: 0
       };
       item.count += 1;
@@ -699,6 +703,9 @@
       item.pending += row.vote_status === 'pending' ? 1 : 0;
       item.noPhone += row.phone_status === 'no-phone' || !hasPhone(row) ? 1 : 0;
       item.transport += row.transport_status === 'need-transport' ? 1 : 0;
+      item.guaranteed += row.support_level === 'guaranteed' ? 1 : 0;
+      item.possible += isPossibleVote(row) ? 1 : 0;
+      item.maxStars = Math.max(item.maxStars, starRating(row));
       item.score += voterPriority(row);
       groups.set(house, item);
     });
@@ -765,17 +772,53 @@
   }
 
   function voterPriority(row) {
-    if (row.phone_status === 'need-call' && hasPhone(row)) return 100;
-    if (isFollowUp(row)) return 85;
-    if (row.vote_status === 'pending') return 65;
-    if (row.transport_status === 'need-transport') return 55;
-    if (row.phone_status === 'no-phone' || !hasPhone(row)) return 35;
-    return 0;
+    let score = 0;
+
+    if (row.support_level === 'guaranteed') score += 120;
+    if (row.vote_status === 'will-vote') score += 100;
+    if (isPossibleVote(row)) score += 65;
+
+    if (row.d2d_status === 'follow-up') score += 95;
+    if (row.d2d_status === 'not-home') score += 85;
+    if (row.d2d_status === 'not-visited') score += 70;
+    if (row.d2d_status === 'visited') score += 20;
+
+    if (row.phone_status === 'need-call' && hasPhone(row)) score += 45;
+    if (row.reach_status === 'reached') score += 20;
+    if (row.transport_status === 'need-transport') score += 15;
+    if (row.phone_status === 'no-phone' || !hasPhone(row)) score += 10;
+
+    return score;
+  }
+
+  function isPossibleVote(row) {
+    return ['pending', 'not-decided'].includes(row.vote_status) && row.support_level !== 'guaranteed';
+  }
+
+  function starRating(row) {
+    const score = typeof row === 'number' ? row : voterPriority(row);
+    if (score >= 230) return 5;
+    if (score >= 180) return 4;
+    if (score >= 120) return 3;
+    if (score >= 70) return 2;
+    return score > 0 ? 1 : 0;
+  }
+
+  function priorityChip(row) {
+    const rating = starRating(row);
+    if (!rating) return '';
+    return `<span class="chip priority">${stars(rating)} Priority</span>`;
+  }
+
+  function stars(count) {
+    return '★★★★★'.slice(0, count || 0) || '-';
   }
 
   function housePriorityStatus(item) {
+    if (item.guaranteed) return 'Guaranteed votes';
+    if (item.possible) return 'Possible votes';
+    if (item.followUp) return 'D2D follow-up';
     if (item.needCall) return 'Call first';
-    if (item.followUp) return 'Follow-up';
     if (item.pending) return 'Pending';
     if (item.noPhone) return 'Find phone';
     if (item.transport) return 'Transport';
