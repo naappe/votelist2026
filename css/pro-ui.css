@@ -210,28 +210,76 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
 .assign-panel p{margin:4px 0 0!important;color:#475467!important;font-size:12px!important;font-weight:650!important}
 .assign-inline{grid-template-columns:minmax(0,1fr) auto!important}
 .assign-inline input{background:#fff!important}
-.modal-card{width:min(760px,calc(100vw - 24px))!important;border-radius:18px!important}
+.modal-card{
+  width:min(820px,calc(100vw - 24px))!important;
+  border-radius:18px!important;
+  border:1px solid #eceff3!important;
+  background:#fff!important;
+  box-shadow:0 24px 70px rgba(15,23,42,.18)!important;
+}
 .modal-head{
-  grid-template-columns:clamp(132px,18vw,158px) minmax(0,1fr) auto!important;
-  gap:18px!important;
-  align-items:start!important;
+  display:grid!important;
+  grid-template-columns:clamp(136px,18vw,156px) minmax(0,1fr) auto!important;
+  gap:22px!important;
+  align-items:center!important;
+  padding:24px!important;
+  background:#fff!important;
+  border-bottom:1px solid #edf0f3!important;
+}
+.modal-person{
+  display:contents!important;
+}
+.modal-person>div:last-child{
+  grid-column:2!important;
+  min-width:0!important;
+}
+.modal-person .eyebrow{
+  color:#7c6cff!important;
+  letter-spacing:.14em!important;
+  font-weight:850!important;
+}
+.modal-person h2{
+  color:#1f2937!important;
+  letter-spacing:0!important;
+}
+.modal-person .muted{
+  color:#5f6b7a!important;
+  font-size:14px!important;
+  font-weight:500!important;
+  line-height:1.55!important;
 }
 .modal-photo{
-  width:clamp(132px,18vw,158px)!important;
-  height:clamp(132px,18vw,158px)!important;
+  grid-column:1!important;
+  grid-row:1!important;
+  width:clamp(136px,18vw,156px)!important;
+  height:clamp(136px,18vw,156px)!important;
   aspect-ratio:1!important;
-  border-radius:18px!important;
-  border:1px solid #d0d5dd!important;
-  box-shadow:0 14px 30px rgba(16,24,40,.14)!important;
-  background:#eef4ff!important;
+  border-radius:999px!important;
+  border:5px solid #fff!important;
+  box-shadow:0 14px 32px rgba(15,23,42,.18),0 0 0 1px #e5e7eb!important;
+  background:#eef2ff!important;
 }
 .modal-photo img{
   width:100%!important;
   height:100%!important;
   object-fit:cover!important;
   object-position:center!important;
+  border-radius:999px!important;
 }
-#voterForm{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start!important}
+.modal-head>.btn{
+  grid-column:3!important;
+  grid-row:1!important;
+  border-radius:14px!important;
+  background:#f9fafb!important;
+  border:1px solid #edf0f3!important;
+  color:#1f2937!important;
+}
+#voterForm{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:start!important;
+  padding:22px 24px 24px!important;
+  background:#fff!important;
+}
 #voterForm .assign-panel,
 #voterForm .hotfix-message,
 #voterForm label:has(textarea),
@@ -252,12 +300,13 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
   .pro-voter-card .share-pick span{display:none!important}
   .pro-voter-card .share-pick{padding:0!important}
   .modal-card{width:calc(100vw - 16px)!important}
-  .modal-head{grid-template-columns:116px minmax(0,1fr) auto!important;gap:12px!important}
-  .modal-photo{width:116px!important;height:116px!important;border-radius:16px!important}
+  .modal-head{grid-template-columns:118px minmax(0,1fr)!important;gap:14px!important;padding:18px!important}
+  .modal-head>.btn{grid-column:2!important;grid-row:2!important;justify-self:start!important}
+  .modal-photo{width:118px!important;height:118px!important;border-radius:999px!important}
+  #voterForm{padding:18px!important}
   #voterForm,.hotfix-grid,.assign-inline{grid-template-columns:1fr!important}
 }
 @media (max-width:430px){
-  .modal-head{grid-template-columns:102px minmax(0,1fr)!important;gap:10px!important}
-  .modal-head>.btn{grid-column:2!important;grid-row:2!important;justify-self:start!important}
-  .modal-photo{width:102px!important;height:102px!important;border-radius:15px!important}
+  .modal-head{grid-template-columns:104px minmax(0,1fr)!important;gap:12px!important}
+  .modal-photo{width:104px!important;height:104px!important;border-radius:999px!important}
 }
