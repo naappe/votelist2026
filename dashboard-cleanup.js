@@ -1,4 +1,6 @@
 (function () {
+  if (stripNormalShareParams()) return;
+
   const selectedVoters = new Set();
   const d2dOptions = [
     ['not-visited', 'Not Visited'],
@@ -13,6 +15,16 @@
 
   function scrollToSearch() {
     document.querySelector('[aria-label="Search voters"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function stripNormalShareParams() {
+    const url = new URL(location.href);
+    if (url.searchParams.get('view') === 'read') return false;
+    const stale = ['filter', 'zero', 'q'].some((key) => url.searchParams.has(key));
+    if (!stale) return false;
+    ['filter', 'zero', 'q'].forEach((key) => url.searchParams.delete(key));
+    location.replace(url.toString());
+    return true;
   }
 
   function tidyDashboard() {
@@ -171,6 +183,43 @@
     });
   }
 
+  async function shareReadView() {
+    const url = new URL(location.href);
+    const active = document.querySelector('[data-filter].active')?.dataset.filter || url.searchParams.get('filter') || 'all';
+    const term = document.getElementById('searchInput')?.value.trim();
+    const party = url.searchParams.get('party') || 'PNC';
+    url.search = '';
+    url.searchParams.set('party', party);
+    url.searchParams.set('view', 'read');
+    url.searchParams.set('filter', active);
+    if (document.body.dataset.page === 'zero-day') url.searchParams.set('zero', '1');
+    if (term) url.searchParams.set('q', term);
+
+    const link = url.toString();
+    const preview = window.open(link, '_blank', 'noopener');
+    try {
+      await navigator.clipboard.writeText(link);
+      showShareLink(link, preview ? 'Read-only link copied and opened.' : 'Read-only link copied. Popup was blocked.');
+    } catch (error) {
+      showShareLink(link, preview ? 'Copy blocked, but link opened.' : 'Copy/open blocked. Use this link.');
+    }
+  }
+
+  function showShareLink(link, message) {
+    showStatus(message);
+    const host = document.getElementById('statusMessage') || document.querySelector('.voter-panel');
+    if (!host) return;
+    let box = document.getElementById('cleanupShareLink');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'cleanupShareLink';
+      box.style.cssText = 'display:grid;gap:8px;margin:0 0 14px;padding:12px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff;color:#1f3b66;font-weight:800';
+      host.after(box);
+    }
+    box.innerHTML = `<span>${escapeAttr(message)}</span><input readonly value="${escapeAttr(link)}" style="width:100%;min-height:38px;border:1px solid #bfdbfe;border-radius:10px;padding:8px;background:#fff;color:#111827;font-weight:700"><a href="${escapeAttr(link)}" target="_blank" rel="noopener" style="color:#1d4ed8;font-weight:950">Open read-only link</a>`;
+    box.querySelector('input')?.select();
+  }
+
   async function selectedRows(ids) {
     const fallback = ids.map((id) => rowFromCard(id)).filter(Boolean);
     try {
@@ -261,8 +310,11 @@
       await shareSelected();
       return;
     }
-    if (event.target.closest('[data-share-read-view]')) {
-      document.getElementById('shareViewBtn')?.click();
+    if (event.target.closest('[data-share-read-view], #shareViewBtn')) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      await shareReadView();
       return;
     }
     const boxTab = event.target.closest('[data-box-search]');
