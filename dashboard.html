@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260705-2">
 </head>
 <body data-page="dashboard">
   <header class="topbar">
@@ -38,8 +38,15 @@
       </div>
 
       <div id="statusMessage" class="status-message" role="status"></div>
+      <div id="sectionStats" hidden></div>
       <div id="voterList" class="voter-list"></div>
     </section>
+
+    <div hidden>
+      <div id="logicTitle"></div>
+      <div id="logicText"></div>
+      <div id="logicList"></div>
+    </div>
   </main>
 
   <div id="voterModal" class="modal" hidden>
@@ -62,7 +69,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js?v=20260705-2"></script>
+  <script src="app.js?v=20260705-2"></script>
 </body>
 </html>
