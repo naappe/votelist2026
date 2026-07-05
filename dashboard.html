@@ -18,38 +18,27 @@
   <main class="page">
     <section class="hero">
       <div>
-        <p class="eyebrow">Campaign work area</p>
-        <h1 id="dashboardTitle">Dashboard</h1>
+        <p class="eyebrow">Filter · Select · Act</p>
+        <h1 id="dashboardTitle">Voter Manager Dashboard</h1>
         <p id="dashboardSubtitle">Loading voter data from Supabase...</p>
       </div>
       <button id="refreshBtn" class="btn light" type="button">Refresh</button>
     </section>
 
-    <section id="summary" class="summary" aria-label="Dashboard summary"></section>
-    <section id="sections" class="sections" aria-label="Campaign sections"></section>
+    <section id="summary" class="stats-grid" aria-label="Campaign statistics"></section>
+    <section id="sections" class="tabs" aria-label="Voter filters"></section>
 
-    <section class="work">
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2 id="sectionTitle">Need Call</h2>
-            <p id="sectionFilter">Loading section...</p>
-          </div>
-          <span id="sectionTotal" class="status-pill">0 voters</span>
+    <section class="panel voter-panel">
+      <div class="panel-head">
+        <div>
+          <h2 id="sectionTitle">All</h2>
+          <p id="sectionFilter">Sections filter voters only. Open a voter card to work.</p>
         </div>
-
-        <div id="statusMessage" class="status-message" role="status"></div>
-        <div id="sectionStats" class="chart-row"></div>
-        <div id="voterList" class="voter-list"></div>
+        <span id="sectionTotal" class="status-pill">0 voters</span>
       </div>
 
-      <aside class="side">
-        <div class="panel">
-          <h2 id="logicTitle">Section Function</h2>
-          <div id="logicText" class="logic-box">Choose a section to see its save rule.</div>
-          <div id="logicList" class="logic-list"></div>
-        </div>
-      </aside>
+      <div id="statusMessage" class="status-message" role="status"></div>
+      <div id="voterList" class="voter-list"></div>
     </section>
   </main>
 
