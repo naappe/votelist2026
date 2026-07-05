@@ -2,6 +2,7 @@
   let focusAssign = false;
 
   function enhance() {
+    removeVotersNav();
     removeOldAssignControls();
     document.querySelectorAll('.voter-card[data-open-voter]').forEach((card) => {
       card.classList.add('pro-voter-card');
@@ -12,6 +13,10 @@
       if (!card.querySelector('.card-actions')) addActions(card);
     });
     focusAssignInput();
+  }
+
+  function removeVotersNav() {
+    document.querySelectorAll('#votersLink, a[href*="voters.html"]').forEach((node) => node.remove());
   }
 
   function isAdminAllView() {
