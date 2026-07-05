@@ -1,0 +1,84 @@
+/* Professional voter management layer */
+body[data-view="management"] #summary{
+  display:grid!important;
+  margin-bottom:12px!important;
+}
+body[data-view="management"] .stat-card{
+  min-height:64px!important;
+  padding:12px 14px!important;
+  border-radius:12px!important;
+}
+body[data-view="management"] .stat-icon{
+  width:34px!important;
+  height:34px!important;
+  border-radius:10px!important;
+  font-size:16px!important;
+}
+body[data-view="management"] .stat-text strong{font-size:22px!important}
+.pro-voter-card{
+  grid-template-columns:74px minmax(0,1fr)!important;
+  min-height:0!important;
+  padding:14px!important;
+  gap:14px!important;
+  border-radius:12px!important;
+  box-shadow:0 8px 22px rgba(16,24,40,.055)!important;
+}
+.pro-voter-card.is-assigned{
+  border-color:#93c5fd!important;
+  background:linear-gradient(180deg,#fff,#f8fbff)!important;
+}
+.pro-voter-card .voter-photo{
+  width:74px!important;
+  height:74px!important;
+  border-radius:12px!important;
+}
+.pro-voter-card .voter-title{align-items:center!important;margin-bottom:7px!important}
+.pro-voter-card .voter-info h3{
+  margin:0!important;
+  font-size:16px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+}
+.pro-voter-card .voter-info p,
+.pro-meta-line{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px 12px!important;
+  margin:0 0 9px!important;
+  color:#475467!important;
+  font-size:12px!important;
+  font-weight:750!important;
+}
+.pro-voter-card .chips{margin-bottom:10px!important}
+.pro-voter-card .chip{padding:5px 8px!important;font-size:11px!important;border-radius:999px!important}
+.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.assign-card-btn{background:#2563eb!important;color:#fff!important}
+.pro-voter-card .section-label{margin-top:10px!important;padding-top:9px!important}
+.assign-panel{
+  background:#eff6ff!important;
+  border-color:#bfdbfe!important;
+  border-radius:14px!important;
+}
+.assign-panel p{margin:4px 0 0!important;color:#475467!important;font-size:12px!important;font-weight:650!important}
+.assign-inline{grid-template-columns:minmax(0,1fr) auto!important}
+.assign-inline input{background:#fff!important}
+.modal-card{width:min(760px,calc(100vw - 24px))!important;border-radius:18px!important}
+#voterForm{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start!important}
+#voterForm .assign-panel,
+#voterForm .hotfix-message,
+#voterForm label:has(textarea),
+#voterForm .modal-actions,
+#voterForm > .hotfix-grid{grid-column:1/-1!important}
+.hotfix-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#voterForm label{min-width:0!important}
+#voterForm textarea{min-height:76px!important}
+.modal-actions{justify-content:flex-end!important}
+@media (max-width:760px){
+  body[data-view="management"] #summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .pro-voter-card{grid-template-columns:58px minmax(0,1fr)!important;padding:12px!important;gap:11px!important}
+  .pro-voter-card .voter-photo{width:58px!important;height:58px!important}
+  .pro-voter-card .voter-info p,.pro-meta-line{display:grid!important;gap:4px!important}
+  .card-actions .btn{flex:1;min-height:34px!important}
+  .modal-card{width:calc(100vw - 16px)!important}
+  #voterForm,.hotfix-grid,.assign-inline{grid-template-columns:1fr!important}
+}
