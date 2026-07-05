@@ -16,6 +16,7 @@
   }
 
   function tidyDashboard() {
+    applyCleanReadView();
     hideMainBoxFilter();
     ensureZeroDayBoxTabs();
     ensurePanelTools();
@@ -39,6 +40,14 @@
     if (modalSection && voteSelect?.value === 'pending' && /Reached/i.test(modalSection.textContent || '')) {
       modalSection.textContent = 'Pending';
     }
+  }
+
+  function applyCleanReadView() {
+    const params = new URLSearchParams(location.search);
+    const isReadView = params.get('view') === 'read';
+    document.body.classList.toggle('clean-read-view', isReadView);
+    if (!isReadView) return;
+    document.querySelectorAll('.share-pick, .panel-tools, #shareViewBtn').forEach((node) => node.remove());
   }
 
   function hideMainBoxFilter() {
