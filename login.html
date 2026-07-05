@@ -9,7 +9,12 @@
 <body data-page="login">
   <header class="topbar">
     <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
-    <a class="btn light" href="index.html">Home</a>
+    <nav class="toolbar">
+      <a class="btn light" href="index.html">Home</a>
+      <a class="btn light" href="dashboard.html">Dashboard</a>
+      <a class="btn light" href="voters.html">Voters</a>
+      <button id="logoutBtn" class="btn dark" type="button">Logout</button>
+    </nav>
   </header>
 
   <main class="login-wrap">
@@ -36,5 +41,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260705-2"></script>
   <script src="app.js?v=20260705-2"></script>
+  <script>
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        if (window.supabase && window.APP_CONFIG) {
+          const client = window.supabase.createClient(window.APP_CONFIG.supabaseUrl, window.APP_CONFIG.supabaseKey);
+          await client.auth.signOut();
+        }
+      } finally {
+        location.href = 'index.html';
+      }
+    });
+  </script>
 </body>
 </html>
