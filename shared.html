@@ -14,9 +14,9 @@
     h1{margin:0 0 5px;font-size:24px;letter-spacing:-.03em;line-height:1.1}
     p{margin:0;color:var(--muted);line-height:1.45;font-weight:700}
     .count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}
-    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
+    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
     label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
-    input[type="text"]{width:100%;min-height:44px;border:1px solid #d0d5dd;border-radius:12px;padding:10px 12px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
+    input[type="text"],input[type="tel"]{width:100%;min-height:44px;border:1px solid #d0d5dd;border-radius:12px;padding:10px 12px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
     button{border:0;border-radius:12px;min-height:42px;padding:10px 14px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}
     button.light{background:#fff;color:#1f3b66;border:1px solid #d0d5dd}
     button:disabled{opacity:.55;cursor:not-allowed}
@@ -27,24 +27,28 @@
     .name{font-size:18px;font-weight:950;letter-spacing:-.02em;margin-bottom:8px;line-height:1.15}
     .line{display:grid;grid-template-columns:68px 1fr;gap:8px;color:#344054;font-size:14px;font-weight:800;line-height:1.35;margin-top:4px;word-break:break-word}
     .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
-    .status{display:inline-flex;width:max-content;margin-top:9px;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:950}
+    .status{display:inline-flex;width:max-content;max-width:100%;margin-top:9px;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:950;white-space:normal}
     .status.done{background:var(--green-bg);color:#166534}
     .empty{padding:28px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:16px}
     .message{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-weight:900;border:1px solid #bfdbfe}
     .message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-    @media(max-width:620px){.wrap{width:min(100% - 20px,820px);margin-top:10px}.tools{grid-template-columns:1fr;position:static}.card{grid-template-columns:28px 1fr}.card button{grid-column:2;width:100%}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}}
+    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}}
+    @media(max-width:620px){.wrap{width:min(100% - 20px,820px);margin-top:10px}.card{grid-template-columns:28px 1fr}.card button{grid-column:2;width:100%}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}}
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="top">
       <h1>Self Assign Voters</h1>
-      <p>Write your name, then assign the voters you will call. No login is required.</p>
+      <p>Write your name and mobile, then assign the voters you will call. No login is required.</p>
       <div id="count" class="count">Loading...</div>
     </section>
     <section class="tools" aria-label="Assignment controls">
       <label>Your name
         <input id="assigneeName" type="text" placeholder="Write your name" autocomplete="name">
+      </label>
+      <label>Your mobile
+        <input id="assigneePhone" type="tel" placeholder="Mobile number" autocomplete="tel" inputmode="tel">
       </label>
       <button id="saveSelectedBtn" type="button">Save Selected</button>
     </section>
@@ -97,17 +101,39 @@
     function nameValue() {
       return document.getElementById('assigneeName').value.trim();
     }
-    function saveName() {
-      try { localStorage.setItem('assigner_name', nameValue()); } catch {}
+    function phoneValue() {
+      return document.getElementById('assigneePhone').value.trim();
     }
-    function loadName() {
-      try { document.getElementById('assigneeName').value = localStorage.getItem('assigner_name') || ''; } catch {}
+    function phoneDigits() {
+      return phoneValue().replace(/[^0-9]/g, '');
+    }
+    function saveIdentity() {
+      try {
+        localStorage.setItem('assigner_name', nameValue());
+        localStorage.setItem('assigner_phone', phoneValue());
+      } catch {}
+    }
+    function loadIdentity() {
+      try {
+        document.getElementById('assigneeName').value = localStorage.getItem('assigner_name') || '';
+        document.getElementById('assigneePhone').value = localStorage.getItem('assigner_phone') || '';
+      } catch {}
+    }
+    function assignedCount(value) {
+      return String(value || '').split(',').map((item) => item.trim()).filter(Boolean).length;
+    }
+    function renderKeepPosition() {
+      const scrollY = window.scrollY;
+      render();
+      requestAnimationFrame(() => window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' }));
     }
     function render() {
       document.getElementById('count').textContent = rows.length ? `${rows.length} voter${rows.length === 1 ? '' : 's'} in this link` : 'No voters selected';
       document.getElementById('content').innerHTML = rows.length ? rows.map((row) => {
-        const assigned = row.assigned_by ? `Assigned to ${row.assigned_by}` : 'Not assigned yet';
-        const canAssign = Boolean(token && row.row_id);
+        const count = assignedCount(row.assigned_by);
+        const assigned = row.assigned_by ? `Assigned: ${row.assigned_by}` : 'Not assigned yet';
+        const canAssign = Boolean(token && row.row_id && count < 3);
+        const buttonText = count >= 3 ? 'Full' : row.assigned_by ? 'Add my name' : 'Assign to me';
         return `
           <article class="card" data-row-id="${esc(row.row_id)}">
             <input class="select" type="checkbox" data-pick="${esc(row.row_id)}" ${canAssign ? '' : 'disabled'} aria-label="Select ${esc(row.name)}">
@@ -118,7 +144,7 @@
               <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
               <span class="status ${row.assigned_by ? 'done' : ''}" data-status="${esc(row.row_id)}">${esc(assigned)}</span>
             </div>
-            <button type="button" data-assign="${esc(row.row_id)}" ${canAssign ? '' : 'disabled'}>${row.assigned_by ? 'Change to me' : 'Assign to me'}</button>
+            <button type="button" data-assign="${esc(row.row_id)}" ${canAssign ? '' : 'disabled'}>${esc(buttonText)}</button>
           </article>
         `;
       }).join('') : '<div class="empty">This assignment link has no selected voter data.</div>';
@@ -126,31 +152,40 @@
     function setBusy(isBusy) {
       document.querySelectorAll('button').forEach((button) => button.disabled = isBusy || button.dataset.wasDisabled === '1');
     }
-    async function assignOne(rowId) {
-      const assignee = nameValue();
-      if (!assignee) {
+    function validateIdentity() {
+      if (!nameValue()) {
         setMessage('Write your name first.', true);
         document.getElementById('assigneeName').focus();
         return false;
       }
+      if (phoneDigits().length < 5) {
+        setMessage('Write your mobile number first.', true);
+        document.getElementById('assigneePhone').focus();
+        return false;
+      }
+      return true;
+    }
+    async function assignOne(rowId, options = {}) {
+      if (!validateIdentity()) return false;
       if (!token || !rowId) {
         setMessage('This old link is read-only. Ask for a new assignment link.', true);
         return false;
       }
-      saveName();
+      saveIdentity();
       const { data, error } = await client.rpc('claim_assignment', {
         p_token: token,
         p_voter_row_id: Number(rowId),
-        p_assignee_name: assignee
+        p_assignee_name: nameValue(),
+        p_assignee_phone: phoneValue()
       });
       if (error) {
         setMessage(error.message || 'Could not save assignment.', true);
         return false;
       }
       const saved = Array.isArray(data) ? data[0] : data;
-      rows = rows.map((row) => row.row_id === String(rowId) ? { ...row, assigned_by: saved?.vote_assigned_by || assignee } : row);
-      render();
-      setMessage(`Saved. ${saved?.name || 'Voter'} assigned to ${assignee}.`, false);
+      rows = rows.map((row) => row.row_id === String(rowId) ? { ...row, assigned_by: saved?.vote_assigned_by || row.assigned_by } : row);
+      renderKeepPosition();
+      if (!options.silent) setMessage(`Saved. ${saved?.name || 'Voter'} assigned to ${nameValue()} (${phoneDigits()}).`, false);
       return true;
     }
     async function assignSelected() {
@@ -159,18 +194,20 @@
         setMessage('Tick voters first, or use Assign to me on one card.', true);
         return;
       }
+      if (!validateIdentity()) return;
       setBusy(true);
       let saved = 0;
       for (const rowId of selected) {
-        if (await assignOne(rowId)) saved += 1;
+        if (await assignOne(rowId, { silent: true })) saved += 1;
       }
       setBusy(false);
       document.querySelectorAll('[data-pick]').forEach((input) => input.checked = false);
-      if (saved) setMessage(`Saved ${saved} voter${saved === 1 ? '' : 's'} to ${nameValue()}.`, false);
+      if (saved) setMessage(`Saved ${saved} voter${saved === 1 ? '' : 's'} to ${nameValue()} (${phoneDigits()}).`, false);
     }
     async function loadShare() {
-      loadName();
-      document.getElementById('assigneeName').addEventListener('input', saveName);
+      loadIdentity();
+      document.getElementById('assigneeName').addEventListener('input', saveIdentity);
+      document.getElementById('assigneePhone').addEventListener('input', saveIdentity);
       document.getElementById('saveSelectedBtn').addEventListener('click', assignSelected);
       document.addEventListener('click', async (event) => {
         const button = event.target.closest('[data-assign]');
