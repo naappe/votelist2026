@@ -8,9 +8,14 @@
       card.classList.toggle('is-blank-party', isAdminAllView() && isBlankParty(card));
       if (isAssigned(card)) card.classList.add('is-assigned');
       const meta = card.querySelector('.voter-info p');
-      if (meta) meta.classList.add('pro-meta-line');
+      if (meta) {
+        meta.classList.add('pro-meta-line');
+        cleanMetaLine(meta);
+      }
       if (!card.querySelector('.card-actions')) addActions(card);
     });
+    const modalMeta = document.getElementById('modalMeta');
+    if (modalMeta) cleanMetaLine(modalMeta);
     focusAssignInput();
   }
 
@@ -35,6 +40,26 @@
 
   function isAssigned(card) {
     return Array.from(card.querySelectorAll('.chip')).some((chip) => /^assign(ed)?:/i.test(chip.textContent.trim()));
+  }
+
+  function cleanMetaLine(meta) {
+    const parts = String(meta.textContent || '').split('·').map((item) => item.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const house = displayHouse(parts[0]);
+    const phone = parts.slice().reverse().find((item) => item && !/^box\b/i.test(item)) || '';
+    meta.textContent = [house, phone && phone !== house ? phone : ''].filter(Boolean).join(' · ');
+  }
+
+  function displayHouse(value) {
+    const text = String(value || '')
+      .replace(/\s+/g, ' ')
+      .replace(/\s*\([^)]*\)\s*/g, ' ')
+      .replace(/\bbox\s*\d+\b/ig, ' ')
+      .replace(/\s*[|/-]\s*villimale.*$/i, ' ')
+      .replace(/\s*[·|/-]\s*$/g, ' ')
+      .replace(/^\s*[·|/-]\s*/g, ' ')
+      .trim();
+    return text || '-';
   }
 
   function addActions(card) {
