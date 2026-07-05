@@ -18,6 +18,13 @@
     return String(value || '').trim();
   }
 
+  function cleanAssigner(value) {
+    const name = clean(value);
+    if (!name) return '';
+    if (name.toLowerCase() === 'naappe@gmail.com') return '';
+    return name;
+  }
+
   function initials(name) {
     return clean(name).split(/\s+/).slice(0, 2).map(x => x[0] || '').join('').toUpperCase() || '?';
   }
@@ -47,8 +54,7 @@
   }
 
   async function fetchVoter(id) {
-    let query = client.from(config.table).select(cols).eq('id', id).single();
-    const { data, error } = await query;
+    const { data, error } = await client.from(config.table).select(cols).eq('id', id).single();
     if (error) throw error;
     return data;
   }
@@ -83,6 +89,7 @@
     const section = document.getElementById('modalSection');
     if (!modal || !form || !title || !meta || !section) return;
 
+    const assignedName = cleanAssigner(voter.vote_assigned_by);
     section.textContent = normalizeHouse([voter.house, voter.lives_in, voter.living_place].join(' ')) === 'dhafthar' ? 'House - Dhafthar' : 'Voter Assignment';
     title.textContent = voter.name || 'Unknown voter';
     meta.textContent = `${voter.house || voter.lives_in || '-'} · Box ${voter.election_box || '-'} · ${voter.phone || 'No phone'}`;
@@ -96,8 +103,8 @@
       <div class="assign-panel">
         <strong>Assign this voter</strong>
         <div class="assign-inline">
-          <label>Assigned person name
-            <input name="vote_assigned_by" value="${esc(voter.vote_assigned_by || '')}" placeholder="Write name here, example: Ahmed / Ali / Team 1">
+          <label>Assigned person / team name
+            <input name="vote_assigned_by" value="${esc(assignedName)}" placeholder="Blank until you write a name, example: Ahmed / Ali / Team 1">
           </label>
           <button class="btn" type="button" id="quickAssignBtn">Assign</button>
         </div>
@@ -151,8 +158,7 @@
       </div>
     `;
 
-    const quickAssign = form.querySelector('#quickAssignBtn');
-    quickAssign?.addEventListener('click', () => form.requestSubmit());
+    form.querySelector('#quickAssignBtn')?.addEventListener('click', () => form.requestSubmit());
     form.querySelector('#hotfixWhatsappBtn')?.addEventListener('click', () => {
       const msg = ['Campaign assignment', `Name: ${voter.name || '-'}`, `House: ${voter.house || voter.lives_in || '-'}`, `Phone: ${voter.phone || 'No phone'}`, `Assigned: ${form.elements.vote_assigned_by.value || '-'}`].join('\n');
       window.open(`https://wa.me/9607282399?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
@@ -170,6 +176,7 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
 
     const fd = Object.fromEntries(new FormData(form).entries());
+    const assigner = cleanAssigner(fd.vote_assigned_by);
     const updates = {
       phone: clean(fd.phone) || null,
       phone_status: fd.phone_status || 'need-call',
@@ -179,8 +186,8 @@
       transport_status: fd.transport_status || 'not-needed',
       support_level: fd.support_level || 'normal',
       remarks: clean(fd.remarks) || null,
-      vote_assigned_by: clean(fd.vote_assigned_by) || null,
-      vote_assigned_at: clean(fd.vote_assigned_by) ? new Date().toISOString() : currentVoter.vote_assigned_at || null
+      vote_assigned_by: assigner || null,
+      vote_assigned_at: assigner ? new Date().toISOString() : null
     };
 
     if (updates.phone_status === 'called' || updates.vote_status === 'will-vote' || updates.support_level === 'guaranteed') updates.reach_status = 'reached';
@@ -203,6 +210,7 @@
   function renderAssignedCard(voter) {
     const phone = clean(voter.phone) || 'No phone';
     const house = clean(voter.house || voter.lives_in || voter.living_place) || '-';
+    const assigned = cleanAssigner(voter.vote_assigned_by);
     return `
       <article class="voter-card" data-open-voter="${esc(voter.id)}" tabindex="0">
         <div class="voter-photo">${voter.photo_url ? `<img src="${esc(voter.photo_url)}" alt="${esc(voter.name || 'Voter photo')}" loading="lazy">` : `<div class="photo-placeholder">${esc(initials(voter.name))}</div>`}</div>
@@ -210,7 +218,7 @@
           <div class="voter-title"><h3>${esc(voter.name || 'Unknown voter')}</h3><span class="party-tag">${esc(voter.party || 'Blank party')}</span></div>
           <p>${esc(house)} · ${esc(phone)}</p>
           <div class="chips">
-            <span class="chip blue">Assigned: ${esc(voter.vote_assigned_by || '-')}</span>
+            <span class="chip blue">Assigned: ${esc(assigned || '-')}</span>
             ${voter.vote_status ? `<span class="chip">${esc(label(voter.vote_status))}</span>` : ''}
             ${voter.phone_status ? `<span class="chip">${esc(label(voter.phone_status))}</span>` : ''}
           </div>
@@ -220,20 +228,54 @@
     `;
   }
 
-  async function renderAssignSection() {
+  function assignerOptions(assigned) {
+    const map = new Map();
+    assigned.forEach(row => {
+      const name = cleanAssigner(row.vote_assigned_by);
+      if (!name) return;
+      map.set(name.toLowerCase(), { name, count: (map.get(name.toLowerCase())?.count || 0) + 1 });
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  function renderAssignerFilter(options, active) {
+    return `
+      <section class="assigner-filter panel">
+        <div class="form assigner-filter-grid">
+          <label>Filter by assigner
+            <select id="assignerSelect">
+              <option value="">All assigners</option>
+              ${options.map(item => `<option value="${esc(item.name)}" ${item.name === active ? 'selected' : ''}>${esc(item.name)} (${item.count})</option>`).join('')}
+            </select>
+          </label>
+          <button class="btn light" type="button" id="clearAssignerFilter">Clear</button>
+        </div>
+      </section>
+    `;
+  }
+
+  async function renderAssignSection(activeAssigner) {
     const list = document.getElementById('voterList');
     const title = document.getElementById('sectionTitle');
     const filter = document.getElementById('sectionFilter');
     const total = document.getElementById('sectionTotal');
     if (!list || !title || !filter || !total) return;
-    title.textContent = 'Assigned Voters';
-    filter.textContent = 'Voters that already have a name written in Assign. Open card to change the assigned person.';
+    title.textContent = activeAssigner ? `Assigned to ${activeAssigner}` : 'Assigned Voters';
+    filter.textContent = 'Use the assigner filter to see voters assigned to one person/team. Blank and naappe@gmail.com are treated as unassigned.';
     total.textContent = 'Loading...';
     list.innerHTML = '<div class="empty">Loading assigned voters...</div>';
+
     const rows = await fetchAllRows(true);
-    const assigned = rows.filter(row => clean(row.vote_assigned_by)).sort((a, b) => clean(a.vote_assigned_by).localeCompare(clean(b.vote_assigned_by)) || clean(a.name).localeCompare(clean(b.name)));
-    total.textContent = `${new Intl.NumberFormat('en-US').format(assigned.length)} voters`;
-    list.innerHTML = assigned.length ? assigned.map(renderAssignedCard).join('') : '<div class="empty">No voters assigned yet. Open any voter card and write the assigned person name.</div>';
+    const assigned = rows.filter(row => cleanAssigner(row.vote_assigned_by));
+    const options = assignerOptions(assigned);
+    const selected = cleanAssigner(activeAssigner);
+    const filtered = selected ? assigned.filter(row => cleanAssigner(row.vote_assigned_by).toLowerCase() === selected.toLowerCase()) : assigned;
+    const sorted = filtered.sort((a, b) => cleanAssigner(a.vote_assigned_by).localeCompare(cleanAssigner(b.vote_assigned_by)) || clean(a.name).localeCompare(clean(b.name)));
+
+    total.textContent = `${new Intl.NumberFormat('en-US').format(sorted.length)} voters`;
+    list.innerHTML = renderAssignerFilter(options, selected) + (sorted.length ? sorted.map(renderAssignedCard).join('') : '<div class="empty">No voters for this assigner. Open a voter card and write the assigned person/team name.</div>');
+    list.querySelector('#assignerSelect')?.addEventListener('change', event => renderAssignSection(event.target.value));
+    list.querySelector('#clearAssignerFilter')?.addEventListener('click', () => renderAssignSection(''));
     document.querySelector('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -243,7 +285,7 @@
     if (!summary || summary.dataset.assignReady === '1') return;
     summary.dataset.assignReady = '1';
     const rows = await fetchAllRows(false);
-    const count = rows.filter(row => clean(row.vote_assigned_by)).length;
+    const count = rows.filter(row => cleanAssigner(row.vote_assigned_by)).length;
     const number = new Intl.NumberFormat('en-US').format(count);
     summary.insertAdjacentHTML('beforeend', `
       <button class="stat-card assign-stat blue" data-hotfix-assign="1" type="button">
@@ -264,7 +306,7 @@
     event.stopImmediatePropagation();
     document.querySelectorAll('[data-filter], [data-hotfix-assign]').forEach(el => el.classList.remove('active'));
     assignButton.classList.add('active');
-    await renderAssignSection();
+    await renderAssignSection('');
   }, true);
 
   document.addEventListener('click', async (event) => {
