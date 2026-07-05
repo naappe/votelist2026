@@ -124,7 +124,8 @@
     if (searchInput) {
       searchInput.addEventListener('input', (event) => {
         state.searchTerm = event.target.value.trim().toLowerCase();
-        renderGrid();
+        if (state.searchTerm) state.activeFilter = 'all';
+        renderDashboard();
       });
     }
     if (clearSearchBtn) {
@@ -139,6 +140,9 @@
       const filterButton = event.target.closest('[data-filter]');
       if (filterButton) {
         state.activeFilter = filterButton.dataset.filter;
+        state.searchTerm = '';
+        const input = document.getElementById('searchInput');
+        if (input) input.value = '';
         renderDashboard();
         return;
       }
@@ -147,8 +151,8 @@
       if (houseButton) {
         state.activeFilter = 'all';
         state.searchTerm = houseButton.dataset.houseFilter.toLowerCase();
-        const input = document.getElementById('searchInput');
-        if (input) input.value = houseButton.dataset.houseFilter;
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = houseButton.dataset.houseFilter;
         renderDashboard();
         return;
       }
@@ -304,11 +308,11 @@
 
   function renderGrid() {
     const filter = getFilter(state.activeFilter);
-    const allSectionRows = getRows(state.activeFilter);
+    const allSectionRows = state.searchTerm ? state.rows : getRows(state.activeFilter);
     const rows = applySearch(allSectionRows);
-    document.getElementById('sectionTitle').textContent = filter.label;
+    document.getElementById('sectionTitle').textContent = state.searchTerm ? 'Search Results' : filter.label;
     document.getElementById('sectionFilter').textContent = state.searchTerm
-      ? `${filter.rule} Showing ${number(rows.length)} search matches.`
+      ? `Searching all ${state.partyScope} voters. Showing ${number(rows.length)} matches.`
       : filter.rule;
     document.getElementById('sectionTotal').textContent = `${number(rows.length)} voters`;
     document.getElementById('voterList').innerHTML = rows.length
