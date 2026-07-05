@@ -24,43 +24,23 @@
     'vote_assigned_at'
   ].join(',');
 
-  const sectionCopy = {
-    'need-call': {
-      filter: 'phone_status = need-call, with a phone number',
-      rule: 'Call result is one choice only. Called moves the voter to reached. Busy, switched off, disconnected, wrong number, and no phone stay not-reached and go to follow-up.'
-    },
-    reached: {
-      filter: 'reach_status = reached',
-      rule: 'Reached confirms contact, keeps phone_status called when needed, and saves the vote decision for this voter.'
-    },
-    'will-vote': {
-      filter: 'vote_status = will-vote',
-      rule: 'Will vote confirms support, can mark guaranteed support, and can request or arrange transport.'
-    },
-    pending: {
-      filter: 'vote_status = pending',
-      rule: 'Pending is the waiting list. Save the next call result or move the voter to will-vote, no-vote, or not-decided.'
-    },
-    'no-phone': {
-      filter: 'phone_status = no-phone or blank phone',
-      rule: 'No phone is for voters missing a usable number. Add a new phone to move them back to need-call, or keep them for door-to-door follow-up.'
-    },
-    'need-transport': {
-      filter: 'transport_status = need-transport',
-      rule: 'Need transport keeps the voter in will-vote and tracks whether pickup is needed, arranged, or completed.'
-    },
-    'follow-up': {
-      filter: 'd2d_status = follow-up or unresolved call result',
-      rule: 'Follow-up is for revisit work: not decided, no phone, busy, switched off, disconnected, wrong number, or not home.'
-    }
-  };
+  const filters = [
+    { key: 'all', label: 'All', icon: '👥', tone: 'blue', rule: 'All voters in the current dashboard scope.' },
+    { key: 'need-call', label: 'Need Call', icon: '📞', tone: 'yellow', rule: 'Phone contact is required. Called moves to reached; missed results move to follow-up.' },
+    { key: 'reached', label: 'Reached', icon: '✅', tone: 'green', rule: 'Contact was successful. Save vote decision and notes.' },
+    { key: 'will-vote', label: 'Will Vote', icon: '👍', tone: 'green', rule: 'Committed supporters. Track support strength and transport needs.' },
+    { key: 'pending', label: 'Pending', icon: '⏰', tone: 'purple', rule: 'Awaiting decision. Save call result, vote decision, and notes.' },
+    { key: 'no-phone', label: 'No Phone', icon: '🚫', tone: 'red', rule: 'Missing contact information. Add phone or send to door-to-door follow-up.' },
+    { key: 'need-transport', label: 'Transport', icon: '🚗', tone: 'yellow', rule: 'Ride assistance needed. Track arranged and picked-up progress.' },
+    { key: 'follow-up', label: 'Follow-up', icon: '🔄', tone: 'pink', rule: 'Needs revisit or recontact. Update D2D, call result, and vote decision.' }
+  ];
 
   const state = {
     rows: [],
     user: null,
     role: null,
     partyScope: 'ALL',
-    activeSection: 'need-call',
+    activeFilter: 'all',
     selectedVoter: null
   };
 
@@ -81,7 +61,7 @@
       const data = new FormData(form);
       const username = String(data.get('username') || '').trim();
       const password = String(data.get('password') || '');
-      const account = findLoginAccount(username);
+      const account = Object.values(config.loginUsers).find((item) => item.username === username);
 
       if (!account) {
         showLoginError(message, 'Username not found.');
@@ -92,11 +72,7 @@
       button.disabled = true;
       button.textContent = 'Checking...';
 
-      const { error } = await client.auth.signInWithPassword({
-        email: account.email,
-        password
-      });
-
+      const { error } = await client.auth.signInWithPassword({ email: account.email, password });
       button.disabled = false;
       button.textContent = 'Login';
 
@@ -111,29 +87,30 @@
   }
 
   async function initDashboard() {
-    bindDashboardEvents();
+    bindEvents();
 
-    const sessionResult = await client.auth.getSession();
-    const session = sessionResult.data.session;
-    if (!session) {
+    const { data } = await client.auth.getSession();
+    if (!data.session) {
       location.href = 'login.html?next=' + encodeURIComponent(location.pathname + location.search);
       return;
     }
 
-    state.user = session.user;
-    state.role = await resolveRole(session.user);
+    state.user = data.session.user;
+    state.role = await resolveRole(state.user);
     state.partyScope = resolvePartyScope();
 
     if (state.role.party && state.partyScope !== state.role.party) {
       state.partyScope = state.role.party;
-      updateUrlParty(state.partyScope);
+      const url = new URL(location.href);
+      url.searchParams.set('party', state.partyScope);
+      history.replaceState(null, '', url);
     }
 
     renderShell();
     await loadRows();
   }
 
-  function bindDashboardEvents() {
+  function bindEvents() {
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await client.auth.signOut();
       location.href = 'index.html';
@@ -141,10 +118,10 @@
 
     document.getElementById('refreshBtn').addEventListener('click', loadRows);
 
-    document.addEventListener('click', async (event) => {
-      const sectionButton = event.target.closest('[data-section]');
-      if (sectionButton) {
-        state.activeSection = sectionButton.dataset.section;
+    document.addEventListener('click', (event) => {
+      const filterButton = event.target.closest('[data-filter]');
+      if (filterButton) {
+        state.activeFilter = filterButton.dataset.filter;
         renderDashboard();
         return;
       }
@@ -156,18 +133,17 @@
         return;
       }
 
-      const resultButton = event.target.closest('[data-result]');
-      if (resultButton) {
+      const option = event.target.closest('[data-choice]');
+      if (option) {
         const form = document.getElementById('voterForm');
-        form.querySelectorAll('[data-result]').forEach((button) => button.classList.remove('active'));
-        resultButton.classList.add('active');
-        form.elements.call_result.value = resultButton.dataset.result;
+        const input = form.elements[option.dataset.name];
+        form.querySelectorAll(`[data-name="${option.dataset.name}"]`).forEach((button) => button.classList.remove('active'));
+        option.classList.add('active');
+        input.value = option.dataset.choice;
         return;
       }
 
-      if (event.target.closest('[data-close-modal]')) {
-        closeModal();
-      }
+      if (event.target.closest('[data-close-modal]')) closeModal();
     });
 
     document.addEventListener('keydown', (event) => {
@@ -177,8 +153,8 @@
 
   async function loadRows() {
     setStatus('Loading voters...');
-    const pageSize = 1000;
     let from = 0;
+    const pageSize = 1000;
     let rows = [];
 
     while (true) {
@@ -188,9 +164,7 @@
         .order('image_number', { ascending: true, nullsFirst: false })
         .range(from, from + pageSize - 1);
 
-      if (state.partyScope !== 'ALL') {
-        query = query.eq('party', state.partyScope);
-      }
+      if (state.partyScope !== 'ALL') query = query.eq('party', state.partyScope);
 
       const { data, error } = await query;
       if (error) {
@@ -209,118 +183,124 @@
   }
 
   function renderShell() {
-    const title = state.partyScope === 'ALL' ? 'Admin Dashboard' : `${state.partyScope} Dashboard`;
+    const title = state.partyScope === 'ALL' ? 'Voter Manager Dashboard' : `${state.partyScope} Voter Manager`;
     const subtitle = state.partyScope === 'ALL'
-      ? 'Admin view shows total, MDP, PNC, no-party and every campaign section.'
-      : `Only ${state.partyScope} voters are shown. Each section saves its own campaign result.`;
+      ? 'Filter voters, open a card, then complete campaign work inside the popup.'
+      : `Showing only ${state.partyScope} voters. Sections filter the grid; popups save campaign work.`;
     document.getElementById('dashboardTitle').textContent = title;
     document.getElementById('dashboardSubtitle').textContent = subtitle;
   }
 
   function renderDashboard() {
     renderShell();
-    renderSummary();
-    renderSections();
-    renderActiveSection();
+    renderStats();
+    renderTabs();
+    renderGrid();
   }
 
-  function renderSummary() {
-    const el = document.getElementById('summary');
-    const rows = state.rows;
-    const cards = state.partyScope === 'ALL'
-      ? [
-          ['Total voters', rows.length],
-          ['MDP', rows.filter((row) => row.party === 'MDP').length],
-          ['PNC', rows.filter((row) => row.party === 'PNC').length],
-          ['Not party', rows.filter((row) => !['MDP', 'PNC'].includes(row.party)).length]
-        ]
-      : [
-          ['Total in view', rows.length],
-          ['Need call', rows.filter(isNeedCall).length],
-          ['Will vote', rows.filter((row) => row.vote_status === 'will-vote').length],
-          ['Pending', rows.filter((row) => row.vote_status === 'pending').length]
-        ];
-
-    el.innerHTML = cards.map(([label, value]) => `
-      <article class="card">
-        <strong>${number(value)}</strong>
-        <span>${escapeHtml(label)}</span>
-      </article>
-    `).join('');
-  }
-
-  function renderSections() {
-    const el = document.getElementById('sections');
-    el.innerHTML = config.sections.map((section) => {
-      const count = getSectionRows(section.key).length;
-      const copy = sectionCopy[section.key];
+  function renderStats() {
+    document.getElementById('summary').innerHTML = filters.map((filter) => {
+      const value = countFor(filter.key);
       return `
-        <button class="section-card ${section.key === state.activeSection ? 'active' : ''}" data-section="${section.key}" type="button">
-          <small>${escapeHtml(section.field)}</small>
-          <strong>${escapeHtml(section.label)}</strong>
-          <span>${number(count)} voters<br>${escapeHtml(copy.filter)}</span>
+        <button class="stat-card ${filter.tone} ${state.activeFilter === filter.key ? 'active' : ''}" data-filter="${filter.key}" type="button">
+          <span class="stat-icon">${filter.icon}</span>
+          <span class="stat-text">
+            <strong>${number(value)}</strong>
+            <small>${escapeHtml(filter.label)}</small>
+          </span>
         </button>
       `;
     }).join('');
   }
 
-  function renderActiveSection() {
-    const section = getSection(state.activeSection);
-    const rows = getSectionRows(state.activeSection);
-    const copy = sectionCopy[state.activeSection];
+  function renderTabs() {
+    document.getElementById('sections').innerHTML = filters.map((filter) => `
+      <button class="tab ${state.activeFilter === filter.key ? 'active' : ''}" data-filter="${filter.key}" type="button">
+        ${escapeHtml(filter.label)}
+        <span>${number(countFor(filter.key))}</span>
+      </button>
+    `).join('');
+  }
 
-    document.getElementById('sectionTitle').textContent = section.label;
-    document.getElementById('sectionFilter').textContent = copy.filter;
+  function renderGrid() {
+    const filter = getFilter(state.activeFilter);
+    const rows = getRows(state.activeFilter);
+    document.getElementById('sectionTitle').textContent = filter.label;
+    document.getElementById('sectionFilter').textContent = filter.rule;
     document.getElementById('sectionTotal').textContent = `${number(rows.length)} voters`;
-    document.getElementById('logicTitle').textContent = `${section.label} Function`;
-    document.getElementById('logicText').textContent = copy.rule;
-    document.getElementById('logicList').innerHTML = renderLogicList(state.activeSection);
-    document.getElementById('sectionStats').innerHTML = renderSectionStats(rows);
     document.getElementById('voterList').innerHTML = rows.length
       ? rows.map(renderVoterCard).join('')
       : '<div class="empty">No voters in this section right now.</div>';
   }
 
   function renderVoterCard(voter) {
+    const section = getFilter(sectionFor(voter));
     return `
       <article class="voter-card" data-open-voter="${escapeAttr(voter.id)}" tabindex="0">
         <div class="voter-photo">${renderPhoto(voter)}</div>
         <div class="voter-info">
-          <h3>${escapeHtml(voter.name || 'Unknown voter')}</h3>
-          <div class="info-grid">
-            <span>House: ${escapeHtml(voter.house || '-')}</span>
-            <span>Box: ${escapeHtml(voter.election_box || '-')}</span>
-            <span>Party: ${escapeHtml(voter.party || 'Not party')}</span>
-            <span>Phone: ${escapeHtml(voter.phone || 'No phone')}</span>
+          <div class="voter-title">
+            <h3>${escapeHtml(voter.name || 'Unknown voter')}</h3>
+            <span class="party-tag">${escapeHtml(voter.party || 'Not party')}</span>
           </div>
+          <p>${escapeHtml(voter.house || '-')} · Box ${escapeHtml(voter.election_box || '-')} · ${escapeHtml(voter.phone || 'No phone')}</p>
           <div class="chips">
-            ${chip(voter.phone_status, 'blue')}
-            ${chip(voter.reach_status, voter.reach_status === 'reached' ? 'green' : '')}
+            ${chip(voter.reach_status, voter.reach_status === 'reached' ? 'green' : 'red')}
             ${chip(voter.vote_status, voter.vote_status === 'will-vote' ? 'green' : voter.vote_status === 'pending' ? 'amber' : '')}
-            ${chip(voter.transport_status, voter.transport_status === 'need-transport' ? 'red' : '')}
-            ${chip(voter.d2d_status, voter.d2d_status === 'follow-up' ? 'amber' : '')}
+            ${chip(voter.phone_status, voter.phone_status === 'called' ? 'green' : voter.phone_status === 'no-phone' ? 'red' : 'blue')}
+            ${chip(voter.support_level, voter.support_level === 'guaranteed' ? 'green' : '')}
           </div>
+          <div class="section-label ${section.tone}">${section.icon} ${escapeHtml(section.label)}</div>
         </div>
-        <button class="btn" type="button" data-open-voter="${escapeAttr(voter.id)}">Open</button>
       </article>
     `;
   }
 
   function openVoter(voter) {
+    const sectionKey = state.activeFilter === 'all' ? sectionFor(voter) : state.activeFilter;
+    const section = getFilter(sectionKey);
     state.selectedVoter = voter;
-    const section = getSection(state.activeSection);
-    const modal = document.getElementById('voterModal');
+
     document.getElementById('modalSection').textContent = section.label;
     document.getElementById('modalTitle').textContent = voter.name || 'Unknown voter';
-    document.getElementById('modalMeta').textContent = `${voter.house || '-'} | Box ${voter.election_box || '-'} | ${voter.phone || 'No phone'}`;
+    document.getElementById('modalMeta').textContent = `${voter.house || '-'} · Box ${voter.election_box || '-'} · ${voter.phone || 'No phone'}`;
     document.getElementById('modalPhoto').src = voter.photo_url || '';
     document.getElementById('modalPhoto').alt = voter.name || 'Voter photo';
-    document.getElementById('voterForm').innerHTML = renderSectionForm(state.activeSection, voter);
-    document.getElementById('voterForm').onsubmit = saveVoter;
-    modal.hidden = false;
+    document.getElementById('voterForm').innerHTML = renderModalForm(sectionKey, voter);
+    document.getElementById('voterForm').onsubmit = (event) => saveVoter(event, sectionKey);
+    document.getElementById('voterModal').hidden = false;
   }
 
-  async function saveVoter(event) {
+  function renderModalForm(sectionKey, voter) {
+    const section = getFilter(sectionKey);
+    const common = `
+      <label>Remarks
+        <textarea name="remarks" placeholder="Short campaign note">${escapeHtml(voter.remarks || '')}</textarea>
+      </label>
+      <div class="modal-actions">
+        <button class="btn light" type="button" data-close-modal>Cancel</button>
+        <button class="btn" type="submit">Save Section</button>
+      </div>
+    `;
+
+    const intro = `
+      <div class="logic-box">
+        <strong>${section.icon} ${escapeHtml(section.label)} Function</strong>
+        <p>${escapeHtml(section.rule)}</p>
+      </div>
+    `;
+
+    if (sectionKey === 'need-call') return intro + phoneField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + common;
+    if (sectionKey === 'reached') return intro + voteField(voter) + common;
+    if (sectionKey === 'will-vote') return intro + supportField(voter) + transportField(voter) + common;
+    if (sectionKey === 'pending') return intro + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + common;
+    if (sectionKey === 'no-phone') return intro + phoneField(voter, 'New Phone') + d2dField(voter) + common;
+    if (sectionKey === 'need-transport') return intro + transportField(voter, 'need-transport') + supportField(voter) + common;
+    if (sectionKey === 'follow-up') return intro + d2dField(voter) + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + common;
+    return intro + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + supportField(voter) + transportField(voter) + d2dField(voter) + common;
+  }
+
+  async function saveVoter(event, sectionKey) {
     event.preventDefault();
     const voter = state.selectedVoter;
     if (!voter) return;
@@ -331,16 +311,10 @@
     button.textContent = 'Saving...';
 
     const formData = Object.fromEntries(new FormData(form).entries());
-    const updates = buildUpdates(state.activeSection, voter, formData);
+    const updates = buildUpdates(sectionKey, voter, formData);
 
-    let query = client
-      .from(config.table)
-      .update(updates)
-      .eq('id', voter.id);
-
-    if (state.partyScope !== 'ALL') {
-      query = query.eq('party', state.partyScope);
-    }
+    let query = client.from(config.table).update(updates).eq('id', voter.id);
+    if (state.partyScope !== 'ALL') query = query.eq('party', state.partyScope);
 
     const { data, error } = await query.select(columns).single();
     button.disabled = false;
@@ -354,93 +328,7 @@
     state.rows = state.rows.map((row) => row.id === voter.id ? data : row);
     closeModal();
     renderDashboard();
-    setStatus('Saved. Voter card updated and moved to the correct section.');
-  }
-
-  function renderSectionForm(sectionKey, voter) {
-    const note = escapeAttr(voter.remarks || '');
-    const commonRemarks = `
-      <label>Remarks
-        <textarea name="remarks" placeholder="Short campaign note">${escapeHtml(voter.remarks || '')}</textarea>
-      </label>
-      <button class="btn full" type="submit">Save Section</button>
-    `;
-
-    if (sectionKey === 'need-call') {
-      return `
-        ${callResultButtons(voter.phone_status || 'need-call')}
-        <label>Vote Decision
-          ${select('vote_status', ['pending', 'will-vote', 'no-vote', 'not-decided'], voter.vote_status || 'pending')}
-        </label>
-        ${commonRemarks}
-      `;
-    }
-
-    if (sectionKey === 'reached') {
-      return `
-        <label>Vote Decision
-          ${select('vote_status', ['pending', 'will-vote', 'no-vote', 'not-decided'], voter.vote_status || 'pending')}
-        </label>
-        ${commonRemarks}
-      `;
-    }
-
-    if (sectionKey === 'will-vote') {
-      return `
-        <label>Support Level
-          ${select('support_level', ['normal', 'guaranteed'], voter.support_level || 'normal')}
-        </label>
-        <label>Transport
-          ${select('transport_status', ['not-needed', 'need-transport', 'arranged', 'picked-up'], voter.transport_status || 'not-needed')}
-        </label>
-        ${commonRemarks}
-      `;
-    }
-
-    if (sectionKey === 'pending') {
-      return `
-        ${callResultButtons(voter.phone_status || 'need-call')}
-        <label>Vote Decision
-          ${select('vote_status', ['pending', 'will-vote', 'no-vote', 'not-decided'], voter.vote_status || 'pending')}
-        </label>
-        ${commonRemarks}
-      `;
-    }
-
-    if (sectionKey === 'no-phone') {
-      return `
-        <label>New Phone Number
-          <input name="phone" value="${escapeAttr(voter.phone || '')}" placeholder="Enter phone number if found">
-        </label>
-        <label>Door-to-door Status
-          ${select('d2d_status', ['follow-up', 'not-visited', 'visited', 'not-home'], voter.d2d_status || 'follow-up')}
-        </label>
-        ${commonRemarks}
-      `;
-    }
-
-    if (sectionKey === 'need-transport') {
-      return `
-        <label>Transport
-          ${select('transport_status', ['need-transport', 'arranged', 'picked-up', 'not-needed'], voter.transport_status || 'need-transport')}
-        </label>
-        <label>Support Level
-          ${select('support_level', ['normal', 'guaranteed'], voter.support_level || 'normal')}
-        </label>
-        ${commonRemarks}
-      `;
-    }
-
-    return `
-      <label>Door-to-door Status
-        ${select('d2d_status', ['follow-up', 'not-visited', 'visited', 'not-home'], voter.d2d_status || 'follow-up')}
-      </label>
-      <label>Vote Decision
-        ${select('vote_status', ['pending', 'will-vote', 'no-vote', 'not-decided'], voter.vote_status || 'not-decided')}
-      </label>
-      ${callResultButtons(voter.phone_status || 'need-call')}
-      ${commonRemarks}
-    `;
+    setStatus('Saved. Voter moved to the correct section.');
   }
 
   function buildUpdates(sectionKey, voter, data) {
@@ -450,36 +338,24 @@
       vote_assigned_at: new Date().toISOString()
     };
 
-    if (sectionKey === 'need-call') {
-      applyCallResult(updates, data.call_result || voter.phone_status || 'need-call');
-      updates.vote_status = data.vote_status || voter.vote_status || 'pending';
+    if (data.phone !== undefined) {
+      const phone = clean(data.phone);
+      if (phone) updates.phone = phone;
     }
+    if (data.vote_status) updates.vote_status = data.vote_status;
+    if (data.support_level) updates.support_level = data.support_level;
+    if (data.transport_status) updates.transport_status = data.transport_status;
+    if (data.d2d_status) updates.d2d_status = data.d2d_status;
+    if (data.call_result) applyCallResult(updates, data.call_result);
 
-    if (sectionKey === 'reached') {
-      updates.reach_status = 'reached';
-      updates.vote_status = data.vote_status || voter.vote_status || 'pending';
-      if (voter.phone_status === 'need-call') updates.phone_status = 'called';
-      if (updates.vote_status === 'not-decided') updates.d2d_status = 'follow-up';
-    }
-
+    if (sectionKey === 'need-call' && data.call_result === 'called') updates.reach_status = 'reached';
+    if (sectionKey === 'reached') updates.reach_status = 'reached';
     if (sectionKey === 'will-vote') {
-      updates.reach_status = 'reached';
       updates.vote_status = 'will-vote';
-      updates.support_level = data.support_level || voter.support_level || 'normal';
-      updates.transport_status = data.transport_status || voter.transport_status || 'not-needed';
+      updates.reach_status = 'reached';
     }
-
-    if (sectionKey === 'pending') {
-      updates.vote_status = data.vote_status || 'pending';
-      if (data.call_result) applyCallResult(updates, data.call_result);
-      if (updates.vote_status === 'will-vote') updates.reach_status = 'reached';
-      if (['no-vote', 'not-decided'].includes(updates.vote_status)) updates.d2d_status = 'follow-up';
-    }
-
     if (sectionKey === 'no-phone') {
-      const newPhone = clean(data.phone);
-      if (newPhone) {
-        updates.phone = newPhone;
+      if (clean(data.phone)) {
         updates.phone_status = 'need-call';
         updates.d2d_status = data.d2d_status || 'not-visited';
       } else {
@@ -487,20 +363,14 @@
         updates.d2d_status = data.d2d_status || 'follow-up';
       }
     }
-
     if (sectionKey === 'need-transport') {
-      updates.reach_status = 'reached';
       updates.vote_status = 'will-vote';
+      updates.reach_status = 'reached';
       updates.transport_status = data.transport_status || 'need-transport';
-      updates.support_level = data.support_level || voter.support_level || 'normal';
     }
-
-    if (sectionKey === 'follow-up') {
-      updates.d2d_status = data.d2d_status || 'follow-up';
-      updates.vote_status = data.vote_status || voter.vote_status || 'not-decided';
-      if (data.call_result) applyCallResult(updates, data.call_result);
-      if (updates.vote_status === 'will-vote') updates.reach_status = 'reached';
-    }
+    if (sectionKey === 'follow-up' && data.vote_status === 'will-vote') updates.reach_status = 'reached';
+    if (updates.vote_status === 'will-vote') updates.reach_status = 'reached';
+    if (['no-vote', 'not-decided'].includes(updates.vote_status)) updates.d2d_status = updates.d2d_status || 'follow-up';
 
     return updates;
   }
@@ -517,8 +387,64 @@
     }
   }
 
-  function callResultButtons(active) {
-    const options = [
+  function phoneField(voter, labelText) {
+    return `
+      <label>${escapeHtml(labelText || 'Phone')}
+        <input name="phone" value="${escapeAttr(voter.phone || '')}" placeholder="Phone number">
+      </label>
+    `;
+  }
+
+  function voteField(voter) {
+    return `
+      <label>Vote Decision
+        ${select('vote_status', ['pending', 'will-vote', 'no-vote', 'not-decided'], voter.vote_status || 'pending')}
+      </label>
+    `;
+  }
+
+  function supportField(voter) {
+    return `
+      <label>Support Level
+        ${select('support_level', ['normal', 'guaranteed'], voter.support_level || 'normal')}
+      </label>
+    `;
+  }
+
+  function transportField(voter, fallback) {
+    return `
+      <label>Transport Status
+        ${select('transport_status', ['not-needed', 'need-transport', 'arranged', 'picked-up'], voter.transport_status || fallback || 'not-needed')}
+      </label>
+    `;
+  }
+
+  function d2dField(voter) {
+    return `
+      <label>D2D Status
+        ${select('d2d_status', ['not-visited', 'visited', 'not-home', 'follow-up'], voter.d2d_status || 'not-visited')}
+      </label>
+    `;
+  }
+
+  function choiceGroup(name, options, active) {
+    return `
+      <input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(active)}">
+      <div>
+        <label>${label(name)}</label>
+        <div class="choice-grid">
+          ${options.map(([value, text]) => `
+            <button class="choice-btn ${value === active ? 'active' : ''}" type="button" data-name="${escapeAttr(name)}" data-choice="${escapeAttr(value)}">
+              ${escapeHtml(text)}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function callOptions() {
+    return [
       ['called', 'Called'],
       ['busy', 'Busy'],
       ['switched-off', 'Switched Off'],
@@ -526,17 +452,6 @@
       ['wrong-number', 'Wrong Number'],
       ['no-phone', 'No Phone']
     ];
-    return `
-      <input type="hidden" name="call_result" value="${escapeAttr(active)}">
-      <div>
-        <label>Call Result</label>
-        <div class="result-grid">
-          ${options.map(([value, label]) => `
-            <button class="result-btn ${value === active ? 'active' : ''}" type="button" data-result="${value}">${label}</button>
-          `).join('')}
-        </div>
-      </div>
-    `;
   }
 
   function select(name, values, active) {
@@ -547,50 +462,33 @@
     `;
   }
 
-  function renderLogicList(sectionKey) {
-    const rules = {
-      'need-call': ['Called -> reached', 'Busy / switched off / disconnected -> follow-up', 'No phone -> no-phone section'],
-      reached: ['Save vote decision', 'Not decided -> follow-up', 'Called is set if phone was still need-call'],
-      'will-vote': ['Vote status stays will-vote', 'Support can become guaranteed', 'Transport can become need-transport'],
-      pending: ['Default waiting list', 'Can move to will-vote, no-vote, or not-decided', 'Call result also updates phone status'],
-      'no-phone': ['Add phone -> need-call', 'No number -> follow-up', 'Door-to-door status is tracked'],
-      'need-transport': ['Vote status stays will-vote', 'Transport can be arranged or picked-up', 'Support level can be guaranteed'],
-      'follow-up': ['Door-to-door status is saved', 'Vote decision is saved', 'Resolved voters move to the correct section']
-    };
-    return (rules[sectionKey] || []).map((rule) => `<div class="logic-item">${escapeHtml(rule)}</div>`).join('');
+  function countFor(key) {
+    return getRows(key).length;
   }
 
-  function renderSectionStats(rows) {
-    const called = rows.filter((row) => row.phone_status === 'called').length;
-    const willVote = rows.filter((row) => row.vote_status === 'will-vote').length;
-    const followUp = rows.filter((row) => row.d2d_status === 'follow-up').length;
-    return [
-      ['Called', called],
-      ['Will vote', willVote],
-      ['Follow-up', followUp]
-    ].map(([labelText, value]) => `
-      <div class="chart-tile">
-        <strong>${number(value)}</strong>
-        <span>${escapeHtml(labelText)}</span>
-      </div>
-    `).join('');
-  }
-
-  function getSectionRows(sectionKey) {
+  function getRows(key) {
+    if (key === 'all') return state.rows;
     return state.rows.filter((row) => {
-      if (sectionKey === 'need-call') return isNeedCall(row);
-      if (sectionKey === 'reached') return row.reach_status === 'reached';
-      if (sectionKey === 'will-vote') return row.vote_status === 'will-vote';
-      if (sectionKey === 'pending') return row.vote_status === 'pending';
-      if (sectionKey === 'no-phone') return row.phone_status === 'no-phone' || !hasPhone(row);
-      if (sectionKey === 'need-transport') return row.transport_status === 'need-transport';
-      if (sectionKey === 'follow-up') return isFollowUp(row);
+      if (key === 'need-call') return row.phone_status === 'need-call' && hasPhone(row);
+      if (key === 'reached') return row.reach_status === 'reached';
+      if (key === 'will-vote') return row.vote_status === 'will-vote';
+      if (key === 'pending') return row.vote_status === 'pending';
+      if (key === 'no-phone') return row.phone_status === 'no-phone' || !hasPhone(row);
+      if (key === 'need-transport') return row.transport_status === 'need-transport';
+      if (key === 'follow-up') return isFollowUp(row);
       return false;
     });
   }
 
-  function isNeedCall(row) {
-    return row.phone_status === 'need-call' && hasPhone(row);
+  function sectionFor(row) {
+    if (row.phone_status === 'no-phone' || !hasPhone(row)) return 'no-phone';
+    if (row.transport_status === 'need-transport') return 'need-transport';
+    if (isFollowUp(row)) return 'follow-up';
+    if (row.vote_status === 'will-vote') return 'will-vote';
+    if (row.reach_status === 'reached') return 'reached';
+    if (row.vote_status === 'pending') return 'pending';
+    if (row.phone_status === 'need-call') return 'need-call';
+    return 'all';
   }
 
   function isFollowUp(row) {
@@ -603,12 +501,8 @@
     return Boolean(String(row.phone || '').trim());
   }
 
-  function getSection(key) {
-    return config.sections.find((section) => section.key === key) || config.sections[0];
-  }
-
-  function findLoginAccount(username) {
-    return Object.values(config.loginUsers).find((account) => account.username === username);
+  function getFilter(key) {
+    return filters.find((filter) => filter.key === key) || filters[0];
   }
 
   async function resolveRole(user) {
@@ -637,12 +531,6 @@
     return state.role.party || requested;
   }
 
-  function updateUrlParty(party) {
-    const url = new URL(location.href);
-    url.searchParams.set('party', party);
-    history.replaceState(null, '', url);
-  }
-
   function closeModal() {
     const modal = document.getElementById('voterModal');
     if (modal) modal.hidden = true;
@@ -662,10 +550,14 @@
   }
 
   function renderPhoto(voter) {
-    if (!voter.photo_url) {
-      return `<div class="photo-placeholder">${escapeHtml((voter.name || '?').slice(0, 1))}</div>`;
+    if (voter.photo_url) {
+      return `<img src="${escapeAttr(voter.photo_url)}" alt="${escapeAttr(voter.name || 'Voter photo')}" loading="lazy">`;
     }
-    return `<img src="${escapeAttr(voter.photo_url)}" alt="${escapeAttr(voter.name || 'Voter photo')}" loading="lazy">`;
+    return `<div class="photo-placeholder">${escapeHtml(initials(voter.name))}</div>`;
+  }
+
+  function initials(name) {
+    return String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase();
   }
 
   function chip(value, color) {
@@ -674,7 +566,7 @@
   }
 
   function label(value) {
-    return String(value || '-').replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+    return String(value || '-').replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
   function clean(value) {
