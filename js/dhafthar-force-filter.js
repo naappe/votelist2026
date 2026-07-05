@@ -1,14 +1,19 @@
 (function () {
   let cachedRows = null;
 
-  function isDhafthar(value) {
-    const raw = String(value || '').toLowerCase();
-    const compact = raw
+  function compactText(value) {
+    return String(value || '').toLowerCase()
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
-      .replace(/['`’.\-]/g, '')
+      .replace(/['`'.-]/g, '')
       .replace(/\s+/g, '');
+  }
+
+  function isDhafthar(value) {
+    const raw = String(value || '').toLowerCase();
+    const compact = compactText(value);
     return raw.includes('dhaf')
+      || raw.includes('dhaft')
       || raw.includes('no dh r')
       || raw.includes('dh r')
       || /^df\d*/.test(compact)
@@ -17,6 +22,25 @@
       || compact.startsWith('dhafthar')
       || compact.startsWith('dhaftharu')
       || compact.startsWith('dafthar');
+  }
+
+  function extractHouse(value) {
+    const original = String(value || '').trim();
+    if (!original) return 'Unknown house';
+    if (!isDhafthar(original)) return original.replace(/^v\.\s*/i, '').replace(/\s+/g, ' ').trim();
+
+    const house = original
+      .replace(/^dhaftharu?\.?\s*/i, '')
+      .replace(/^dhaftaru?\.?\s*/i, '')
+      .replace(/^daftharu?\.?\s*/i, '')
+      .replace(/^df\.?\s*/i, '')
+      .replace(/\brs\s*no\.?\s*/i, 'RS ')
+      .replace(/\bno\.?\s*/i, '')
+      .replace(/\bdh\s*r\b\.?\s*/i, 'DH R ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return house || 'Dhafthar';
   }
 
   function partyParam() {
@@ -29,6 +53,10 @@
     if (selected === 'ALL') return true;
     if (party === selected) return true;
     return selected === 'PNC' && !party && isDhafthar(row.house);
+  }
+
+  function cleanHouse(row) {
+    return String(row.house || row.lives_in || row.living_place || '-').trim() || '-';
   }
 
   async function fetchRows() {
@@ -72,10 +100,6 @@
     return value ? `<span class="chip">${escapeHtml(String(value).replace(/[-_]/g, ' '))}</span>` : '';
   }
 
-  function cleanHouse(row) {
-    return String(row.house || row.lives_in || row.living_place || '-').trim() || '-';
-  }
-
   function renderCard(voter) {
     const phone = String(voter.phone || '').trim() || 'No phone';
     return `
@@ -91,15 +115,22 @@
             ${chip(voter.d2d_status)}
             ${chip(voter.support_level)}
           </div>
-          <div class="section-label blue">House - Dhafthar</div>
+          <div class="section-label blue">House - ${escapeHtml(extractHouse(cleanHouse(voter)))}</div>
         </div>
       </article>
     `;
   }
 
-  async function dhaftharRows() {
-    const rows = await fetchRows();
-    return rows.filter((row) => partyAllowed(row) && isDhafthar([row.house, row.lives_in, row.living_place].join(' ')));
+  function groupedDhaftharRows(rows) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const house = extractHouse(cleanHouse(row));
+      const key = house.toLowerCase();
+      const group = groups.get(key) || { house, voters: [] };
+      group.voters.push(row);
+      groups.set(key, group);
+    });
+    return Array.from(groups.values()).sort((a, b) => b.voters.length - a.voters.length || a.house.localeCompare(b.house));
   }
 
   async function renderDhafthar() {
@@ -117,38 +148,30 @@
     if (box) box.value = '';
 
     title.textContent = 'House - Dhafthar';
-    filter.textContent = 'Dhafthar includes Dhafthar, Dhaftharu, DF, Dh R, No Dh R, and blank-party Dhafthar rows.';
+    filter.textContent = 'Dhafthar voters grouped by their specific house number.';
     total.textContent = 'Loading...';
     list.innerHTML = '<div class="empty">Loading Dhafthar voters...</div>';
 
-    const voters = await dhaftharRows();
+    const rows = await fetchRows();
+    const voters = rows.filter((row) => partyAllowed(row) && isDhafthar([row.house, row.lives_in, row.living_place].join(' ')));
+    const groups = groupedDhaftharRows(voters);
     total.textContent = `${new Intl.NumberFormat('en-US').format(voters.length)} voters`;
-    list.innerHTML = voters.length ? voters.map(renderCard).join('') : '<div class="empty">No Dhafthar voters found.</div>';
+    list.innerHTML = groups.length
+      ? groups.map((group) => `
+        <section class="dhafthar-house-group">
+          <h3>${escapeHtml(group.house)} <span>${new Intl.NumberFormat('en-US').format(group.voters.length)} voters</span></h3>
+          ${group.voters.map(renderCard).join('')}
+        </section>
+      `).join('')
+      : '<div class="empty">No Dhafthar voters found.</div>';
     list.closest('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  async function refreshDhaftharTopHouse() {
-    const topHouses = document.getElementById('topHouses');
-    if (!topHouses || document.body.classList.contains('clean-read-view')) return;
-    const rows = await dhaftharRows();
-    if (!rows.length) return;
-    let dhaftharRow = topHouses.querySelector('[data-cleanup-house="__dhafthar__"], [data-house-filter="__dhafthar__"]');
-    if (!dhaftharRow) {
-      dhaftharRow = document.createElement('button');
-      dhaftharRow.className = 'house-row';
-      dhaftharRow.type = 'button';
-      dhaftharRow.dataset.cleanupHouse = '__dhafthar__';
-      dhaftharRow.dataset.houseLabel = 'Dhafthar';
-      topHouses.prepend(dhaftharRow);
-    }
-    dhaftharRow.innerHTML = `<span class="house-main"><span>1. Dhafthar</span></span><strong>${new Intl.NumberFormat('en-US').format(rows.length)}</strong>`;
   }
 
   function shouldForceDhafthar(event) {
     const select = event.target?.id === 'houseSelect' ? event.target : null;
     if (select?.value === '__dhafthar__') return true;
     const row = event.target?.closest?.('[data-cleanup-house], [data-house-filter]');
-    return row && (row.dataset.cleanupHouse === '__dhafthar__' || isDhafthar(row.dataset.houseLabel || row.textContent));
+    return row?.dataset.cleanupHouse === '__dhafthar__' || row?.dataset.houseFilter === '__dhafthar__';
   }
 
   document.addEventListener('change', (event) => {
@@ -166,7 +189,4 @@
     event.stopImmediatePropagation();
     renderDhafthar();
   }, true);
-
-  window.addEventListener('load', () => setTimeout(refreshDhaftharTopHouse, 1200));
-  setTimeout(refreshDhaftharTopHouse, 2500);
 })();
