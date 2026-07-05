@@ -174,16 +174,33 @@
   }
 
   function isDhaftharHouse(value) {
-    const compact = String(value || '').toLowerCase()
+    const raw = String(value || '').toLowerCase();
+    const compact = raw
       .normalize('NFKD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/['`’.\-]/g, '')
       .replace(/\s+/g, '');
-    return /^df\d*/.test(compact)
+    return raw.includes('dhaf')
+      || raw.includes('no dh r')
+      || raw.includes('dh r')
+      || /^df\d*/.test(compact)
       || /^dhr\d*/.test(compact)
       || /^nodhr\d*/.test(compact)
       || compact.startsWith('dhafthar')
+      || compact.startsWith('dhaftharu')
       || compact.startsWith('dafthar');
+  }
+
+  function isDhaftharSearch(value) {
+    const text = String(value || '').toLowerCase().trim();
+    const compact = text.replace(/[^a-z0-9]/g, '');
+    return text.includes('dhaf')
+      || text.includes('no dh r')
+      || text.includes('dh r')
+      || compact === 'df'
+      || compact.startsWith('df')
+      || compact.startsWith('dhr')
+      || compact.startsWith('nodhr');
   }
 
   function renderCleanupCard(voter) {
@@ -537,6 +554,17 @@
       setTimeout(scrollToList, 80);
     }
     setTimeout(tidyDashboard, 0);
+  }, true);
+
+  document.addEventListener('input', (event) => {
+    if (event.target?.id !== 'searchInput' || !isDhaftharSearch(event.target.value)) return;
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    const house = document.getElementById('houseSelect');
+    const box = document.getElementById('boxSelect');
+    if (house) house.value = '__dhafthar__';
+    if (box) box.value = '';
+    renderDhaftharRows();
   }, true);
 
   document.addEventListener('change', (event) => {
