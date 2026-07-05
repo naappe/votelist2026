@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css?v=20260705-6">
+  <link rel="stylesheet" href="style.css?v=20260705-7">
 </head>
 <body data-page="dashboard">
   <header class="topbar">
     <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
     <nav class="toolbar">
       <a class="btn light" href="index.html">Home</a>
+      <button id="zeroDayBtn" class="btn light" type="button">Zero Day</button>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -29,9 +30,25 @@
     <section id="sections" class="tabs" aria-label="Voter filters"></section>
 
     <section class="panel" aria-label="Search voters">
-      <div class="form">
+      <div class="form search-grid">
+        <label>Search by
+          <select id="searchField">
+            <option value="all">All fields</option>
+            <option value="name">Name</option>
+            <option value="national_id">ID</option>
+            <option value="phone">Phone</option>
+            <option value="house">House</option>
+            <option value="election_box">Box</option>
+            <option value="party">Party</option>
+          </select>
+        </label>
         <label>Search voters
           <input id="searchInput" type="search" placeholder="Name, ID, phone, house, box, party">
+        </label>
+        <label>House
+          <select id="houseSelect">
+            <option value="">All houses</option>
+          </select>
         </label>
         <button id="clearSearchBtn" class="btn light" type="button">Clear Search</button>
       </div>
@@ -53,8 +70,8 @@
       <article class="panel">
         <div class="panel-head">
           <div>
-            <h2>Top 5 Houses</h2>
-            <p>Highest voter count in this dashboard view.</p>
+            <h2>Top 10 Houses</h2>
+            <p>Highest voter count with priority status.</p>
           </div>
         </div>
         <div id="topHouses" class="house-list"></div>
@@ -102,7 +119,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260705-6"></script>
-  <script src="app.js?v=20260705-6"></script>
+  <script src="config.js?v=20260705-7"></script>
+  <script src="app.js?v=20260705-7"></script>
 </body>
 </html>
