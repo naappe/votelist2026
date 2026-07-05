@@ -24,6 +24,9 @@
     'vote_assigned_at'
   ].join(',');
 
+  const storagePrefix = 'villimale_campaign_manager_v1';
+  const whatsappNumber = '9607282399';
+
   const filters = [
     { key: 'all', label: 'All', icon: '👥', tone: 'blue', rule: 'All voters in the current dashboard scope.' },
     { key: 'need-call', label: 'Need Call', icon: '📞', tone: 'yellow', rule: 'Phone contact is required. Called moves to reached; missed results move to follow-up.' },
@@ -34,6 +37,13 @@
     { key: 'need-transport', label: 'Transport', icon: '🚗', tone: 'yellow', rule: 'Ride assistance needed. Track arranged and picked-up progress.' },
     { key: 'follow-up', label: 'Follow-up', icon: '🔄', tone: 'pink', rule: 'Needs revisit or recontact. Update D2D, call result, and vote decision.' }
   ];
+  const zeroDaySection = {
+    key: 'zero-day',
+    label: 'Zero Day',
+    icon: '✓',
+    tone: 'green',
+    rule: 'Voting-day queue for will-vote and guaranteed voters. Mark voted/not voted, transport, phone result, and remarks.'
+  };
 
   const state = {
     rows: [],
@@ -42,9 +52,10 @@
     partyScope: 'ALL',
     activeFilter: 'all',
     zeroDayMode: false,
-    searchField: 'all',
+    readOnly: false,
     searchTerm: '',
-    selectedVoter: null
+    selectedVoter: null,
+    syncing: false
   };
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -101,6 +112,7 @@
     state.user = data.session.user;
     state.role = await resolveRole(state.user);
     state.partyScope = resolvePartyScope();
+    applySharedView();
 
     if (state.role.party && state.partyScope !== state.role.party) {
       state.partyScope = state.role.party;
@@ -122,43 +134,29 @@
     document.getElementById('refreshBtn').addEventListener('click', loadRows);
 
     const searchInput = document.getElementById('searchInput');
-    const searchField = document.getElementById('searchField');
     const houseSelect = document.getElementById('houseSelect');
     const boxSelect = document.getElementById('boxSelect');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const shareViewBtn = document.getElementById('shareViewBtn');
     const zeroDayBtn = document.getElementById('zeroDayBtn');
     if (zeroDayBtn) {
       zeroDayBtn.addEventListener('click', () => {
         state.zeroDayMode = true;
         state.activeFilter = 'all';
-        state.searchField = 'all';
         state.searchTerm = '';
         if (searchInput) searchInput.value = '';
-        if (searchField) searchField.value = 'all';
         if (houseSelect) houseSelect.value = '';
         if (boxSelect) boxSelect.value = '';
         renderDashboard();
         document.querySelector('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
-    if (searchField) {
-      searchField.addEventListener('change', (event) => {
-        state.searchField = event.target.value;
-        state.zeroDayMode = false;
-        if (state.searchTerm) state.activeFilter = 'all';
-        if (state.searchField !== 'house' && houseSelect) houseSelect.value = '';
-        if (state.searchField !== 'election_box' && boxSelect) boxSelect.value = '';
-        renderDashboard();
-      });
-    }
     if (houseSelect) {
       houseSelect.addEventListener('change', (event) => {
         const value = event.target.value;
         state.zeroDayMode = false;
-        state.searchField = value ? 'house' : 'all';
         state.searchTerm = value;
         state.activeFilter = 'all';
-        if (searchField) searchField.value = state.searchField;
         if (searchInput) searchInput.value = event.target.selectedOptions[0]?.dataset.label || '';
         if (boxSelect) boxSelect.value = '';
         renderDashboard();
@@ -168,10 +166,8 @@
       boxSelect.addEventListener('change', (event) => {
         const value = event.target.value;
         state.zeroDayMode = false;
-        state.searchField = value ? 'election_box' : 'all';
         state.searchTerm = value;
         state.activeFilter = 'all';
-        if (searchField) searchField.value = state.searchField;
         if (searchInput) searchInput.value = event.target.selectedOptions[0]?.dataset.label || '';
         if (houseSelect) houseSelect.value = '';
         renderDashboard();
@@ -182,35 +178,39 @@
         state.searchTerm = event.target.value.trim().toLowerCase();
         state.zeroDayMode = false;
         if (state.searchTerm) state.activeFilter = 'all';
-        if (state.searchField !== 'house' && houseSelect) houseSelect.value = '';
-        if (state.searchField !== 'election_box' && boxSelect) boxSelect.value = '';
+        if (houseSelect) houseSelect.value = '';
+        if (boxSelect) boxSelect.value = '';
         renderDashboard();
       });
     }
     if (clearSearchBtn) {
       clearSearchBtn.addEventListener('click', () => {
         state.zeroDayMode = false;
-        state.searchField = 'all';
         state.searchTerm = '';
         searchInput.value = '';
-        if (searchField) searchField.value = 'all';
         if (houseSelect) houseSelect.value = '';
         if (boxSelect) boxSelect.value = '';
         renderDashboard();
       });
     }
+    if (shareViewBtn) {
+      shareViewBtn.addEventListener('click', shareReadView);
+    }
+
+    window.addEventListener('online', () => {
+      setSyncNotice('Back online. Syncing offline saves...', 'warn');
+      syncPendingUpdates();
+    });
+    window.addEventListener('offline', () => updateConnectionNotice());
 
     document.addEventListener('click', (event) => {
       const filterButton = event.target.closest('[data-filter]');
       if (filterButton) {
         state.zeroDayMode = false;
         state.activeFilter = filterButton.dataset.filter;
-        state.searchField = 'all';
         state.searchTerm = '';
         const input = document.getElementById('searchInput');
         if (input) input.value = '';
-        const select = document.getElementById('searchField');
-        if (select) select.value = 'all';
         const house = document.getElementById('houseSelect');
         if (house) house.value = '';
         const box = document.getElementById('boxSelect');
@@ -223,12 +223,9 @@
       if (houseButton) {
         state.zeroDayMode = false;
         state.activeFilter = 'all';
-        state.searchField = 'house';
         state.searchTerm = houseButton.dataset.houseFilter;
         const searchInput = document.getElementById('searchInput');
         if (searchInput) searchInput.value = houseButton.dataset.houseLabel || houseButton.dataset.houseFilter;
-        const field = document.getElementById('searchField');
-        if (field) field.value = 'house';
         const house = document.getElementById('houseSelect');
         if (house) house.value = houseButton.dataset.houseFilter;
         const box = document.getElementById('boxSelect');
@@ -254,6 +251,12 @@
         return;
       }
 
+      if (event.target.closest('[data-whatsapp-alert]')) {
+        event.preventDefault();
+        sendWhatsAppAlert();
+        return;
+      }
+
       if (event.target.closest('[data-close-modal]')) closeModal();
     });
 
@@ -263,7 +266,17 @@
   }
 
   async function loadRows() {
+    if (!navigator.onLine) {
+      const cached = loadCachedRows();
+      state.rows = applyPendingToRows(cached);
+      renderDashboard();
+      updateConnectionNotice();
+      setStatus(cached.length ? 'Offline mode. Showing saved voter data.' : 'Offline mode. No saved voter data found.', !cached.length);
+      return;
+    }
+
     setStatus('Loading voters...');
+    if (!state.readOnly) await syncPendingUpdates({ silent: true });
     let from = 0;
     const pageSize = 1000;
     let rows = [];
@@ -279,6 +292,14 @@
 
       const { data, error } = await query;
       if (error) {
+        const cached = loadCachedRows();
+        if (cached.length) {
+          state.rows = applyPendingToRows(cached);
+          renderDashboard();
+          updateConnectionNotice();
+          setStatus(`Could not refresh from Supabase. Showing saved offline data. ${error.message}`, true);
+          return;
+        }
         setStatus(error.message, true);
         return;
       }
@@ -288,9 +309,11 @@
       from += pageSize;
     }
 
-    state.rows = rows;
+    state.rows = applyPendingToRows(rows);
+    saveCachedRows(state.rows);
     setStatus('');
     renderDashboard();
+    updateConnectionNotice();
   }
 
   function renderShell() {
@@ -299,7 +322,7 @@
       ? 'Filter voters, open a card, then complete campaign work inside the popup.'
       : `Showing only ${state.partyScope} voters. Sections filter the grid; popups save campaign work.`;
     document.getElementById('dashboardTitle').textContent = title;
-    document.getElementById('dashboardSubtitle').textContent = subtitle;
+    document.getElementById('dashboardSubtitle').textContent = state.readOnly ? `${subtitle} Read-only shared view.` : subtitle;
   }
 
   function renderDashboard() {
@@ -337,14 +360,12 @@
 
   function renderSearchControls() {
     const zeroDayBtn = document.getElementById('zeroDayBtn');
-    const searchField = document.getElementById('searchField');
     const houseSelect = document.getElementById('houseSelect');
     const boxSelect = document.getElementById('boxSelect');
     if (zeroDayBtn) zeroDayBtn.classList.toggle('active', state.zeroDayMode);
-    if (searchField) searchField.value = state.searchField;
 
     if (houseSelect) {
-      const selectedHouse = state.searchField === 'house' ? state.searchTerm : '';
+      const selectedHouse = state.searchTerm;
       houseSelect.innerHTML = '<option value="">All houses</option>' + houseOptions(state.rows).map((item) => `
         <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.house)}" ${item.search === selectedHouse ? 'selected' : ''}>
           ${escapeHtml(item.house)} (${number(item.count)})
@@ -353,13 +374,15 @@
     }
 
     if (boxSelect) {
-      const selectedBox = state.searchField === 'election_box' ? state.searchTerm : '';
+      const selectedBox = state.searchTerm;
       boxSelect.innerHTML = '<option value="">All boxes</option>' + boxOptions(state.rows).map((item) => `
         <option value="${escapeAttr(item.search)}" data-label="${escapeAttr(item.box)}" ${item.search === selectedBox ? 'selected' : ''}>
           ${escapeHtml(item.box)} (${number(item.count)})
         </option>
       `).join('');
     }
+
+    updateConnectionNotice();
   }
 
   function renderInsights() {
@@ -409,7 +432,7 @@
         <button class="house-row" type="button" data-house-filter="${escapeAttr(item.search)}" data-house-label="${escapeAttr(item.house)}">
           <span class="house-main">
             <span>${index + 1}. ${escapeHtml(item.house)}</span>
-            <small>${stars(item.maxStars)} ${escapeHtml(item.status)} · ${number(item.guaranteed)} guaranteed · ${number(item.possible)} possible · ${number(item.followUp)} D2D</small>
+            <small>${escapeHtml(item.status)} · ${number(item.guaranteed)} guaranteed · ${number(item.possible)} possible · ${number(item.followUp)} D2D</small>
           </span>
           <strong>${number(item.count)}</strong>
         </button>
@@ -431,9 +454,9 @@
         ? 'Search Results'
         : filter.label;
     document.getElementById('sectionFilter').textContent = state.zeroDayMode
-      ? 'Star priority from D2D status plus guaranteed and possible vote strength.'
+      ? 'Will Vote and guaranteed voters sorted by D2D, transport, phone, and not-voted priority.'
       : state.searchTerm
-        ? `Searching ${state.searchField === 'all' ? 'all fields' : label(state.searchField)} across ${state.partyScope} voters. Showing ${number(rows.length)} matches.`
+        ? `Smart search across ${state.partyScope} voters. Showing ${number(rows.length)} matches.`
         : filter.rule;
     document.getElementById('sectionTotal').textContent = `${number(rows.length)} voters`;
     document.getElementById('voterList').innerHTML = rows.length
@@ -457,7 +480,7 @@
             ${chip(voter.vote_status, voter.vote_status === 'will-vote' ? 'green' : voter.vote_status === 'pending' ? 'amber' : '')}
             ${chip(voter.phone_status, voter.phone_status === 'called' ? 'green' : voter.phone_status === 'no-phone' ? 'red' : 'blue')}
             ${chip(voter.support_level, voter.support_level === 'guaranteed' ? 'green' : '')}
-            ${state.zeroDayMode ? priorityChip(voter) : ''}
+            ${state.zeroDayMode ? zeroDayChip(voter) : ''}
           </div>
           <div class="section-label ${section.tone}">${section.icon} ${escapeHtml(section.label)}</div>
         </div>
@@ -466,7 +489,7 @@
   }
 
   function openVoter(voter) {
-    const sectionKey = state.activeFilter === 'all' ? sectionFor(voter) : state.activeFilter;
+    const sectionKey = state.zeroDayMode ? 'zero-day' : (state.activeFilter === 'all' ? sectionFor(voter) : state.activeFilter);
     const section = getFilter(sectionKey);
     state.selectedVoter = voter;
 
@@ -484,11 +507,12 @@
     const section = getFilter(sectionKey);
     const common = `
       <label>Remarks
-        <textarea name="remarks" placeholder="Short campaign note">${escapeHtml(voter.remarks || '')}</textarea>
+        <textarea name="remarks" placeholder="Short campaign note">${escapeHtml(stripZeroDayTag(voter.remarks || ''))}</textarea>
       </label>
       <div class="modal-actions">
         <button class="btn light" type="button" data-close-modal>Cancel</button>
-        <button class="btn" type="submit">Save Section</button>
+        <button class="btn whatsapp" type="button" data-whatsapp-alert>WhatsApp Alert</button>
+        ${state.readOnly ? '<button class="btn" type="button" disabled>Read Only</button>' : '<button class="btn" type="submit">Save Section</button>'}
       </div>
     `;
 
@@ -499,18 +523,24 @@
       </div>
     `;
 
-    if (sectionKey === 'need-call') return intro + phoneField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + transportField(voter) + common;
-    if (sectionKey === 'reached') return intro + voteField(voter) + transportField(voter) + common;
-    if (sectionKey === 'will-vote') return intro + supportField(voter) + transportField(voter) + common;
-    if (sectionKey === 'pending') return intro + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + transportField(voter) + common;
-    if (sectionKey === 'no-phone') return intro + phoneField(voter, 'New Phone') + d2dField(voter) + common;
-    if (sectionKey === 'need-transport') return intro + transportField(voter, 'need-transport') + supportField(voter) + common;
-    if (sectionKey === 'follow-up') return intro + d2dField(voter) + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + transportField(voter) + common;
-    return intro + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + supportField(voter) + transportField(voter) + d2dField(voter) + common;
+    const priority = priorityRatingBox(voter);
+    if (sectionKey === 'zero-day') return intro + priority + zeroDayField(voter) + phoneField(voter, 'Working Phone') + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + supportField(voter) + transportField(voter) + common;
+    if (sectionKey === 'need-call') return intro + priority + phoneField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + transportField(voter) + common;
+    if (sectionKey === 'reached') return intro + priority + voteField(voter) + transportField(voter) + common;
+    if (sectionKey === 'will-vote') return intro + priority + supportField(voter) + transportField(voter) + common;
+    if (sectionKey === 'pending') return intro + priority + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + transportField(voter) + common;
+    if (sectionKey === 'no-phone') return intro + priority + phoneField(voter, 'New Phone') + d2dField(voter) + common;
+    if (sectionKey === 'need-transport') return intro + priority + transportField(voter, 'need-transport') + supportField(voter) + common;
+    if (sectionKey === 'follow-up') return intro + priority + d2dField(voter) + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + transportField(voter) + common;
+    return intro + priority + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + supportField(voter) + transportField(voter) + d2dField(voter) + common;
   }
 
   async function saveVoter(event, sectionKey) {
     event.preventDefault();
+    if (state.readOnly) {
+      setStatus('Read-only shared view. Saving is disabled.', true);
+      return;
+    }
     const voter = state.selectedVoter;
     if (!voter) return;
 
@@ -522,22 +552,258 @@
     const formData = Object.fromEntries(new FormData(form).entries());
     const updates = buildUpdates(sectionKey, voter, formData);
 
+    if (!navigator.onLine) {
+      button.disabled = false;
+      button.textContent = 'Save Section';
+      saveVoterOffline(voter, updates, sectionKey);
+      return;
+    }
+
     let query = client.from(config.table).update(updates).eq('id', voter.id);
     if (state.partyScope !== 'ALL') query = query.eq('party', state.partyScope);
 
-    const { data, error } = await query.select(columns).single();
+    let data;
+    let error;
+    try {
+      const result = await query.select(columns).single();
+      data = result.data;
+      error = result.error;
+    } catch (syncError) {
+      error = syncError;
+    }
     button.disabled = false;
     button.textContent = 'Save Section';
 
     if (error) {
+      if (!navigator.onLine || String(error.message || error).toLowerCase().includes('failed to fetch')) {
+        saveVoterOffline(voter, updates, sectionKey);
+        return;
+      }
       setStatus(error.message, true);
       return;
     }
 
     state.rows = state.rows.map((row) => row.id === voter.id ? data : row);
+    saveCachedRows(state.rows);
     closeModal();
     renderDashboard();
     setStatus('Saved. Voter moved to the correct section.');
+    updateConnectionNotice();
+  }
+
+  function saveVoterOffline(voter, updates, sectionKey) {
+    const localRow = { ...voter, ...updates };
+    state.rows = state.rows.map((row) => row.id === voter.id ? localRow : row);
+    queuePendingUpdate(voter.id, updates, sectionKey);
+    saveCachedRows(state.rows);
+    closeModal();
+    renderDashboard();
+    const pending = getPendingUpdates().length;
+    setStatus('Saved offline. It will update Supabase when online.');
+    setSyncNotice(`Offline save queued. ${number(pending)} waiting to sync.`, 'warn');
+    notifyUser('Saved offline', `${voter.name || 'Voter'} will sync when online.`);
+  }
+
+  async function syncPendingUpdates(options = {}) {
+    if (state.syncing || !navigator.onLine) {
+      updateConnectionNotice();
+      return;
+    }
+
+    const pending = getPendingUpdates();
+    if (!pending.length) {
+      if (!options.silent) updateConnectionNotice();
+      return;
+    }
+
+    state.syncing = true;
+    if (!options.silent) setSyncNotice(`Syncing ${number(pending.length)} offline saves...`, 'warn');
+
+    const remaining = [];
+    const syncedRows = [];
+
+    for (const item of pending) {
+      let query = client.from(config.table).update(item.updates).eq('id', item.id);
+      if (item.partyScope && item.partyScope !== 'ALL') query = query.eq('party', item.partyScope);
+
+      try {
+        const { data, error } = await query.select(columns).single();
+        if (error) {
+          remaining.push({ ...item, error: error.message });
+        } else if (data) {
+          syncedRows.push(data);
+        }
+      } catch (error) {
+        remaining.push({ ...item, error: error.message || String(error) });
+      }
+    }
+
+    savePendingUpdates(remaining);
+    syncedRows.forEach((row) => {
+      state.rows = state.rows.map((item) => item.id === row.id ? row : item);
+    });
+    state.rows = applyPendingToRows(state.rows);
+    saveCachedRows(state.rows);
+    state.syncing = false;
+
+    if (state.rows.length) renderDashboard();
+
+    if (remaining.length) {
+      setSyncNotice(`${number(remaining.length)} offline saves still waiting. Check connection or permissions.`, 'warn');
+    } else {
+      setSyncNotice(`Online. Synced ${number(syncedRows.length)} offline saves.`, 'ok');
+      notifyUser('Offline saves synced', `${number(syncedRows.length)} voter updates uploaded.`);
+    }
+  }
+
+  function queuePendingUpdate(id, updates, sectionKey) {
+    const pending = getPendingUpdates();
+    const existing = pending.find((item) => item.id === id);
+    if (existing) {
+      existing.updates = { ...existing.updates, ...updates };
+      existing.sectionKey = sectionKey;
+      existing.queuedAt = new Date().toISOString();
+    } else {
+      pending.push({
+        id,
+        updates,
+        sectionKey,
+        partyScope: state.partyScope,
+        queuedAt: new Date().toISOString()
+      });
+    }
+    savePendingUpdates(pending);
+  }
+
+  function applyPendingToRows(rows) {
+    const pending = getPendingUpdates();
+    if (!pending.length) return rows;
+    return rows.map((row) => {
+      const local = pending.find((item) => item.id === row.id);
+      return local ? { ...row, ...local.updates } : row;
+    });
+  }
+
+  function loadCachedRows() {
+    return readJson(storageKey('rows'), []);
+  }
+
+  function saveCachedRows(rows) {
+    writeJson(storageKey('rows'), rows);
+  }
+
+  function getPendingUpdates() {
+    return readJson(storageKey('pending'), []);
+  }
+
+  function savePendingUpdates(items) {
+    writeJson(storageKey('pending'), items);
+  }
+
+  function storageKey(name) {
+    return `${storagePrefix}:${state.partyScope}:${name}`;
+  }
+
+  function readJson(key, fallback) {
+    try {
+      return JSON.parse(localStorage.getItem(key) || 'null') || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeJson(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      setSyncNotice('Local storage is full or blocked. Offline save may not work.', 'error');
+    }
+  }
+
+  function updateConnectionNotice() {
+    const pending = getPendingUpdates().length;
+    if (!navigator.onLine) {
+      setSyncNotice(`Offline mode. ${number(pending)} save${pending === 1 ? '' : 's'} waiting to sync.`, 'warn');
+      return;
+    }
+    if (pending) {
+      setSyncNotice(`Online. ${number(pending)} offline save${pending === 1 ? '' : 's'} waiting to sync.`, 'warn');
+      return;
+    }
+    setSyncNotice('');
+  }
+
+  function setSyncNotice(message, tone) {
+    const el = document.getElementById('syncNotice');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+    el.className = message ? `sync-notice ${tone || 'info'}` : 'sync-notice';
+  }
+
+  function sendWhatsAppAlert() {
+    requestNotificationPermission();
+    const voter = state.selectedVoter;
+    if (!voter) return;
+    const section = getFilter(state.activeFilter === 'all' ? sectionFor(voter) : state.activeFilter);
+    const message = [
+      'Campaign alert',
+      `Name: ${voter.name || '-'}`,
+      `House: ${voter.house || '-'}`,
+      `Phone: ${voter.phone || 'No phone'}`,
+      `Party: ${voter.party || 'Not party'}`,
+      `Section: ${section.label}`,
+      `Vote: ${label(voter.vote_status)}`,
+      `D2D: ${label(voter.d2d_status)}`
+    ].join('\n');
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+    setSyncNotice('WhatsApp alert opened for +9607282399.', 'ok');
+  }
+
+  function notifyUser(title, body) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    new Notification(title, { body });
+  }
+
+  function requestNotificationPermission() {
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    Notification.requestPermission().catch(() => {});
+  }
+
+  async function shareReadView() {
+    requestNotificationPermission();
+    const url = new URL(location.href);
+    url.searchParams.set('party', state.partyScope);
+    url.searchParams.set('view', 'read');
+    url.searchParams.set('filter', state.activeFilter);
+    url.searchParams.set('zero', state.zeroDayMode ? '1' : '0');
+    if (state.searchTerm) url.searchParams.set('q', state.searchTerm);
+    else url.searchParams.delete('q');
+
+    const link = url.toString();
+    try {
+      await navigator.clipboard.writeText(link);
+      setSyncNotice('Read-only filter link copied.', 'ok');
+      setStatus('Share link copied. This view opens without save actions.');
+    } catch {
+      history.replaceState(null, '', url);
+      setSyncNotice('Read-only link ready in the address bar.', 'ok');
+      setStatus('Share link created in the browser address bar.');
+    }
+  }
+
+  function applySharedView() {
+    const params = new URLSearchParams(location.search);
+    state.readOnly = params.get('view') === 'read';
+    const filter = params.get('filter');
+    if (filters.some((item) => item.key === filter)) state.activeFilter = filter;
+    state.zeroDayMode = params.get('zero') === '1';
+    state.searchTerm = String(params.get('q') || '').trim().toLowerCase();
+
+    const input = document.getElementById('searchInput');
+    if (input) input.value = state.searchTerm;
+    const houseSelect = document.getElementById('houseSelect');
+    if (houseSelect) houseSelect.value = state.searchTerm;
   }
 
   function buildUpdates(sectionKey, voter, data) {
@@ -557,6 +823,20 @@
     if (data.d2d_status) updates.d2d_status = data.d2d_status;
     if (data.call_result) applyCallResult(updates, data.call_result);
 
+    if (sectionKey === 'zero-day') {
+      updates.vote_status = 'will-vote';
+      updates.reach_status = 'reached';
+      if (data.zero_day_action) {
+        updates.remarks = mergeZeroDayRemark(updates.remarks, data.zero_day_action);
+        if (data.zero_day_action === 'voted') {
+          updates.d2d_status = 'visited';
+          if (updates.transport_status === 'need-transport') updates.transport_status = 'picked-up';
+        }
+        if (data.zero_day_action === 'not-voted') {
+          updates.d2d_status = 'follow-up';
+        }
+      }
+    }
     if (sectionKey === 'need-call' && data.call_result === 'called') updates.reach_status = 'reached';
     if (sectionKey === 'reached') updates.reach_status = 'reached';
     if (sectionKey === 'will-vote') {
@@ -638,6 +918,14 @@
         ${select('d2d_status', ['not-visited', 'visited', 'not-home', 'follow-up'], voter.d2d_status || 'not-visited')}
       </label>
     `;
+  }
+
+  function zeroDayField(voter) {
+    return choiceGroup('zero_day_action', [
+      ['pending', 'Not Voted Yet'],
+      ['voted', 'Voted ✓'],
+      ['not-voted', 'Not Voted']
+    ], zeroDayAction(voter));
   }
 
   function choiceGroup(name, options, active) {
@@ -755,16 +1043,18 @@
 
   function zeroDayRows(rows) {
     const houseScores = new Map();
-    rows.forEach((row) => {
+    const willVoteRows = rows.filter((row) => row.vote_status === 'will-vote' || row.support_level === 'guaranteed');
+    willVoteRows.forEach((row) => {
       const key = houseGroupName(row.house).toLowerCase();
       houseScores.set(key, (houseScores.get(key) || 0) + voterPriority(row));
     });
-    return rows
-      .filter((row) => voterPriority(row) > 0)
+    return willVoteRows
       .sort((a, b) => {
         const houseDiff = (houseScores.get(houseGroupName(b.house).toLowerCase()) || 0)
           - (houseScores.get(houseGroupName(a.house).toLowerCase()) || 0);
         if (houseDiff) return houseDiff;
+        const votedDiff = zeroDaySortValue(b) - zeroDaySortValue(a);
+        if (votedDiff) return votedDiff;
         const priorityDiff = voterPriority(b) - voterPriority(a);
         if (priorityDiff) return priorityDiff;
         return String(a.name || '').localeCompare(String(b.name || ''));
@@ -787,8 +1077,18 @@
     if (row.reach_status === 'reached') score += 20;
     if (row.transport_status === 'need-transport') score += 15;
     if (row.phone_status === 'no-phone' || !hasPhone(row)) score += 10;
+    if (zeroDayAction(row) === 'not-voted') score += 60;
+    if (zeroDayAction(row) === 'voted') score -= 120;
 
     return score;
+  }
+
+  function zeroDaySortValue(row) {
+    const status = zeroDayAction(row);
+    if (status === 'not-voted') return 3;
+    if (status === 'pending') return 2;
+    if (status === 'voted') return 1;
+    return 2;
   }
 
   function isPossibleVote(row) {
@@ -804,10 +1104,31 @@
     return score > 0 ? 1 : 0;
   }
 
-  function priorityChip(row) {
+  function priorityRatingBox(row) {
     const rating = starRating(row);
-    if (!rating) return '';
-    return `<span class="chip priority">${stars(rating)} Priority</span>`;
+    return `
+      <div class="rating-box">
+        <strong>Priority Rating</strong>
+        <span class="rating-stars">${escapeHtml(stars(rating))}</span>
+        <p>Based on D2D, guaranteed support, possible vote, phone contact, and transport status.</p>
+      </div>
+    `;
+  }
+
+  function zeroDayAction(row) {
+    const match = String(row.remarks || '').match(/\[Zero Day: ([^\]]+)\]/i);
+    if (!match) return 'pending';
+    const value = match[1].toLowerCase().trim();
+    return ['voted', 'not-voted', 'pending'].includes(value) ? value : 'pending';
+  }
+
+  function stripZeroDayTag(value) {
+    return String(value || '').replace(/\s*\[Zero Day: [^\]]+\]\s*/i, ' ').trim();
+  }
+
+  function mergeZeroDayRemark(remarks, action) {
+    const base = stripZeroDayTag(remarks);
+    return `${base ? `${base} ` : ''}[Zero Day: ${action}]`;
   }
 
   function stars(count) {
@@ -845,17 +1166,17 @@
   }
 
   function searchText(row) {
-    const fields = {
-      name: [row.name],
-      national_id: [row.national_id],
-      phone: [row.phone],
-      house: [row.house, houseGroupName(row.house)],
-      election_box: [row.election_box, boxSearchAlias(row.election_box)],
-      party: [row.party]
-    };
-    const values = state.searchField === 'all'
-      ? [row.name, row.national_id, row.phone, row.house, houseGroupName(row.house), row.election_box, boxSearchAlias(row.election_box), row.party, row.lives_in]
-      : fields[state.searchField] || [];
+    const values = [
+      row.name,
+      row.national_id,
+      row.phone,
+      row.house,
+      houseGroupName(row.house),
+      row.election_box,
+      boxSearchAlias(row.election_box),
+      row.party,
+      row.lives_in
+    ];
     return values.map((value) => String(value || '').toLowerCase()).join(' ');
   }
 
@@ -903,6 +1224,7 @@
   }
 
   function getFilter(key) {
+    if (key === 'zero-day') return zeroDaySection;
     return filters.find((filter) => filter.key === key) || filters[0];
   }
 
@@ -964,6 +1286,13 @@
   function chip(value, color) {
     if (!value) return '';
     return `<span class="chip ${color || ''}">${escapeHtml(label(value))}</span>`;
+  }
+
+  function zeroDayChip(voter) {
+    const status = zeroDayAction(voter);
+    if (status === 'voted') return chip('voted', 'green');
+    if (status === 'not-voted') return chip('not-voted', 'red');
+    return chip('not-voted-yet', 'amber');
   }
 
   function label(value) {
