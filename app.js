@@ -358,6 +358,7 @@
   }
 
   function renderSectionForm(sectionKey, voter) {
+    const note = escapeAttr(voter.remarks || '');
     const commonRemarks = `
       <label>Remarks
         <textarea name="remarks" placeholder="Short campaign note">${escapeHtml(voter.remarks || '')}</textarea>
@@ -614,13 +615,13 @@
     const fallback = user.email === config.loginUsers.admin.email
       ? { role: 'admin', party: null }
       : user.email === config.loginUsers.pnc.email
-        ? { role: 'party', party: 'PNC' }
-        : { role: 'party', party: null };
+        ? { role: 'member', party: 'PNC' }
+        : { role: 'viewer', party: null };
 
     const { data, error } = await client
       .from('user_roles')
-      .select('role,party')
-      .eq('email', user.email)
+      .select('role,party,can_edit,can_export')
+      .eq('user_id', user.id)
       .maybeSingle();
 
     if (error || !data) return fallback;
