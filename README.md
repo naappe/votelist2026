@@ -2,6 +2,27 @@
 
 Static GitHub Pages voter dashboard for Villimale campaign work.
 
+## Current UI Status
+
+The voter management screens now use a staged professional UI layer:
+
+- `css/pro-ui.css` improves the stats, voter cards, Assign action, and popup spacing.
+- `js/pro-ui.js` keeps one clear Assign action per voter card and focuses the assignment field when Assign is clicked.
+- `js/assign-filter.js` is legacy and is not loaded by `dashboard.html` or `voters.html`.
+- `js/voter-final-cleanup.js` is still active for D2D cleanup and special vote-status saves. It preserves the visible Assign field instead of auto-stamping the logged-in email.
+
+## Cleanup Roadmap
+
+The project is being cleaned in safe stages so GitHub Pages stays working:
+
+1. Keep the active pages stable: `dashboard.html`, `voters.html`, `login.html`, `shared.html`, and `index.html`.
+2. Keep active helpers loaded only where needed: `app.js`, `config.js`, `assign-share.js`, `campaign-arrangement.js`, `dhafthar-force-filter.js`, `dashboard-cleanup.js`, `house-dropdown-group.js`, `house-click-filter.js`, `pro-ui.js`, `voter-final-cleanup.js`, and `voter-hotfix.js`.
+3. Treat `assign-filter.js`, `all-voters.html`, and `zero-day.html` as legacy until their behavior is either merged or formally removed.
+4. Future consolidation target:
+   - assignment helpers -> `js/features/assignments.js`
+   - house/search filters -> `js/features/filters.js`
+   - cleanup utilities -> `js/utils/helpers.js`
+
 ## File Structure
 
 ```text
