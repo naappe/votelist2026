@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css?v=20260705-2">
+  <link rel="stylesheet" href="style.css?v=20260705-4">
 </head>
 <body data-page="dashboard">
   <header class="topbar">
@@ -27,6 +27,39 @@
 
     <section id="summary" class="stats-grid" aria-label="Campaign statistics"></section>
     <section id="sections" class="tabs" aria-label="Voter filters"></section>
+
+    <section class="panel" aria-label="Search voters">
+      <div class="form">
+        <label>Search voters
+          <input id="searchInput" type="search" placeholder="Name, ID, phone, house, box, party">
+        </label>
+        <button id="clearSearchBtn" class="btn light" type="button">Clear Search</button>
+      </div>
+    </section>
+
+    <section class="insight-grid" aria-label="Campaign target and focus">
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Target To Win</h2>
+            <p>Opponent baseline 428 votes, target 429.</p>
+          </div>
+        </div>
+        <div id="targetStats" class="stats-grid"></div>
+        <div class="progress"><span id="targetProgressBar"></span></div>
+        <p id="targetPrediction" class="muted">Loading prediction...</p>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Top 5 Houses</h2>
+            <p>Highest voter count in this dashboard view.</p>
+          </div>
+        </div>
+        <div id="topHouses" class="house-list"></div>
+      </article>
+    </section>
 
     <section class="panel voter-panel">
       <div class="panel-head">
@@ -69,7 +102,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260705-2"></script>
-  <script src="app.js?v=20260705-2"></script>
+  <script src="config.js?v=20260705-4"></script>
+  <script src="app.js?v=20260705-4"></script>
 </body>
 </html>
