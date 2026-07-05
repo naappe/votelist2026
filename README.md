@@ -78,7 +78,7 @@ votelist2026/
 | `js/d2d-count-fix.js` | Keeps D2D counts aligned with current D2D status logic. |
 | `js/house-sync.js` | Single source of truth for house dropdown, Dhafthar/Sinamale grouping, and Top Houses. |
 | `js/pro-ui.js` | Professional voter card actions: one Assign button and View Profile button per card. |
-| `js/save-state-fix.js` | Preserves active house/search/filter and scroll position after saving, including when the voter list rebuilds. |
+| `js/save-state-fix.js` | Preserves active house/search/filter and scroll position after saving, including list rebuilds and accidental full-page reloads. |
 | `js/voter-hotfix.js` | Small voter page hotfixes. |
 
 ## Legacy / Disabled JavaScript
@@ -130,7 +130,7 @@ vote_assigned_by, vote_assigned_at
 | House dropdown | Controlled by `house-sync.js`. |
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
-| Save after house filter | `save-state-fix.js` restores selected house/search/filter after saving, even if the list rebuilds. |
+| Save after house filter | `save-state-fix.js` restores selected house/search/filter after saving, even if the list rebuilds or the browser reloads. |
 | Save after assign filter | `save-state-fix.js` restores Assign/filter view and scroll position after saving. |
 | Self assign page | Friends tick/untick voters, write name/mobile only when needed, then save. |
 | Assignment privacy | Public shared links do not show other assignee names. They only show private assignment status/count. |
@@ -152,6 +152,8 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Persisted `save-state-fix.js` state in sessionStorage so house/filter/scroll can recover even if the browser refreshes during save. |
+| 2026-07-06 | Bumped `save-state-fix.js` cache key to `v=20260706-2` on `dashboard.html` and `voters.html`. |
 | 2026-07-06 | Strengthened `save-state-fix.js` so it watches voter-list rebuilds and restores house/filter/scroll after save. |
 | 2026-07-06 | Added `save-state-fix.js` to stop saving from jumping to top or resetting house/filter to All. |
 | 2026-07-06 | Busted cache for disabled legacy scripts in `dashboard.html` and `voters.html`. |
@@ -193,7 +195,7 @@ Important structure:
 - js/app.js owns main dashboard load, filters, modal save, and Supabase updates.
 - js/house-sync.js owns house dropdown, Dhafthar/Sinamale grouping, and Top Houses.
 - js/assign-share.js owns short assignment share links.
-- js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds.
+- js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
 - js/pro-ui.js owns clean card buttons and Assign focus.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
