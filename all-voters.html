@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Campaign Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="dashboard-body">
+  <header class="dashboard-header">
+    <div class="container dashboard-topbar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark"></span>
+        <span class="brand-text">Campaign Manager</span>
+      </a>
+      <div class="header-actions">
+        <button class="btn btn-light" id="exportBtn" type="button"><i class="fa-solid fa-file-export"></i> Export CSV</button>
+        <a class="btn btn-light" href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+        <button class="btn btn-light" type="button" onclick="signOut()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      </div>
+    </div>
+
+    <div class="container dashboard-hero">
+      <div>
+        <p class="eyebrow">CAMPAIGN DASHBOARD</p>
+        <h1 id="pageTitle">All Voters</h1>
+        <p class="hero-text small" id="pageSubtitle">Search, filter, update, and track campaign progress fast.</p>
+      </div>
+      <div class="admin-tabs" id="adminTabs">
+        <a class="tab-link" href="all-voters.html">All Voters</a>
+        <a class="tab-link" href="all-voters.html?party=MDP">MDP</a>
+        <a class="tab-link" href="all-voters.html?party=PNC">PNC</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container dashboard-main">
+    <section class="stats-card glass-panel">
+      <div class="section-row">
+        <div>
+          <p class="eyebrow">KEY NUMBERS</p>
+          <h2>Campaign Snapshot</h2>
+        </div>
+        <div id="showingText" class="showing-text">Showing 0 voters</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <strong id="totalCount">0</strong>
+          <span>Total</span>
+        </div>
+        <div class="stat-box">
+          <strong id="reachedCount">0</strong>
+          <span>Reached</span>
+        </div>
+        <div class="stat-box">
+          <strong id="willVoteCount">0</strong>
+          <span>Will Vote</span>
+        </div>
+        <div class="stat-box">
+          <strong id="guaranteedCount">0</strong>
+          <span>Guaranteed</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="analysis-card glass-panel">
+      <div class="section-row">
+        <div>
+          <p class="eyebrow">ANALYSIS</p>
+          <h2>Action Items</h2>
+        </div>
+        <div class="section-hint">Tap a box to filter voters</div>
+      </div>
+      <div class="analysis-grid">
+        <button class="analysis-box clickable" data-analysis="need-call" type="button">
+          <strong id="needCallCount">0</strong>
+          <span>Need Call</span>
+        </button>
+        <button class="analysis-box clickable" data-analysis="need-transport" type="button">
+          <strong id="needTransportCount">0</strong>
+          <span>Need Transport</span>
+        </button>
+        <button class="analysis-box clickable" data-analysis="d2d-follow-up" type="button">
+          <strong id="d2dFollowupCount">0</strong>
+          <span>D2D Follow-up</span>
+        </button>
+        <button class="analysis-box clickable" data-analysis="has-remarks" type="button">
+          <strong id="remarksCount">0</strong>
+          <span>Has Remarks</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="filter-panel glass-panel">
+      <div class="section-row">
+        <div>
+          <p class="eyebrow">FILTERS</p>
+          <h2>Search & Refine</h2>
+        </div>
+      </div>
+      <div class="filter-grid">
+        <input id="searchInput" placeholder="Search name, ID, phone, house..." />
+        <select id="partyFilter">
+          <option value="">All Parties</option>
+          <option value="MDP">MDP</option>
+          <option value="PNC">PNC</option>
+        </select>
+        <select id="reachFilter">
+          <option value="">All Reach</option>
+          <option value="not-reached">Not Reached</option>
+          <option value="reached">Reached</option>
+        </select>
+        <select id="phoneFilter">
+          <option value="">All Call Status</option>
+          <option value="need-call">Need Call</option>
+          <option value="called">Called</option>
+          <option value="wrong-number">Wrong Number</option>
+          <option value="out-of-range">Out of Range</option>
+          <option value="no-phone">No Phone</option>
+        </select>
+        <select id="voteFilter">
+          <option value="">All Vote Status</option>
+          <option value="will-vote">Will Vote</option>
+          <option value="pending">Pending</option>
+          <option value="not-decided">Not Decided</option>
+          <option value="no-vote">No Vote</option>
+        </select>
+        <select id="supportFilter">
+          <option value="">All Support</option>
+          <option value="normal">Normal</option>
+          <option value="guaranteed">Guaranteed</option>
+        </select>
+        <select id="transportFilter">
+          <option value="">All Transport</option>
+          <option value="not-needed">Not Needed</option>
+          <option value="need-transport">Need Transport</option>
+          <option value="arranged">Arranged</option>
+          <option value="picked-up">Picked Up</option>
+        </select>
+        <select id="d2dFilter">
+          <option value="">All D2D</option>
+          <option value="not-visited">Not Visited</option>
+          <option value="visited">Visited</option>
+          <option value="not-home">Not Home</option>
+          <option value="follow-up">Follow-up</option>
+        </select>
+        <button id="resetBtn" class="btn btn-light" type="button"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+      </div>
+    </section>
+
+    <section id="voterGrid" class="voter-grid">
+      <div class="loading-state">Loading voters...</div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Mobile navigation">
+    <button class="bottom-nav-item active" data-view="overview" type="button">
+      <i class="fa-solid fa-house"></i><span>Home</span>
+    </button>
+    <button class="bottom-nav-item" data-view="voters" type="button">
+      <i class="fa-solid fa-list"></i><span>Voters</span>
+    </button>
+    <button class="bottom-nav-item" data-view="calls" type="button">
+      <i class="fa-solid fa-phone"></i><span>Calls</span>
+    </button>
+    <button class="bottom-nav-item" data-view="stats" type="button">
+      <i class="fa-solid fa-chart-simple"></i><span>Stats</span>
+    </button>
+    <button class="bottom-nav-item" data-view="more" type="button">
+      <i class="fa-solid fa-gear"></i><span>More</span>
+    </button>
+  </nav>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-top">
+        <div>
+          <h2 id="modalName">Voter</h2>
+          <p id="modalMeta" class="modal-meta"></p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeModal()">×</button>
+      </div>
+
+      <div class="quick-status-group">
+        <button type="button" class="quick-status-btn vote" data-quick="will-vote">1 · Will Vote</button>
+        <button type="button" class="quick-status-btn maybe" data-quick="not-decided">2 · Not Decided</button>
+        <button type="button" class="quick-status-btn no" data-quick="no-vote">3 · No Vote</button>
+        <button type="button" class="quick-status-btn guaranteed" data-quick="guaranteed">4 · Guaranteed</button>
+      </div>
+
+      <div class="assign-strip">
+        <div class="assign-meta">
+          <div class="assign-label">Assigned To</div>
+          <div class="assign-value" id="assignedDisplay">Unassigned</div>
+          <div class="assign-sub" id="assignedAtDisplay">No update yet</div>
+        </div>
+        <button type="button" class="btn btn-light assign-btn" id="assignToMeBtn"><i class="fa-solid fa-user-plus"></i> Assign to Me</button>
+      </div>
+
+      <form id="editForm" class="edit-grid">
+        <div class="field">
+          <label>Phone</label>
+          <input id="modalPhone" />
+        </div>
+        <div class="field">
+          <label>Call</label>
+          <select id="modalPhoneStatus">
+            <option value="need-call">Need Call</option>
+            <option value="called">Called</option>
+            <option value="wrong-number">Wrong Number</option>
+            <option value="out-of-range">Out of Range</option>
+            <option value="no-phone">No Phone</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reach</label>
+          <select id="modalReachStatus">
+            <option value="not-reached">Not Reached</option>
+            <option value="reached">Reached</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vote</label>
+          <select id="modalVoteStatus">
+            <option value="pending">Pending</option>
+            <option value="will-vote">Will Vote</option>
+            <option value="not-decided">Not Decided</option>
+            <option value="no-vote">No Vote</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Support</label>
+          <select id="modalSupportLevel">
+            <option value="normal">Normal</option>
+            <option value="guaranteed">Guaranteed</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Transport</label>
+          <select id="modalTransportStatus">
+            <option value="not-needed">Not Needed</option>
+            <option value="need-transport">Need Transport</option>
+            <option value="arranged">Arranged</option>
+            <option value="picked-up">Picked Up</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>D2D</label>
+          <select id="modalD2DStatus">
+            <option value="not-visited">Not Visited</option>
+            <option value="visited">Visited</option>
+            <option value="not-home">Not Home</option>
+            <option value="follow-up">Follow-up</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>Assigned To</label>
+          <input id="modalAssignedBy" placeholder="Unassigned" />
+        </div>
+        <div class="field full">
+          <label>Remarks</label>
+          <textarea id="modalRemarks" placeholder="Add campaign note..."></textarea>
+        </div>
+        <div class="field full modal-actions">
+          <a id="callLink" class="btn btn-light" href="#"><i class="fa-solid fa-phone"></i> Call</a>
+          <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
