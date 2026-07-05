@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Zero Day | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css?v=20260705-11">
+  <link rel="stylesheet" href="style.css?v=20260705-13">
+  <link rel="stylesheet" href="dashboard-cleanup.css?v=20260705-13">
   <style>
     .quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.quick-btn{min-height:38px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:12px;font-weight:950;color:#344054;cursor:pointer}.quick-btn.call{background:#dcfce7;color:#166534;border-color:#bbf7d0}.quick-btn.assign{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}.quick-btn.remark{background:#fef3c7;color:#92400e;border-color:#fde68a}.impact-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 22px}.impact-strip div{border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow);border-radius:14px;padding:14px}.impact-strip strong{display:block;font-size:24px;letter-spacing:-.03em}.impact-strip span{display:block;color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase}.star-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.star-btn{min-height:44px;border:1px solid #fed7aa;background:#fff;color:#d6d3d1;border-radius:12px;font-size:24px;font-weight:950;cursor:pointer}.star-btn.active{background:#f59e0b;border-color:#d97706;color:white}body.dark{--bg:#0b1220;--card:#111827;--ink:#f8fafc;--muted:#cbd5e1;--line:#334155;--navy:#1d4ed8;--shadow:0 18px 45px rgba(0,0,0,.2)}body.dark .topbar,body.dark .stat-card,body.dark .voter-card,body.dark .tab,body.dark input,body.dark select,body.dark textarea,body.dark .choice-btn,body.dark .house-row,body.dark .metric,body.dark .logic-box,body.dark .modal-card{background:#111827;color:var(--ink)}body.dark .btn.light,body.dark .quick-btn{background:#111827;color:var(--ink);border-color:var(--line)}body.dark .party-tag,body.dark .chip{background:#1f2937;color:#e5e7eb}@media(max-width:760px){.impact-strip,.quick-actions{grid-template-columns:1fr 1fr}}
   </style>
@@ -36,7 +37,7 @@
     <section class="panel" aria-label="Search voters"><div class="form search-grid"><label>Search voters<input id="searchInput" type="search" placeholder="Name, ID, phone, house, party"></label><label>House<select id="houseSelect"><option value="">All houses</option></select></label><label>Box<select id="boxSelect"><option value="">All boxes</option></select></label><button id="clearSearchBtn" class="btn light" type="button">Clear Search</button><button id="shareViewBtn" class="btn light" type="button">Share Read View</button></div></section>
     <div id="syncNotice" class="sync-notice" role="status" hidden></div>
 
-    <section class="insight-grid" aria-label="Campaign target and focus"><article class="panel"><div class="panel-head"><div><h2>Target To Win</h2><p>Opponent baseline 428 votes, target 429.</p></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article><article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2><p>Highest voter count with priority status.</p></div></div><div id="topHouses" class="house-list"></div></article></section>
+    <section class="insight-grid" aria-label="Campaign target and focus"><article class="panel"><div class="panel-head"><div><h2>Target To Win</h2></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article><article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2></div></div><div id="topHouses" class="house-list"></div></article></section>
 
     <section class="panel voter-panel"><div class="panel-head"><div><h2 id="sectionTitle">Zero Day Priority</h2><p id="sectionFilter">Will Vote and guaranteed voters sorted by voting-day priority.</p></div><span id="sectionTotal" class="status-pill">0 voters</span></div><div id="statusMessage" class="status-message" role="status"></div><div id="voterList" class="voter-list"></div></section>
   </main>
@@ -45,6 +46,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260705-11"></script>
-  <script src="zero-day.js?v=20260705-12"></script>
+  <script src="zero-day.js?v=20260705-13"></script>
 </body>
 </html>
