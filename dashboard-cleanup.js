@@ -8,6 +8,9 @@
     ['not-home', 'Not Home'],
     ['follow-up', 'Follow-up']
   ];
+  let modalHistoryPushed = false;
+  let modalWasOpen = false;
+  let topHousesInFlight = false;
 
   function scrollToList() {
     document.querySelector('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -36,6 +39,8 @@
     ensureShareSelection();
     ensureD2DField();
     ensureTargetMath();
+    ensureModalBackGuard();
+    ensureGroupedTopHouses();
     document.querySelectorAll('.logic-box, .rating-box p, .house-main small').forEach((node) => node.remove());
 
     document.querySelectorAll('.voter-card').forEach((card) => {
@@ -121,6 +126,76 @@
     house.insertBefore(option, house.options[1] || null);
   }
 
+  function ensureModalBackGuard() {
+    const modal = document.getElementById('voterModal');
+    const isOpen = Boolean(modal && !modal.hidden);
+    if (isOpen && !modalWasOpen) {
+      modalWasOpen = true;
+      if (!history.state?.cleanupModal) {
+        history.pushState({ ...(history.state || {}), cleanupModal: true }, '', location.href);
+        modalHistoryPushed = true;
+      }
+    }
+    if (!isOpen) modalWasOpen = false;
+  }
+
+  function closeModalForBackButton() {
+    const modal = document.getElementById('voterModal');
+    if (modal) modal.hidden = true;
+    modalWasOpen = false;
+    modalHistoryPushed = false;
+  }
+
+  async function ensureGroupedTopHouses() {
+    const topHouses = document.getElementById('topHouses');
+    if (!topHouses || document.body.classList.contains('clean-read-view')) return;
+    if (window.__cleanupRows?.length) {
+      renderGroupedTopHouses(window.__cleanupRows);
+      return;
+    }
+    if (topHousesInFlight) return;
+    topHousesInFlight = true;
+    const rows = await fetchRowsForCleanup();
+    topHousesInFlight = false;
+    if (rows.length) renderGroupedTopHouses(rows);
+  }
+
+  function renderGroupedTopHouses(rows) {
+    const topHouses = document.getElementById('topHouses');
+    if (!topHouses) return;
+    const groups = new Map();
+    rows.forEach((row) => {
+      const house = cleanupHouseGroup(row.house);
+      const search = house === 'Dhafthar' ? '__dhafthar__' : house.toLowerCase();
+      const item = groups.get(search) || { house, search, count: 0 };
+      item.count += 1;
+      groups.set(search, item);
+    });
+    const houses = Array.from(groups.values())
+      .sort((a, b) => b.count - a.count || a.house.localeCompare(b.house))
+      .slice(0, 10);
+    topHouses.innerHTML = houses.length
+      ? houses.map((item, index) => `
+        <button class="house-row" type="button" data-cleanup-house="${escapeAttr(item.search)}" data-house-label="${escapeAttr(item.house)}">
+          <span class="house-main"><span>${index + 1}. ${escapeAttr(item.house)}</span></span>
+          <strong>${formatNumber(item.count)}</strong>
+        </button>
+      `).join('')
+      : '<div class="empty small">No house data.</div>';
+  }
+
+  function cleanupHouseGroup(value) {
+    const house = String(value || '').trim() || 'Unknown house';
+    const compact = house.toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/['`’.\-]/g, '')
+      .replace(/\s+/g, '');
+    if (isDhaftharHouse(house)) return 'Dhafthar';
+    if (compact.includes('sinamale') || compact.includes('sinamle')) return 'Sinamale';
+    return house;
+  }
+
   async function renderDhaftharRows() {
     const list = document.getElementById('voterList');
     const title = document.getElementById('sectionTitle');
@@ -167,6 +242,7 @@
         if (!data || data.length < pageSize) break;
         from += pageSize;
       }
+      window.__cleanupRows = rows;
       return rows;
     } catch (error) {
       return [];
@@ -506,6 +582,13 @@
   }
 
   document.addEventListener('click', async (event) => {
+    if (event.target.closest('[data-close-modal]') && modalHistoryPushed) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      history.back();
+      return;
+    }
     if (event.target.closest('.share-pick')) {
       event.stopPropagation();
       return;
@@ -545,6 +628,29 @@
       }
       if (search && !boxTab.dataset.boxSearch) {
         search.value = '';
+        search.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      setTimeout(scrollToList, 80);
+      return;
+    }
+    const cleanupHouse = event.target.closest('[data-cleanup-house]');
+    if (cleanupHouse) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      const search = document.getElementById('searchInput');
+      const house = document.getElementById('houseSelect');
+      const box = document.getElementById('boxSelect');
+      if (box) box.value = '';
+      if (cleanupHouse.dataset.cleanupHouse === '__dhafthar__') {
+        if (search) search.value = 'Dhafthar';
+        if (house) house.value = '__dhafthar__';
+        await renderDhaftharRows();
+        return;
+      }
+      if (house) house.value = cleanupHouse.dataset.cleanupHouse || '';
+      if (search) {
+        search.value = cleanupHouse.dataset.houseLabel || cleanupHouse.dataset.cleanupHouse || '';
         search.dispatchEvent(new Event('input', { bubbles: true }));
       }
       setTimeout(scrollToList, 80);
@@ -596,5 +702,9 @@
     if (startupRuns >= 20) clearInterval(startupTimer);
   }, 500);
   window.addEventListener('load', tidyDashboard);
+  window.addEventListener('popstate', () => {
+    const modal = document.getElementById('voterModal');
+    if (modal && !modal.hidden) closeModalForBackButton();
+  });
   tidyDashboard();
 })();
