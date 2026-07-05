@@ -1,6 +1,9 @@
-.insight-grid{align-items:start}
+.impact-strip{display:none!important}
+.insight-grid{grid-template-columns:1fr!important;align-items:start;gap:12px;margin-bottom:14px}
 .logic-box,.rating-box p,.house-main small{display:none!important}
 .house-main{display:block;min-width:0}
+.house-list{gap:8px}
+.house-row{padding:10px 12px;border-radius:12px}
 .panel-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn.compact{min-height:34px;padding:7px 11px;border-radius:10px;font-size:12px}
 .box-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
