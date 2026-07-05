@@ -5,62 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Self Assign Voters</title>
   <style>
-    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--dark:#101828;--soft:#eef4ff;--green:#16a34a;--green-bg:#dcfce7;--shadow:0 16px 40px rgba(16,24,40,.08)}
+    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--dark:#101828;--soft:#eef4ff;--green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fef2f2;--shadow:0 16px 40px rgba(16,24,40,.08)}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .wrap{width:min(820px,calc(100% - 28px));margin:18px auto 48px}
-    .top,.tools,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
-    .top{padding:16px;margin-bottom:14px}
-    h1{margin:0 0 5px;font-size:24px;letter-spacing:-.03em;line-height:1.1}
-    p{margin:0;color:var(--muted);line-height:1.45;font-weight:700}
+    .wrap{width:min(820px,calc(100% - 24px));margin:14px auto 44px}
+    .top,.tools,.card,.modal-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+    .top{padding:16px;margin-bottom:12px}
+    h1{margin:0 0 6px;font-size:25px;letter-spacing:-.03em;line-height:1.08}
+    p{margin:0;color:var(--muted);line-height:1.4;font-weight:700}
     .count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}
-    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
+    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 160px auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
     label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
-    input[type="text"],input[type="tel"]{width:100%;min-height:44px;border:1px solid #d0d5dd;border-radius:12px;padding:10px 12px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
-    button{border:0;border-radius:12px;min-height:42px;padding:10px 14px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}
+    input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
+    button{border:0;border-radius:11px;min-height:40px;padding:9px 13px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}
     button.light{background:#fff;color:#1f3b66;border:1px solid #d0d5dd}
+    button.danger{background:var(--red);color:#fff}
     button:disabled{opacity:.55;cursor:not-allowed}
-    .grid{display:grid;gap:12px}
-    .card{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:12px}
-    .select{width:20px;height:20px;accent-color:var(--blue)}
-    .info{min-width:0}
+    .grid{display:grid;gap:10px}
+    .card{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:13px;text-align:left}
+    .card-main{min-width:0}
     .name{font-size:18px;font-weight:950;letter-spacing:-.02em;margin-bottom:8px;line-height:1.15}
-    .line{display:grid;grid-template-columns:68px 1fr;gap:8px;color:#344054;font-size:14px;font-weight:800;line-height:1.35;margin-top:4px;word-break:break-word}
+    .line{display:grid;grid-template-columns:66px 1fr;gap:8px;color:#344054;font-size:14px;font-weight:800;line-height:1.35;margin-top:3px;word-break:break-word}
     .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
     .status{display:inline-flex;width:max-content;max-width:100%;margin-top:9px;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:950;white-space:normal}
     .status.done{background:var(--green-bg);color:#166534}
-    .empty{padding:28px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:16px}
+    .status.full{background:var(--red-bg);color:#991b1b}
+    .empty{padding:28px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:14px}
     .message{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-weight:900;border:1px solid #bfdbfe}
     .message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}}
-    @media(max-width:620px){.wrap{width:min(100% - 20px,820px);margin-top:10px}.card{grid-template-columns:28px 1fr}.card button{grid-column:2;width:100%}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}}
+    .modal{position:fixed;inset:0;z-index:20;display:grid;place-items:end center;padding:12px;background:rgba(15,23,42,.45)}
+    .modal[hidden]{display:none}
+    .modal-card{width:min(520px,100%);padding:16px;border-radius:18px}
+    .modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .modal-head h2{margin:0;font-size:22px;line-height:1.1;letter-spacing:-.02em}
+    .modal-meta{display:grid;gap:4px;margin:10px 0 14px;padding:10px;border-radius:12px;background:#f8fafc;border:1px solid var(--line)}
+    .modal-form{display:grid;gap:10px}
+    .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
+    .modal-actions .wide{grid-column:1 / -1}
+    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.card{grid-template-columns:1fr}.card button{width:100%}}
+    @media(max-width:520px){.wrap{width:min(100% - 18px,820px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="top">
       <h1>Self Assign Voters</h1>
-      <p>Write your name and mobile, then assign the voters you will call. No login is required.</p>
+      <p>Search a voter, tap assign, then enter your name and mobile in the popup. No login is required.</p>
       <div id="count" class="count">Loading...</div>
     </section>
-    <section class="tools" aria-label="Assignment controls">
-      <label>Your name
-        <input id="assigneeName" type="text" placeholder="Write your name" autocomplete="name">
+
+    <section class="tools" aria-label="Search and filter voters">
+      <label>Search voters
+        <input id="searchInput" type="search" placeholder="Name, ID, address, mobile">
       </label>
-      <label>Your mobile
-        <input id="assigneePhone" type="tel" placeholder="Mobile number" autocomplete="tel" inputmode="tel">
+      <label>Filter
+        <select id="filterSelect">
+          <option value="all">All</option>
+          <option value="open">Not assigned</option>
+          <option value="assigned">Assigned</option>
+          <option value="full">Full</option>
+        </select>
       </label>
-      <button id="saveSelectedBtn" type="button">Save Selected</button>
+      <button id="clearBtn" class="light" type="button">Clear</button>
     </section>
+
     <div id="message" class="message" hidden></div>
     <section id="content" class="grid"></section>
   </main>
+
+  <section id="assignModal" class="modal" hidden>
+    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <div>
+          <h2 id="modalTitle">Assign voter</h2>
+          <p id="modalAssigned">Not assigned yet</p>
+        </div>
+        <button id="closeModalBtn" class="light" type="button">Close</button>
+      </div>
+      <div id="modalMeta" class="modal-meta"></div>
+      <div class="modal-form">
+        <label>Your name
+          <input id="assigneeName" type="text" placeholder="Write your name" autocomplete="name">
+        </label>
+        <label>Your mobile
+          <input id="assigneePhone" type="tel" placeholder="Mobile number" autocomplete="tel" inputmode="tel">
+        </label>
+        <div class="modal-actions">
+          <button id="removeAssignBtn" class="danger" type="button">Remove my assignment</button>
+          <button id="saveAssignBtn" type="button">Save assignment</button>
+          <button id="cancelAssignBtn" class="light wide" type="button">Cancel</button>
+        </div>
+      </div>
+    </article>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=20260705-11"></script>
   <script>
     const params = new URLSearchParams(location.search);
     const token = params.get('s') || '';
     let rows = [];
+    let activeRowId = '';
     let client = null;
 
     function decodePayload(value) {
@@ -92,6 +137,12 @@
           assigned_by: row.assigned_by || row.vote_assigned_by || ''
         }));
     }
+    function assignedList(value) {
+      return String(value || '').split(',').map((item) => item.trim()).filter(Boolean);
+    }
+    function assignedCount(value) {
+      return assignedList(value).length;
+    }
     function setMessage(text, isError) {
       const el = document.getElementById('message');
       el.hidden = !text;
@@ -119,8 +170,20 @@
         document.getElementById('assigneePhone').value = localStorage.getItem('assigner_phone') || '';
       } catch {}
     }
-    function assignedCount(value) {
-      return String(value || '').split(',').map((item) => item.trim()).filter(Boolean).length;
+    function rowById(rowId) {
+      return rows.find((row) => row.row_id === String(rowId));
+    }
+    function filteredRows() {
+      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filter = document.getElementById('filterSelect').value;
+      return rows.filter((row) => {
+        const count = assignedCount(row.assigned_by);
+        if (filter === 'open' && count !== 0) return false;
+        if (filter === 'assigned' && count === 0) return false;
+        if (filter === 'full' && count < 3) return false;
+        if (!term) return true;
+        return [row.name, row.id, row.house, row.mobile, row.assigned_by].some((value) => String(value || '').toLowerCase().includes(term));
+      });
     }
     function renderKeepPosition() {
       const scrollY = window.scrollY;
@@ -128,39 +191,26 @@
       requestAnimationFrame(() => window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' }));
     }
     function render() {
-      document.getElementById('count').textContent = rows.length ? `${rows.length} voter${rows.length === 1 ? '' : 's'} in this link` : 'No voters selected';
-      document.getElementById('content').innerHTML = rows.length ? rows.map((row) => {
+      const visible = filteredRows();
+      document.getElementById('count').textContent = `${visible.length} of ${rows.length} voter${rows.length === 1 ? '' : 's'} showing`;
+      document.getElementById('content').innerHTML = visible.length ? visible.map((row) => {
         const count = assignedCount(row.assigned_by);
-        const assigned = row.assigned_by ? `Assigned: ${row.assigned_by}` : 'Not assigned yet';
-        const canAssign = Boolean(token && row.row_id && count < 3);
-        const buttonText = count >= 3 ? 'Full' : row.assigned_by ? 'Add my name' : 'Assign to me';
+        const assignedText = row.assigned_by ? `Assigned: ${row.assigned_by}` : 'Not assigned yet';
+        const statusClass = count >= 3 ? 'full' : row.assigned_by ? 'done' : '';
+        const buttonText = count >= 3 ? 'Full' : row.assigned_by ? 'Add or remove' : 'Assign';
         return `
           <article class="card" data-row-id="${esc(row.row_id)}">
-            <input class="select" type="checkbox" data-pick="${esc(row.row_id)}" ${canAssign ? '' : 'disabled'} aria-label="Select ${esc(row.name)}">
-            <div class="info">
+            <div class="card-main">
               <div class="name">${esc(row.name || 'Unknown voter')}</div>
               <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
               <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
               <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
-              <span class="status ${row.assigned_by ? 'done' : ''}" data-status="${esc(row.row_id)}">${esc(assigned)}</span>
+              <span class="status ${statusClass}">${esc(assignedText)}</span>
             </div>
-            <button type="button" data-assign="${esc(row.row_id)}" ${canAssign ? '' : 'disabled'}>${esc(buttonText)}</button>
+            <button type="button" data-open-assign="${esc(row.row_id)}">${esc(buttonText)}</button>
           </article>
         `;
-      }).join('') : '<div class="empty">This assignment link has no selected voter data.</div>';
-    }
-    function setBusy(isBusy) {
-      document.querySelectorAll('button').forEach((button) => {
-        if (isBusy) {
-          if (!button.disabled) button.dataset.busyEnabled = '1';
-          button.disabled = true;
-          return;
-        }
-        if (button.dataset.busyEnabled === '1') {
-          button.disabled = false;
-          delete button.dataset.busyEnabled;
-        }
-      });
+      }).join('') : '<div class="empty">No voters match this search.</div>';
     }
     function validateIdentity() {
       if (!nameValue()) {
@@ -175,56 +225,110 @@
       }
       return true;
     }
-    async function assignOne(rowId, options = {}) {
-      if (!validateIdentity()) return false;
-      if (!token || !rowId) {
+    function setBusy(isBusy) {
+      ['saveAssignBtn', 'removeAssignBtn', 'cancelAssignBtn', 'closeModalBtn'].forEach((id) => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = isBusy;
+      });
+    }
+    function openModal(rowId) {
+      const row = rowById(rowId);
+      if (!row) return;
+      activeRowId = String(rowId);
+      loadIdentity();
+      const count = assignedCount(row.assigned_by);
+      document.getElementById('modalTitle').textContent = row.name || 'Unknown voter';
+      document.getElementById('modalAssigned').textContent = row.assigned_by ? `Assigned: ${row.assigned_by}` : 'Not assigned yet';
+      document.getElementById('modalMeta').innerHTML = `
+        <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
+        <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
+        <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
+      `;
+      document.getElementById('saveAssignBtn').textContent = count >= 3 ? 'Full' : row.assigned_by ? 'Add my name' : 'Assign to me';
+      document.getElementById('saveAssignBtn').disabled = !token || count >= 3;
+      document.getElementById('removeAssignBtn').disabled = !token || !row.assigned_by;
+      document.getElementById('assignModal').hidden = false;
+      setTimeout(() => document.getElementById('assigneeName').focus(), 80);
+    }
+    function closeModal() {
+      activeRowId = '';
+      document.getElementById('assignModal').hidden = true;
+    }
+    async function saveAssignment() {
+      if (!validateIdentity()) return;
+      const row = rowById(activeRowId);
+      if (!token || !row) {
         setMessage('This old link is read-only. Ask for a new assignment link.', true);
-        return false;
+        return;
       }
+      setBusy(true);
       saveIdentity();
       const { data, error } = await client.rpc('claim_assignment', {
         p_token: token,
-        p_voter_row_id: Number(rowId),
+        p_voter_row_id: Number(activeRowId),
         p_assignee_name: nameValue(),
         p_assignee_phone: phoneValue()
       });
+      setBusy(false);
       if (error) {
         setMessage(error.message || 'Could not save assignment.', true);
-        return false;
-      }
-      const saved = Array.isArray(data) ? data[0] : data;
-      rows = rows.map((row) => row.row_id === String(rowId) ? { ...row, assigned_by: saved?.vote_assigned_by || row.assigned_by } : row);
-      renderKeepPosition();
-      if (!options.silent) setMessage(`Saved. ${saved?.name || 'Voter'} assigned to ${nameValue()} (${phoneDigits()}).`, false);
-      return true;
-    }
-    async function assignSelected() {
-      const selected = Array.from(document.querySelectorAll('[data-pick]:checked')).map((input) => input.value).filter(Boolean);
-      if (!selected.length) {
-        setMessage('Tick voters first, or use Assign to me on one card.', true);
         return;
       }
-      if (!validateIdentity()) return;
-      setBusy(true);
-      let saved = 0;
-      for (const rowId of selected) {
-        if (await assignOne(rowId, { silent: true })) saved += 1;
+      const saved = Array.isArray(data) ? data[0] : data;
+      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_by: saved?.vote_assigned_by || item.assigned_by } : item);
+      closeModal();
+      renderKeepPosition();
+      setMessage(`Saved. ${saved?.name || 'Voter'} assigned to ${nameValue()} (${phoneDigits()}).`, false);
+    }
+    async function removeAssignment() {
+      if (phoneDigits().length < 5) {
+        setMessage('Write your mobile number to remove your assignment.', true);
+        document.getElementById('assigneePhone').focus();
+        return;
       }
+      const row = rowById(activeRowId);
+      if (!token || !row) {
+        setMessage('This old link is read-only. Ask for a new assignment link.', true);
+        return;
+      }
+      setBusy(true);
+      saveIdentity();
+      const { data, error } = await client.rpc('unclaim_assignment', {
+        p_token: token,
+        p_voter_row_id: Number(activeRowId),
+        p_assignee_phone: phoneValue()
+      });
       setBusy(false);
-      document.querySelectorAll('[data-pick]').forEach((input) => input.checked = false);
-      if (saved) setMessage(`Saved ${saved} voter${saved === 1 ? '' : 's'} to ${nameValue()} (${phoneDigits()}).`, false);
+      if (error) {
+        setMessage(error.message || 'Could not remove assignment.', true);
+        return;
+      }
+      const saved = Array.isArray(data) ? data[0] : data;
+      rows = rows.map((item) => item.row_id === activeRowId ? { ...item, assigned_by: saved?.vote_assigned_by || '' } : item);
+      closeModal();
+      renderKeepPosition();
+      setMessage(`Removed your assignment from ${saved?.name || 'this voter'}.`, false);
     }
     async function loadShare() {
-      loadIdentity();
+      document.getElementById('searchInput').addEventListener('input', render);
+      document.getElementById('filterSelect').addEventListener('change', render);
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterSelect').value = 'all';
+        render();
+      });
+      document.getElementById('saveAssignBtn').addEventListener('click', saveAssignment);
+      document.getElementById('removeAssignBtn').addEventListener('click', removeAssignment);
+      document.getElementById('cancelAssignBtn').addEventListener('click', closeModal);
+      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+      document.getElementById('assignModal').addEventListener('click', (event) => {
+        if (event.target.id === 'assignModal') closeModal();
+      });
       document.getElementById('assigneeName').addEventListener('input', saveIdentity);
       document.getElementById('assigneePhone').addEventListener('input', saveIdentity);
-      document.getElementById('saveSelectedBtn').addEventListener('click', assignSelected);
-      document.addEventListener('click', async (event) => {
-        const button = event.target.closest('[data-assign]');
-        if (!button) return;
-        setBusy(true);
-        await assignOne(button.dataset.assign);
-        setBusy(false);
+      document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-open-assign]');
+        if (button) openModal(button.dataset.openAssign);
       });
 
       if (!token) {
