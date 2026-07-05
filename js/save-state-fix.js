@@ -64,7 +64,7 @@
       houseLabel: selectedLabel('houseSelect'),
       box: valueOf('boxSelect'),
       scrollY: window.scrollY,
-      cardId: window.__lastOpenedVoterId || document.querySelector('.modal:not([hidden])')?.dataset?.openVoter || ''
+      cardId: window.__lastOpenedVoterId || ''
     };
     remember(MAIN_KEY, mainSnapshot);
     return mainSnapshot;
@@ -127,13 +127,14 @@
       dispatch('searchInput', 'input');
     } else if (item.assignActive) {
       document.querySelector('[data-assign-filter="assigned"]')?.click();
-    } else if (item.activeFilter) {
+    } else if (item.activeFilter && item.activeFilter !== 'all') {
       document.querySelector(`[data-filter="${cssEscape(item.activeFilter)}"]`)?.click();
     }
 
     const selector = item.cardId ? `.voter-card[data-open-voter="${cssEscape(item.cardId)}"]` : '';
     restoreScroll(selector, item.scrollY);
-    setTimeout(() => { restoring = false; }, 120);
+    setTimeout(() => restoreScroll(selector, item.scrollY), 180);
+    setTimeout(() => { restoring = false; }, 220);
   }
 
   function restoreShared(snapshot) {
@@ -167,7 +168,10 @@
 
   document.addEventListener('click', (event) => {
     const card = event.target.closest?.('.voter-card[data-open-voter]');
-    if (card) window.__lastOpenedVoterId = card.dataset.openVoter || '';
+    if (card) {
+      window.__lastOpenedVoterId = card.dataset.openVoter || '';
+      captureMain();
+    }
 
     const toggle = event.target.closest?.('[data-toggle-assign]');
     if (toggle?.dataset?.toggleAssign) window.__lastTouchedAssignRow = toggle.dataset.toggleAssign;
