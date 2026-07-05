@@ -150,7 +150,17 @@
       }).join('') : '<div class="empty">This assignment link has no selected voter data.</div>';
     }
     function setBusy(isBusy) {
-      document.querySelectorAll('button').forEach((button) => button.disabled = isBusy || button.dataset.wasDisabled === '1');
+      document.querySelectorAll('button').forEach((button) => {
+        if (isBusy) {
+          if (!button.disabled) button.dataset.busyEnabled = '1';
+          button.disabled = true;
+          return;
+        }
+        if (button.dataset.busyEnabled === '1') {
+          button.disabled = false;
+          delete button.dataset.busyEnabled;
+        }
+      });
     }
     function validateIdentity() {
       if (!nameValue()) {
