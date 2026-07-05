@@ -1,5 +1,6 @@
 (function () {
   const voteOptions = [
+    ['pending', 'Pending', { vote_status: 'pending', support_level: 'normal' }],
     ['garentee', 'Garentee', { vote_status: 'will-vote', support_level: 'guaranteed' }],
     ['will-vote', 'Will Vote', { vote_status: 'will-vote', support_level: 'normal' }],
     ['no-vote', 'Not Give Vote', { vote_status: 'no-vote', support_level: 'normal' }],
@@ -19,6 +20,7 @@
     ['arranged', 'Place To Pick', { transport_status: 'arranged' }]
   ];
   const d2dOptions = [
+    ['not-visited', 'Pending', { d2d_status: 'not-visited' }],
     ['visited', 'Reach', { d2d_status: 'visited' }],
     ['not-home', 'Not Home', { d2d_status: 'not-home' }],
     ['follow-up', 'Live In Another Place', { d2d_status: 'follow-up' }]
@@ -47,7 +49,9 @@
         ? 'will-vote'
         : form.elements.vote_status.value === 'no-vote'
           ? 'no-vote'
-          : 'not-decided';
+          : form.elements.vote_status.value === 'not-decided'
+            ? 'not-decided'
+            : 'pending';
 
     renderGroup(form, 'vote', 'Vote', voteOptions, voteValue);
     renderGroup(form, 'call', 'Call Center', callOptions, form.elements.call_result.value || 'need-call');
@@ -56,9 +60,7 @@
   }
 
   function initialVoteValue() {
-    const section = document.getElementById('modalSection')?.textContent || '';
-    if (/will\s*vote/i.test(section)) return 'will-vote';
-    return 'not-decided';
+    return 'pending';
   }
 
   function ensureField(form, name, value) {
