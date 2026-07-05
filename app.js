@@ -212,6 +212,7 @@
     renderShell();
     renderStats();
     renderTabs();
+    renderInsights();
     renderGrid();
   }
 
@@ -237,6 +238,58 @@
         <span>${number(countFor(filter.key))}</span>
       </button>
     `).join('');
+  }
+
+  function renderInsights() {
+    const targetEl = document.getElementById('targetStats');
+    const progressEl = document.getElementById('targetProgressBar');
+    const predictionEl = document.getElementById('targetPrediction');
+    const topHousesEl = document.getElementById('topHouses');
+    if (!targetEl || !progressEl || !predictionEl || !topHousesEl) return;
+
+    const opponentVotes = 428;
+    const targetVotes = opponentVotes + 1;
+    const committed = state.rows.filter((row) => row.vote_status === 'will-vote').length;
+    const guaranteed = state.rows.filter((row) => row.support_level === 'guaranteed').length;
+    const gap = Math.max(0, targetVotes - committed);
+    const progress = Math.min(100, Math.round((committed / targetVotes) * 100));
+    const poolGap = Math.max(0, targetVotes - state.rows.length);
+
+    targetEl.innerHTML = [
+      ['Opponent', opponentVotes],
+      ['Target', targetVotes],
+      ['Committed', committed],
+      ['Need More', gap],
+      ['Progress', `${progress}%`],
+      ['Guaranteed', guaranteed]
+    ].map(([labelText, value]) => `
+      <div class="metric">
+        <strong>${typeof value === 'number' ? number(value) : escapeHtml(value)}</strong>
+        <span>${escapeHtml(labelText)}</span>
+      </div>
+    `).join('');
+
+    progressEl.style.width = `${progress}%`;
+    if (committed >= targetVotes) {
+      predictionEl.textContent = 'Prediction: winning if committed voters hold.';
+      predictionEl.className = 'prediction good';
+    } else if (state.rows.length >= targetVotes) {
+      predictionEl.textContent = `Prediction: possible to win. Need ${number(gap)} more committed voters.`;
+      predictionEl.className = 'prediction warn';
+    } else {
+      predictionEl.textContent = `Prediction: current pool is short by ${number(poolGap)} voters against target.`;
+      predictionEl.className = 'prediction bad';
+    }
+
+    const houses = topHouses(state.rows);
+    topHousesEl.innerHTML = houses.length
+      ? houses.map((item, index) => `
+        <div class="house-row">
+          <span>${index + 1}. ${escapeHtml(item.house)}</span>
+          <strong>${number(item.count)}</strong>
+        </div>
+      `).join('')
+      : '<div class="empty small">No house data.</div>';
   }
 
   function renderGrid() {
@@ -488,6 +541,17 @@
 
   function countFor(key) {
     return getRows(key).length;
+  }
+
+  function topHouses(rows) {
+    const counts = new Map();
+    rows.forEach((row) => {
+      const house = clean(row.house) || 'Unknown house';
+      counts.set(house, (counts.get(house) || 0) + 1);
+    });
+    return Array.from(counts, ([house, count]) => ({ house, count }))
+      .sort((a, b) => b.count - a.count || a.house.localeCompare(b.house))
+      .slice(0, 5);
   }
 
   function applySearch(rows) {
