@@ -1,0 +1,97 @@
+/* Final voter UI hotfix: larger photos, stable cards, assign field */
+.voter-list{
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr))!important;
+  gap:18px!important;
+}
+.voter-card{
+  grid-template-columns:112px minmax(0,1fr)!important;
+  align-items:start!important;
+  padding:18px!important;
+  min-height:150px!important;
+}
+.voter-photo{
+  width:112px!important;
+  height:112px!important;
+  aspect-ratio:1/1!important;
+  border-radius:18px!important;
+  background:#eef2ff!important;
+}
+.voter-photo img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+}
+.photo-placeholder{
+  width:100%!important;
+  height:100%!important;
+  display:grid!important;
+  place-items:center!important;
+}
+.voter-info h3{
+  font-size:19px!important;
+  line-height:1.15!important;
+  margin-bottom:8px!important;
+}
+.voter-info p{
+  font-size:14px!important;
+  line-height:1.45!important;
+}
+.modal-card{
+  width:min(680px,calc(100vw - 24px))!important;
+}
+.modal-person{
+  align-items:flex-start!important;
+}
+.modal-photo{
+  width:96px!important;
+  height:96px!important;
+  border-radius:18px!important;
+}
+.assign-panel{
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  border-radius:16px;
+  padding:14px;
+  display:grid;
+  gap:10px;
+}
+.assign-panel strong{
+  color:#1d4ed8;
+  font-size:14px;
+}
+.assign-inline{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:10px;
+  align-items:end;
+}
+.assign-inline .btn{
+  min-width:120px;
+}
+.hotfix-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.hotfix-message{
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:850;
+  background:#eef2ff;
+  color:#1d4ed8;
+}
+.hotfix-message.error{
+  background:#fee2e2;
+  color:#991b1b;
+}
+@media (max-width:640px){
+  .voter-list{grid-template-columns:1fr!important;}
+  .voter-card{grid-template-columns:96px minmax(0,1fr)!important;padding:14px!important;}
+  .voter-photo{width:96px!important;height:96px!important;}
+  .modal-card{width:calc(100vw - 16px)!important;padding:16px!important;}
+  .modal-head{display:grid!important;grid-template-columns:1fr!important;}
+  .modal-photo{width:88px!important;height:88px!important;}
+  .hotfix-grid,.assign-inline{grid-template-columns:1fr!important;}
+  .modal-actions{grid-template-columns:1fr!important;}
+}
