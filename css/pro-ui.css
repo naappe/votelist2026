@@ -27,6 +27,16 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
   border-color:#93c5fd!important;
   background:linear-gradient(180deg,#fff,#f8fbff)!important;
 }
+.pro-voter-card.is-blank-party{
+  border-color:#f59e0b!important;
+  background:linear-gradient(180deg,#fff,#fffbeb)!important;
+  box-shadow:0 8px 24px rgba(245,158,11,.14)!important;
+}
+.pro-voter-card.is-blank-party .party-tag{
+  background:#fef3c7!important;
+  color:#92400e!important;
+  border-color:#f59e0b!important;
+}
 .pro-voter-card .voter-photo{
   width:74px!important;
   height:74px!important;
