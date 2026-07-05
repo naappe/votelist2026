@@ -8,6 +8,7 @@
   const cols = 'id,photo_url,name,national_id,house,lives_in,living_place,phone,party,election_box,phone_status,reach_status,vote_status,transport_status,d2d_status,remarks,support_level,vote_assigned_by,vote_assigned_at';
   const allowedVote = ['pending', 'will-vote', 'not-vote', 'no-vote', 'not-decided'];
   let currentVoter = null;
+  let allRowsCache = null;
 
   function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
@@ -36,11 +37,36 @@
     return (new URLSearchParams(location.search).get('party') || 'ALL').toUpperCase();
   }
 
+  function partyAllowed(row) {
+    const selected = partyParam();
+    const voterParty = String(row.party || '').trim().toUpperCase();
+    const isDhafthar = normalizeHouse([row.house, row.lives_in, row.living_place].join(' ')) === 'dhafthar';
+    if (selected === 'ALL') return true;
+    if (voterParty === selected) return true;
+    return selected === 'PNC' && !voterParty && isDhafthar;
+  }
+
   async function fetchVoter(id) {
     let query = client.from(config.table).select(cols).eq('id', id).single();
     const { data, error } = await query;
     if (error) throw error;
     return data;
+  }
+
+  async function fetchAllRows(force) {
+    if (allRowsCache && !force) return allRowsCache;
+    let from = 0;
+    const pageSize = 1000;
+    let rows = [];
+    while (true) {
+      const { data, error } = await client.from(config.table).select(cols).order('image_number', { ascending: true, nullsFirst: false }).range(from, from + pageSize - 1);
+      if (error) break;
+      rows = rows.concat(data || []);
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
+    }
+    allRowsCache = rows.filter(partyAllowed);
+    return allRowsCache;
   }
 
   function option(value, active) {
@@ -165,6 +191,7 @@
     try {
       const { error } = await client.from(config.table).update(updates).eq('id', currentVoter.id);
       if (error) throw error;
+      allRowsCache = null;
       if (msg) { msg.hidden = false; msg.className = 'hotfix-message'; msg.textContent = 'Saved. Refreshing voter list...'; }
       setTimeout(() => location.reload(), 500);
     } catch (error) {
@@ -172,6 +199,73 @@
       if (btn) { btn.disabled = false; btn.textContent = 'Save Voter'; }
     }
   }
+
+  function renderAssignedCard(voter) {
+    const phone = clean(voter.phone) || 'No phone';
+    const house = clean(voter.house || voter.lives_in || voter.living_place) || '-';
+    return `
+      <article class="voter-card" data-open-voter="${esc(voter.id)}" tabindex="0">
+        <div class="voter-photo">${voter.photo_url ? `<img src="${esc(voter.photo_url)}" alt="${esc(voter.name || 'Voter photo')}" loading="lazy">` : `<div class="photo-placeholder">${esc(initials(voter.name))}</div>`}</div>
+        <div class="voter-info">
+          <div class="voter-title"><h3>${esc(voter.name || 'Unknown voter')}</h3><span class="party-tag">${esc(voter.party || 'Blank party')}</span></div>
+          <p>${esc(house)} · ${esc(phone)}</p>
+          <div class="chips">
+            <span class="chip blue">Assigned: ${esc(voter.vote_assigned_by || '-')}</span>
+            ${voter.vote_status ? `<span class="chip">${esc(label(voter.vote_status))}</span>` : ''}
+            ${voter.phone_status ? `<span class="chip">${esc(label(voter.phone_status))}</span>` : ''}
+          </div>
+          <div class="section-label blue">Assign</div>
+        </div>
+      </article>
+    `;
+  }
+
+  async function renderAssignSection() {
+    const list = document.getElementById('voterList');
+    const title = document.getElementById('sectionTitle');
+    const filter = document.getElementById('sectionFilter');
+    const total = document.getElementById('sectionTotal');
+    if (!list || !title || !filter || !total) return;
+    title.textContent = 'Assigned Voters';
+    filter.textContent = 'Voters that already have a name written in Assign. Open card to change the assigned person.';
+    total.textContent = 'Loading...';
+    list.innerHTML = '<div class="empty">Loading assigned voters...</div>';
+    const rows = await fetchAllRows(true);
+    const assigned = rows.filter(row => clean(row.vote_assigned_by)).sort((a, b) => clean(a.vote_assigned_by).localeCompare(clean(b.vote_assigned_by)) || clean(a.name).localeCompare(clean(b.name)));
+    total.textContent = `${new Intl.NumberFormat('en-US').format(assigned.length)} voters`;
+    list.innerHTML = assigned.length ? assigned.map(renderAssignedCard).join('') : '<div class="empty">No voters assigned yet. Open any voter card and write the assigned person name.</div>';
+    document.querySelector('.voter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function injectAssignCounter() {
+    const summary = document.getElementById('summary');
+    const tabs = document.getElementById('sections');
+    if (!summary || summary.dataset.assignReady === '1') return;
+    summary.dataset.assignReady = '1';
+    const rows = await fetchAllRows(false);
+    const count = rows.filter(row => clean(row.vote_assigned_by)).length;
+    const number = new Intl.NumberFormat('en-US').format(count);
+    summary.insertAdjacentHTML('beforeend', `
+      <button class="stat-card assign-stat blue" data-hotfix-assign="1" type="button">
+        <span class="stat-icon">A</span>
+        <span class="stat-text"><strong>${number}</strong><small>Assign</small></span>
+      </button>
+    `);
+    if (tabs && !tabs.querySelector('[data-hotfix-assign]')) {
+      tabs.insertAdjacentHTML('beforeend', `<button class="tab" data-hotfix-assign="1" type="button">Assign <span>${number}</span></button>`);
+    }
+  }
+
+  document.addEventListener('click', async (event) => {
+    const assignButton = event.target.closest('[data-hotfix-assign]');
+    if (!assignButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    document.querySelectorAll('[data-filter], [data-hotfix-assign]').forEach(el => el.classList.remove('active'));
+    assignButton.classList.add('active');
+    await renderAssignSection();
+  }, true);
 
   document.addEventListener('click', async (event) => {
     const card = event.target.closest('[data-open-voter]');
@@ -181,10 +275,7 @@
     event.stopImmediatePropagation();
     try {
       const voter = await fetchVoter(card.dataset.openVoter);
-      const selectedParty = partyParam();
-      const voterParty = String(voter.party || '').toUpperCase();
-      const isDhafthar = normalizeHouse([voter.house, voter.lives_in, voter.living_place].join(' ')) === 'dhafthar';
-      if (selectedParty !== 'ALL' && voterParty && voterParty !== selectedParty && !isDhafthar) return;
+      if (!partyAllowed(voter)) return;
       openModal(voter);
     } catch (error) {
       console.error('Voter hotfix open failed:', error);
@@ -197,4 +288,7 @@
     if (!card) return;
     card.click();
   }, true);
+
+  window.addEventListener('load', () => setTimeout(injectAssignCounter, 1400));
+  setTimeout(injectAssignCounter, 2400);
 })();
