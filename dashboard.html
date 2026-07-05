@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="style.css?v=20260705-13">
-  <link rel="stylesheet" href="dashboard-cleanup.css?v=20260705-26">
-  <link rel="stylesheet" href="mobile-modal-fixes.css?v=20260705-1">
-  <link rel="stylesheet" href="voter-hotfix.css?v=20260705-2">
+  <link rel="stylesheet" href="css/style.css?v=20260705-13">
+  <link rel="stylesheet" href="css/dashboard-cleanup.css?v=20260705-26">
+  <link rel="stylesheet" href="css/mobile-modal-fixes.css?v=20260705-1">
+  <link rel="stylesheet" href="css/voter-hotfix.css?v=20260705-2">
 </head>
 <body data-page="dashboard" data-view="analytics">
   <header class="topbar">
@@ -70,7 +70,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20260705-11"></script>
+  <script src="js/config.js?v=20260705-11"></script>
   <script>
     const partyParam = new URLSearchParams(location.search).get('party');
     if (partyParam) {
@@ -78,15 +78,15 @@
       document.getElementById('votersLink').href = 'voters.html?party=' + encodeURIComponent(partyParam);
     }
   </script>
-  <script src="app.js?v=20260705-15"></script>
-  <script src="assign-share.js?v=20260705-1"></script>
-  <script src="campaign-arrangement.js?v=20260705-4"></script>
-  <script src="dhafthar-force-filter.js?v=20260705-3"></script>
-  <script src="dashboard-cleanup.js?v=20260705-25"></script>
-  <script src="house-dropdown-group.js?v=20260705-2"></script>
-  <script src="house-click-filter.js?v=20260705-2"></script>
-  <script src="voter-final-cleanup.js?v=20260705-4"></script>
-  <script src="voter-hotfix.js?v=20260705-3"></script>
-  <script src="assign-filter.js?v=20260705-1"></script>
+  <script src="js/app.js?v=20260705-15"></script>
+  <script src="js/assign-share.js?v=20260705-1"></script>
+  <script src="js/campaign-arrangement.js?v=20260705-4"></script>
+  <script src="js/dhafthar-force-filter.js?v=20260705-3"></script>
+  <script src="js/dashboard-cleanup.js?v=20260705-25"></script>
+  <script src="js/house-dropdown-group.js?v=20260705-2"></script>
+  <script src="js/house-click-filter.js?v=20260705-2"></script>
+  <script src="js/voter-final-cleanup.js?v=20260705-4"></script>
+  <script src="js/voter-hotfix.js?v=20260705-3"></script>
+  <script src="js/assign-filter.js?v=20260705-1"></script>
 </body>
 </html>
