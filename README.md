@@ -49,6 +49,7 @@ votelist2026/
 │   ├── campaign-arrangement.js
 │   ├── dashboard-cleanup.js
 │   ├── d2d-count-fix.js
+│   ├── house-filter-lock.js
 │   ├── house-sync.js
 │   ├── pro-ui.js
 │   ├── save-state-fix.js
@@ -76,6 +77,7 @@ votelist2026/
 | `js/campaign-arrangement.js` | Campaign popup/control helper layer. |
 | `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, top-house presentation helpers. |
 | `js/d2d-count-fix.js` | Keeps D2D counts aligned with current D2D status logic. |
+| `js/house-filter-lock.js` | Keeps selected house locked when status filters or saves rebuild the list. |
 | `js/house-sync.js` | Single source of truth for house dropdown, Dhafthar/Sinamale grouping, and Top Houses. |
 | `js/pro-ui.js` | Professional voter card actions: one Assign button and View Profile button per card. |
 | `js/save-state-fix.js` | Preserves active house/search/filter and scroll position after saving, including list rebuilds and accidental full-page reloads. |
@@ -127,11 +129,11 @@ vote_assigned_by, vote_assigned_at
 
 | Feature | Current Rule |
 |---|---|
-| House dropdown | Controlled by `house-sync.js`. |
+| House dropdown | Controlled by `house-sync.js`; selected house is locked by `house-filter-lock.js` while filtering/saving. |
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
 | Popup voter photo | `pro-ui.css` keeps the modal voter photo medium gallery-size for easier identification. |
-| Save after house filter | `save-state-fix.js` restores selected house/search/filter after saving, even if the list rebuilds or the browser reloads. |
+| Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
 | Save after assign filter | `save-state-fix.js` restores Assign/filter view and scroll position after saving. |
 | Self assign page | Friends tick/untick voters, write name/mobile only when needed, then save. |
 | Assignment privacy | Public shared links do not show other assignee names. They only show private assignment status/count. |
@@ -153,6 +155,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `house-filter-lock.js` so selected house stays locked when choosing status filters or saving voter status. |
 | 2026-07-06 | Increased popup voter photo to medium gallery size in `pro-ui.css` and bumped CSS cache keys. |
 | 2026-07-06 | Persisted `save-state-fix.js` state in sessionStorage so house/filter/scroll can recover even if the browser refreshes during save. |
 | 2026-07-06 | Bumped `save-state-fix.js` cache key to `v=20260706-2` on `dashboard.html` and `voters.html`. |
@@ -175,6 +178,7 @@ Before adding a new script, check if one of these already owns the feature:
 |---|---|
 | Dashboard data, stats, voter modal save | `js/app.js` |
 | House dropdown, Dhafthar/Sinamale, Top Houses | `js/house-sync.js` |
+| House + status lock after save/filter | `js/house-filter-lock.js` |
 | Self-assign links | `js/assign-share.js` and `shared.html` |
 | Keep filters/scroll after save | `js/save-state-fix.js` |
 | Card buttons and professional UI layer | `js/pro-ui.js` |
@@ -196,6 +200,7 @@ Important structure:
 - shared.html is the no-login self-assign page.
 - js/app.js owns main dashboard load, filters, modal save, and Supabase updates.
 - js/house-sync.js owns house dropdown, Dhafthar/Sinamale grouping, and Top Houses.
+- js/house-filter-lock.js keeps selected house active when status filters or saves rebuild the voter list.
 - js/assign-share.js owns short assignment share links.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
 - js/pro-ui.js owns clean card buttons, Assign focus, and medium gallery-style modal photo.
@@ -204,9 +209,10 @@ Important structure:
 When changing the app:
 1. Do not create duplicate filter/save logic.
 2. Keep house logic in house-sync.js.
-3. Keep save state preservation working after every save.
-4. Keep public assignment links private: do not show other assignee names.
-5. Update README.md with every important change.
+3. Keep house + status lock working after every save.
+4. Keep save state preservation working after every save.
+5. Keep public assignment links private: do not show other assignee names.
+6. Update README.md with every important change.
 ```
 
 ## Deployment
