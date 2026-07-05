@@ -73,10 +73,20 @@
 
       house = house.replace(/^dh\s*r\s*/i, 'DH R ');
       house = house.replace(/^rs\s*/i, 'RS ');
-      return house || 'Dhafthar';
+      return houseCode(house) || house || 'Dhafthar';
     }
 
     return original.replace(/^v\.\s*/i, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function houseCode(value) {
+    const text = String(value || '').replace(/\s+/g, ' ').trim();
+    const dh = text.match(/\bDH\s*R\s*\d+\b/i);
+    if (dh) return dh[0].replace(/\s+/g, ' ').replace(/^dh\s*r/i, 'DH R');
+    const rs = text.match(/\bRS\s*\d+\b/i);
+    if (rs) return rs[0].replace(/\s+/g, ' ').replace(/^rs/i, 'RS');
+    const number = text.match(/\b\d+\b/);
+    return number ? number[0] : '';
   }
 
   function searchKey(house) {
