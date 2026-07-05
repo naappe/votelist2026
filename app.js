@@ -290,13 +290,13 @@
       </div>
     `;
 
-    if (sectionKey === 'need-call') return intro + phoneField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + common;
-    if (sectionKey === 'reached') return intro + voteField(voter) + common;
+    if (sectionKey === 'need-call') return intro + phoneField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + transportField(voter) + common;
+    if (sectionKey === 'reached') return intro + voteField(voter) + transportField(voter) + common;
     if (sectionKey === 'will-vote') return intro + supportField(voter) + transportField(voter) + common;
-    if (sectionKey === 'pending') return intro + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + common;
+    if (sectionKey === 'pending') return intro + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + voteField(voter) + transportField(voter) + common;
     if (sectionKey === 'no-phone') return intro + phoneField(voter, 'New Phone') + d2dField(voter) + common;
     if (sectionKey === 'need-transport') return intro + transportField(voter, 'need-transport') + supportField(voter) + common;
-    if (sectionKey === 'follow-up') return intro + d2dField(voter) + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + common;
+    if (sectionKey === 'follow-up') return intro + d2dField(voter) + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + transportField(voter) + common;
     return intro + voteField(voter) + choiceGroup('call_result', callOptions(), voter.phone_status || 'need-call') + supportField(voter) + transportField(voter) + d2dField(voter) + common;
   }
 
@@ -367,6 +367,10 @@
       updates.vote_status = 'will-vote';
       updates.reach_status = 'reached';
       updates.transport_status = data.transport_status || 'need-transport';
+    }
+    if (['need-transport', 'arranged', 'picked-up'].includes(updates.transport_status)) {
+      updates.vote_status = 'will-vote';
+      updates.reach_status = 'reached';
     }
     if (sectionKey === 'follow-up' && data.vote_status === 'will-vote') updates.reach_status = 'reached';
     if (updates.vote_status === 'will-vote') updates.reach_status = 'reached';
