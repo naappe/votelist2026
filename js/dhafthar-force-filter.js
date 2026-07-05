@@ -51,8 +51,7 @@
     const selected = partyParam();
     const party = String(row.party || '').trim().toUpperCase();
     if (selected === 'ALL') return true;
-    if (party === selected) return true;
-    return selected === 'PNC' && !party && isDhafthar([row.house, row.lives_in].join(' '));
+    return party === selected;
   }
 
   function cleanHouse(row) {
