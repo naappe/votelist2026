@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard | Villimale Campaign Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="dashboard">
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
+    <nav class="toolbar">
+      <a class="btn light" href="index.html">Home</a>
+      <button id="logoutBtn" class="btn dark" type="button">Logout</button>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Campaign work area</p>
+        <h1 id="dashboardTitle">Dashboard</h1>
+        <p id="dashboardSubtitle">Loading voter data from Supabase...</p>
+      </div>
+      <button id="refreshBtn" class="btn light" type="button">Refresh</button>
+    </section>
+
+    <section id="summary" class="summary" aria-label="Dashboard summary"></section>
+    <section id="sections" class="sections" aria-label="Campaign sections"></section>
+
+    <section class="work">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 id="sectionTitle">Need Call</h2>
+            <p id="sectionFilter">Loading section...</p>
+          </div>
+          <span id="sectionTotal" class="status-pill">0 voters</span>
+        </div>
+
+        <div id="statusMessage" class="status-message" role="status"></div>
+        <div id="sectionStats" class="chart-row"></div>
+        <div id="voterList" class="voter-list"></div>
+      </div>
+
+      <aside class="side">
+        <div class="panel">
+          <h2 id="logicTitle">Section Function</h2>
+          <div id="logicText" class="logic-box">Choose a section to see its save rule.</div>
+          <div id="logicList" class="logic-list"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="voterModal" class="modal" hidden>
+    <button class="modal-backdrop" type="button" data-close-modal aria-label="Close"></button>
+    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-head">
+        <div class="modal-person">
+          <div class="voter-photo modal-photo"><img id="modalPhoto" alt=""></div>
+          <div>
+            <p class="eyebrow" id="modalSection">Section</p>
+            <h2 id="modalTitle">Voter</h2>
+            <p id="modalMeta" class="muted"></p>
+          </div>
+        </div>
+        <button class="btn light" type="button" data-close-modal>Close</button>
+      </header>
+
+      <form id="voterForm" class="form"></form>
+    </article>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
