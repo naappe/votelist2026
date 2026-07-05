@@ -50,7 +50,7 @@
           house: row?.house || backup.house || '',
           mobile: row?.phone || backup.mobile || '',
           photo: row?.photo_url || backup.photo || '',
-          assigned_by: row?.vote_assigned_by || backup.assigned_by || ''
+          assigned_count: countAssignments(row?.vote_assigned_by || '')
         };
       });
     } catch {
@@ -69,8 +69,12 @@
       house: meta[0] || '',
       mobile: meta[meta.length - 1] || '',
       photo: card.querySelector('.voter-photo img')?.src || '',
-      assigned_by: ''
+      assigned_count: 0
     };
+  }
+
+  function countAssignments(value) {
+    return String(value || '').split(',').map((item) => item.trim()).filter(Boolean).length;
   }
 
   function token() {
