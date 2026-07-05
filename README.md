@@ -155,6 +155,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Changed Pages workflow concurrency to queue deployments instead of cancelling in-progress Pages deploys. |
 | 2026-07-06 | Added `house-filter-lock.js` so selected house stays locked when choosing status filters or saving voter status. |
 | 2026-07-06 | Increased popup voter photo to medium gallery size in `pro-ui.css` and bumped CSS cache keys. |
 | 2026-07-06 | Persisted `save-state-fix.js` state in sessionStorage so house/filter/scroll can recover even if the browser refreshes during save. |
@@ -219,4 +220,4 @@ When changing the app:
 
 GitHub Pages deploys from `.github/workflows/pages.yml`.
 
-The workflow uploads the static repository files and deploys with GitHub Pages. If a phone still shows old behavior after a fix, wait for Pages deployment, then hard refresh or open the page in a new tab.
+The workflow uploads the static repository files and deploys with GitHub Pages. Deployments are queued instead of cancelled so rapid commits do not interrupt an in-progress Pages deployment. If GitHub still reports `Deployment failed, try again later`, rerun the latest failed job after one or two minutes.
