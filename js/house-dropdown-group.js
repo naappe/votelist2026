@@ -44,7 +44,14 @@
   }
 
   function sourceHouse(row) {
-    return clean(row.house) || clean(row.lives_in) || 'Unknown house';
+    const house = clean(row.house);
+    const livesIn = clean(row.lives_in);
+    if (house && livesIn && isGenericDhafthar(house)) return livesIn;
+    return house || livesIn || 'Unknown house';
+  }
+
+  function isGenericDhafthar(value) {
+    return isDhafthar(value) && extractHouse(value) === 'Dhafthar';
   }
 
   function extractHouse(value) {
@@ -57,6 +64,7 @@
         .replace(/^dhaftaru?\.?\s*/i, '')
         .replace(/^daftharu?\.?\s*/i, '')
         .replace(/^df\.?\s*/i, '')
+        .replace(/^[,/:;-]\s*/, '')
         .replace(/\brs\s*no\.?\s*/i, 'RS ')
         .replace(/\bno\.?\s*/i, '')
         .replace(/\bdh\s*r\b\.?\s*/i, 'DH R ')
@@ -99,7 +107,7 @@
     if (!window.supabase || !config) return [];
     const client = window.__houseNormalizeClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
     window.__houseNormalizeClient = client;
-    const columns = 'house,lives_in,party,phone,phone_status,vote_status,d2d_status,support_level,transport_status';
+    const columns = 'id,photo_url,name,national_id,house,lives_in,phone,party,election_box,phone_status,reach_status,vote_status,transport_status,d2d_status,support_level';
     let from = 0;
     const pageSize = 1000;
     const rows = [];
@@ -190,6 +198,63 @@
     if (select.innerHTML.trim() !== html.trim()) select.innerHTML = html;
   }
 
+  function renderExactHouse(value) {
+    const selected = String(value || '').trim().toLowerCase();
+    if (!selected) return;
+
+    fetchRows().then((rows) => {
+      const matches = rows.filter((row) => searchKey(extractHouse(sourceHouse(row))) === selected);
+      if (!matches.length) return;
+
+      const selectedHouse = extractHouse(sourceHouse(matches[0]));
+      const title = document.getElementById('sectionTitle');
+      const filter = document.getElementById('sectionFilter');
+      const total = document.getElementById('sectionTotal');
+      const list = document.getElementById('voterList');
+      const search = document.getElementById('searchInput');
+      if (!list) return;
+
+      if (title) title.textContent = selectedHouse;
+      if (filter) filter.textContent = `Showing exact house group: ${selectedHouse}.`;
+      if (total) total.textContent = `${number(matches.length)} voter${matches.length === 1 ? '' : 's'}`;
+      if (search) search.value = selectedHouse;
+      list.innerHTML = matches.map(renderVoterCard).join('');
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 30);
+    });
+  }
+
+  function renderVoterCard(voter) {
+    const phone = clean(voter.phone) || 'No phone';
+    return `
+      <article class="voter-card" data-open-voter="${escapeAttr(voter.id)}" tabindex="0">
+        <div class="voter-photo">${voter.photo_url ? `<img src="${escapeAttr(voter.photo_url)}" alt="${escapeAttr(voter.name || 'Voter photo')}" loading="lazy">` : `<div class="photo-placeholder">${escapeHtml(initials(voter.name))}</div>`}</div>
+        <div class="voter-info">
+          <div class="voter-title">
+            <h3>${escapeHtml(voter.name || 'Unknown voter')}</h3>
+            <span class="party-tag">${escapeHtml(voter.party || 'Not party')}</span>
+          </div>
+          <p>${escapeHtml(sourceHouse(voter))} · Box ${escapeHtml(voter.election_box || '-')} · ${escapeHtml(phone)}</p>
+          <div class="chips">
+            ${chip(voter.reach_status, voter.reach_status === 'reached' ? 'green' : 'red')}
+            ${chip(voter.vote_status, voter.vote_status === 'will-vote' ? 'green' : voter.vote_status === 'pending' ? 'amber' : '')}
+            ${chip(voter.phone_status, voter.phone_status === 'called' ? 'green' : voter.phone_status === 'no-phone' ? 'red' : 'blue')}
+            ${chip(voter.support_level, voter.support_level === 'guaranteed' ? 'green' : '')}
+          </div>
+          <div class="section-label blue">House - ${escapeHtml(extractHouse(sourceHouse(voter)))}</div>
+        </div>
+      </article>
+    `;
+  }
+
+  function initials(name) {
+    return String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase();
+  }
+
+  function chip(value, color) {
+    if (!value) return '';
+    return `<span class="chip ${color || ''}">${escapeHtml(String(value).replace(/[_-]/g, ' '))}</span>`;
+  }
+
   async function applyHouseGrouping() {
     if (applying) return;
     applying = true;
@@ -215,7 +280,11 @@
   document.addEventListener('DOMContentLoaded', () => scheduleApply(600));
   window.addEventListener('load', () => scheduleApply(800));
   document.addEventListener('change', (event) => {
-    if (event.target?.id === 'houseSelect') scheduleApply(300);
+    if (event.target?.id !== 'houseSelect') return;
+    const value = event.target.value;
+    scheduleApply(300);
+    setTimeout(() => renderExactHouse(value), 120);
+    setTimeout(() => renderExactHouse(value), 420);
   }, true);
 
   const observer = new MutationObserver(() => scheduleApply(200));
