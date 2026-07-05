@@ -3,6 +3,10 @@ body[data-view="management"] #summary{
   display:grid!important;
   margin-bottom:12px!important;
 }
+body[data-view="management"] #summary,
+body[data-view="management"] .assign-stat.stat-card{
+  display:none!important;
+}
 body[data-view="management"] .stat-card{
   min-height:64px!important;
   padding:12px 14px!important;
@@ -42,13 +46,17 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
   height:74px!important;
   border-radius:12px!important;
 }
-.pro-voter-card .voter-title{align-items:center!important;margin-bottom:7px!important}
+.pro-voter-card .voter-title{align-items:flex-start!important;margin-bottom:8px!important;gap:10px!important;min-width:0!important}
 .pro-voter-card .voter-info h3{
   margin:0!important;
   font-size:16px!important;
   line-height:1.2!important;
   font-weight:900!important;
+  min-width:0!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
 }
+.pro-voter-card .party-tag{flex:0 0 auto!important}
 .pro-voter-card .voter-info p,
 .pro-meta-line{
   display:flex!important;
@@ -64,6 +72,23 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
 .card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .assign-card-btn{background:#2563eb!important;color:#fff!important}
 .pro-voter-card .section-label{margin-top:10px!important;padding-top:9px!important}
+.pro-voter-card .share-pick{
+  top:10px!important;
+  right:10px!important;
+  padding:4px 7px!important;
+  gap:5px!important;
+  background:#f8fafc!important;
+  color:#475467!important;
+  box-shadow:none!important;
+}
+.pro-voter-card .share-pick span{
+  font-size:10px!important;
+  font-weight:900!important;
+}
+.pro-voter-card .share-pick input{
+  width:13px!important;
+  min-height:13px!important;
+}
 .assign-panel{
   background:#eff6ff!important;
   border-color:#bfdbfe!important;
@@ -109,6 +134,8 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
   .pro-voter-card .voter-photo{width:58px!important;height:58px!important}
   .pro-voter-card .voter-info p,.pro-meta-line{display:grid!important;gap:4px!important}
   .card-actions .btn{flex:1;min-height:34px!important}
+  .pro-voter-card .share-pick span{display:none!important}
+  .pro-voter-card .share-pick{padding:6px!important}
   .modal-card{width:calc(100vw - 16px)!important}
   .modal-head{grid-template-columns:116px minmax(0,1fr) auto!important;gap:12px!important}
   .modal-photo{width:116px!important;height:116px!important;border-radius:16px!important}
