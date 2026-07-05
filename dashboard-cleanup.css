@@ -1,3 +1,6 @@
 .insight-grid{align-items:start}
 .logic-box,.rating-box p,.house-main small{display:none!important}
 .house-main{display:block;min-width:0}
+.panel-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn.compact{min-height:34px;padding:7px 11px;border-radius:10px;font-size:12px}
+@media(max-width:760px){.panel-tools{justify-content:stretch}.panel-tools .btn{flex:1}}
