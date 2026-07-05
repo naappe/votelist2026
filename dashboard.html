@@ -15,7 +15,6 @@
     <div class="brand" aria-label="Villimale Campaign Manager"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></div>
     <nav class="toolbar">
       <a id="dashboardLink" class="btn light" href="dashboard.html">Dashboard</a>
-      <a id="votersLink" class="btn light" href="voters.html">Voters</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -76,7 +75,6 @@
     const partyParam = new URLSearchParams(location.search).get('party');
     if (partyParam) {
       document.getElementById('dashboardLink').href = 'dashboard.html?party=' + encodeURIComponent(partyParam);
-      document.getElementById('votersLink').href = 'voters.html?party=' + encodeURIComponent(partyParam);
     }
   </script>
   <script src="js/app.js?v=20260705-15"></script>
