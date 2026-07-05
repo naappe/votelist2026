@@ -11,7 +11,7 @@
     <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
     <nav class="toolbar">
       <a class="btn light" href="index.html">Home</a>
-      <button id="zeroDayBtn" class="btn light" type="button">Zero Day</button>
+      <a id="zeroDayLink" class="btn light" href="zero-day.html">Zero Day</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -35,14 +35,10 @@
           <input id="searchInput" type="search" placeholder="Name, ID, phone, house, party">
         </label>
         <label>House
-          <select id="houseSelect">
-            <option value="">All houses</option>
-          </select>
+          <select id="houseSelect"><option value="">All houses</option></select>
         </label>
         <label>Box
-          <select id="boxSelect">
-            <option value="">All boxes</option>
-          </select>
+          <select id="boxSelect"><option value="">All boxes</option></select>
         </label>
         <button id="clearSearchBtn" class="btn light" type="button">Clear Search</button>
         <button id="shareViewBtn" class="btn light" type="button">Share Read View</button>
@@ -51,71 +47,34 @@
     <div id="syncNotice" class="sync-notice" role="status" hidden></div>
 
     <section class="insight-grid" aria-label="Campaign target and focus">
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Target To Win</h2>
-            <p>Opponent baseline 428 votes, target 429.</p>
-          </div>
-        </div>
-        <div id="targetStats" class="stats-grid"></div>
-        <div class="progress"><span id="targetProgressBar"></span></div>
-        <p id="targetPrediction" class="muted">Loading prediction...</p>
-      </article>
-
-      <article class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Top 10 Houses</h2>
-            <p>Highest voter count with priority status.</p>
-          </div>
-        </div>
-        <div id="topHouses" class="house-list"></div>
-      </article>
+      <article class="panel"><div class="panel-head"><div><h2>Target To Win</h2><p>Opponent baseline 428 votes, target 429.</p></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article>
+      <article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2><p>Highest voter count with priority status.</p></div></div><div id="topHouses" class="house-list"></div></article>
     </section>
 
     <section class="panel voter-panel">
-      <div class="panel-head">
-        <div>
-          <h2 id="sectionTitle">All</h2>
-          <p id="sectionFilter">Sections filter voters only. Open a voter card to work.</p>
-        </div>
-        <span id="sectionTotal" class="status-pill">0 voters</span>
-      </div>
-
+      <div class="panel-head"><div><h2 id="sectionTitle">All</h2><p id="sectionFilter">Sections filter voters only. Open a voter card to work.</p></div><span id="sectionTotal" class="status-pill">0 voters</span></div>
       <div id="statusMessage" class="status-message" role="status"></div>
       <div id="sectionStats" hidden></div>
       <div id="voterList" class="voter-list"></div>
     </section>
 
-    <div hidden>
-      <div id="logicTitle"></div>
-      <div id="logicText"></div>
-      <div id="logicList"></div>
-    </div>
+    <div hidden><div id="logicTitle"></div><div id="logicText"></div><div id="logicList"></div></div>
   </main>
 
   <div id="voterModal" class="modal" hidden>
     <button class="modal-backdrop" type="button" data-close-modal aria-label="Close"></button>
     <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <header class="modal-head">
-        <div class="modal-person">
-          <div class="voter-photo modal-photo"><img id="modalPhoto" alt=""></div>
-          <div>
-            <p class="eyebrow" id="modalSection">Section</p>
-            <h2 id="modalTitle">Voter</h2>
-            <p id="modalMeta" class="muted"></p>
-          </div>
-        </div>
-        <button class="btn light" type="button" data-close-modal>Close</button>
-      </header>
-
+      <header class="modal-head"><div class="modal-person"><div class="voter-photo modal-photo"><img id="modalPhoto" alt=""></div><div><p class="eyebrow" id="modalSection">Section</p><h2 id="modalTitle">Voter</h2><p id="modalMeta" class="muted"></p></div></div><button class="btn light" type="button" data-close-modal>Close</button></header>
       <form id="voterForm" class="form"></form>
     </article>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=20260705-11"></script>
+  <script>
+    const partyParam = new URLSearchParams(location.search).get('party');
+    if (partyParam) document.getElementById('zeroDayLink').href = 'zero-day.html?party=' + encodeURIComponent(partyParam);
+  </script>
   <script src="app.js?v=20260705-11"></script>
 </body>
 </html>
