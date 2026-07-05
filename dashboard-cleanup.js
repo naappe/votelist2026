@@ -31,6 +31,7 @@
     applyCleanReadView();
     hideBoxDropdown();
     ensureBoxTabs();
+    ensureDhaftharOption();
     ensurePanelTools();
     ensureShareSelection();
     ensureD2DField();
@@ -108,6 +109,108 @@
         .map((item) => `<button class="box-tab ${activeNumber === item.number ? 'active' : ''}" type="button" data-box-search="${item.search}" data-box-value="${escapeAttr(item.value)}">${item.label}</button>`)
     ].join('');
     if (tabs.innerHTML !== nextHtml) tabs.innerHTML = nextHtml;
+  }
+
+  function ensureDhaftharOption() {
+    const house = document.getElementById('houseSelect');
+    if (!house || house.querySelector('option[value="__dhafthar__"]')) return;
+    const option = document.createElement('option');
+    option.value = '__dhafthar__';
+    option.textContent = 'House - Dhafthar';
+    option.dataset.label = 'Dhafthar';
+    house.insertBefore(option, house.options[1] || null);
+  }
+
+  async function renderDhaftharRows() {
+    const list = document.getElementById('voterList');
+    const title = document.getElementById('sectionTitle');
+    const filter = document.getElementById('sectionFilter');
+    const total = document.getElementById('sectionTotal');
+    if (!list || !title || !filter || !total) return;
+
+    title.textContent = 'House - Dhafthar';
+    filter.textContent = 'Showing Dhafthar, DF, Dh R, and No Dh R house records.';
+    total.textContent = 'Loading...';
+    list.innerHTML = '<div class="empty">Loading Dhafthar voters...</div>';
+
+    const rows = await fetchRowsForCleanup();
+    const filtered = rows.filter((row) => isDhaftharHouse(row.house));
+    const pageRows = document.body.dataset.page === 'zero-day'
+      ? filtered.filter((row) => row.vote_status === 'will-vote' || row.support_level === 'guaranteed')
+      : filtered;
+
+    total.textContent = `${formatNumber(pageRows.length)} voters`;
+    list.innerHTML = pageRows.length
+      ? pageRows.map(renderCleanupCard).join('')
+      : '<div class="empty">No Dhafthar voters found.</div>';
+    ensureShareSelection();
+    scrollToList();
+  }
+
+  async function fetchRowsForCleanup() {
+    try {
+      const config = window.APP_CONFIG;
+      if (!window.supabase || !config) return [];
+      const client = window.__cleanupClient || window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      window.__cleanupClient = client;
+      const party = new URLSearchParams(location.search).get('party');
+      const columns = 'id,photo_url,name,national_id,house,phone,party,election_box,phone_status,reach_status,vote_status,transport_status,d2d_status,support_level';
+      let from = 0;
+      const pageSize = 1000;
+      let rows = [];
+      while (true) {
+        let query = client.from(config.table).select(columns).order('image_number', { ascending: true, nullsFirst: false }).range(from, from + pageSize - 1);
+        if (party && party !== 'ALL') query = query.eq('party', party);
+        const { data, error } = await query;
+        if (error) return rows;
+        rows = rows.concat(data || []);
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+      }
+      return rows;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function isDhaftharHouse(value) {
+    const compact = String(value || '').toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/['`’.\-]/g, '')
+      .replace(/\s+/g, '');
+    return /^df\d*/.test(compact)
+      || /^dhr\d*/.test(compact)
+      || /^nodhr\d*/.test(compact)
+      || compact.startsWith('dhafthar')
+      || compact.startsWith('dafthar');
+  }
+
+  function renderCleanupCard(voter) {
+    return `
+      <article class="voter-card" data-open-voter="${escapeAttr(voter.id)}" tabindex="0">
+        <div class="voter-photo">${voter.photo_url ? `<img src="${escapeAttr(voter.photo_url)}" alt="${escapeAttr(voter.name || 'Voter photo')}" loading="lazy">` : `<div class="photo-placeholder">${escapeAttr(initials(voter.name))}</div>`}</div>
+        <div class="voter-info">
+          <div class="voter-title"><h3>${escapeAttr(voter.name || 'Unknown voter')}</h3><span class="party-tag">${escapeAttr(voter.party || 'Not party')}</span></div>
+          <p>${escapeAttr(voter.house || '-')} · Box ${escapeAttr(voter.election_box || '-')} · ${escapeAttr(voter.phone || 'No phone')}</p>
+          <div class="chips">
+            ${cleanupChip(voter.reach_status)}
+            ${cleanupChip(voter.vote_status)}
+            ${cleanupChip(voter.phone_status)}
+            ${cleanupChip(voter.support_level)}
+          </div>
+          <div class="section-label blue">House - Dhafthar</div>
+        </div>
+      </article>
+    `;
+  }
+
+  function cleanupChip(value) {
+    return value ? `<span class="chip">${escapeAttr(String(value).replace(/-/g, ' '))}</span>` : '';
+  }
+
+  function initials(name) {
+    return String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase();
   }
 
   function normalizeBox(text) {
@@ -437,6 +540,17 @@
   }, true);
 
   document.addEventListener('change', (event) => {
+    if (event.target?.id === 'houseSelect' && event.target.value === '__dhafthar__') {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      const search = document.getElementById('searchInput');
+      const box = document.getElementById('boxSelect');
+      if (search) search.value = 'Dhafthar';
+      if (box) box.value = '';
+      renderDhaftharRows();
+      return;
+    }
     const checkbox = event.target.closest('[data-share-select]');
     if (checkbox) {
       if (checkbox.checked) selectedVoters.add(checkbox.value);
