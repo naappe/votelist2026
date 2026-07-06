@@ -106,7 +106,7 @@ These files remain only so old script tags or old links do not break. They shoul
 | `css/mobile-modal-fixes.css` | Mobile popup and responsive fixes. |
 | `css/voter-hotfix.css` | Voter page specific fixes. |
 | `css/pro-ui.css` | Professional profile-card voter theme, Assign/View actions, and matching profile-style modal photo/card spacing. |
-| `css/voters-stats.css` | Voters page override that keeps the stats strip visible above filters. |
+| `css/voters-stats.css` | Voters page override that keeps the stats strip and Assign stat visible above filters. |
 
 ## Supabase Map
 
@@ -135,7 +135,7 @@ vote_assigned_by, vote_assigned_at
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
 | Popup voter photo | `pro-ui.css` uses a larger circular profile photo inside a soft white modal card for easier identification. |
-| Voters stats strip | `voters.html` loads `css/voters-stats.css` after `pro-ui.css` so the All/Need Call/D2D/Will Vote stats stay visible. |
+| Voters stats strip | `voters.html` loads `css/voters-stats.css` after `pro-ui.css` so the All/Need Call/D2D/Will Vote and Assign stats stay visible. |
 | Voter card spacing | `pro-ui.css` uses a profile-card theme with larger circular photos, centered text, soft gray page spacing, footer action buttons, and Pick share checkboxes. |
 | Voter card meta | `pro-ui.js` cleans the visible card and popup text to `house · phone`, hiding helper text like `(Box 392 | Villimale'-2)` without changing saved data. |
 | Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
@@ -161,6 +161,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Restored the Assign stat card inside the Voters page stats strip. |
 | 2026-07-06 | Restored the stats strip on the Voters page with a page-specific override loaded after the profile theme. |
 | 2026-07-06 | Tightened voter popup spacing: compact header, left-aligned voter text, aligned choice buttons, and reduced empty modal space. |
 | 2026-07-06 | Cleaned voter card/popup meta to hide bracket helper text and extended the profile-card theme to the voter popup. |
