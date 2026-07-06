@@ -67,12 +67,12 @@ votelist2026/
 | `js/app.js` | Main logged-in app: auth, Supabase load, stats, filters, voter modal, and save logic. |
 | `js/config.js` | Supabase URL/key, table name, login users, shared-page helpers. |
 | `js/assign-share.js` | Creates short public self-assign links and the Copy/Open share panel. |
-| `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, top-house helpers. |
+| `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, top-house helpers. Its old startup interval is blocked by `no-jump-fixes.js`. |
 | `js/d2d-count-fix.js` | Keeps D2D count labels aligned with D2D status. |
 | `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, Top Houses. |
 | `js/house-filter-lock.js` | Keeps selected house/search active while filtering or saving. |
-| `js/no-jump-fixes.js` | Stops old hotfix behavior from injecting the Assign stat late or refreshing the page after save. |
-| `js/pro-ui.js` | Clean card actions, Assign focus, View Profile button, visible meta cleanup. |
+| `js/no-jump-fixes.js` | Loads before cleanup/hotfix scripts; blocks the cleanup startup timer, removes late old Assign stats, and saves the old hotfix popup without `location.reload()`. |
+| `js/pro-ui.js` | Clean card actions, Assign focus, View Profile button, visible meta cleanup; scheduled with `requestAnimationFrame`, not intervals. |
 | `js/save-state-fix.js` | Preserves selected filter/search/house/scroll when lists rebuild. |
 | `js/voter-card-statuses.js` | Voter card status display cleanup. |
 | `js/voter-hotfix.js` | Legacy popup/save layer still loaded, but guarded by `no-jump-fixes.js`. |
@@ -94,7 +94,7 @@ votelist2026/
 |---|---|
 | Voter card chips | Keep the chips such as Reached, Will Vote, Need Call, Normal. |
 | Bottom duplicate result row | Removed from voter cards. Do not re-add duplicate Will Vote at the bottom. |
-| Voters stats | Do not inject Assign stat late after page load; it causes layout jump. |
+| Voters stats | Do not inject Assign stat late after page load; it causes layout jump. Duplicate old Assign stats are hidden by `voters-stats.css` and removed by `no-jump-fixes.js`. |
 | Save from middle of list | Must not refresh the page or jump to the top. |
 | House filter | Must stay selected after saving or changing voter status. |
 | Self-assign link | Friends tick/untick voters, write name/mobile only when needed, then save. |
@@ -133,6 +133,9 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Loaded `js/no-jump-fixes.js` before `dashboard-cleanup.js` so the old startup timer is blocked before it starts. |
+| 2026-07-06 | Changed `js/pro-ui.js` scheduling to `requestAnimationFrame` instead of timer-style enhancement. |
+| 2026-07-06 | Updated `css/voters-stats.css` to hide duplicate old Assign stats and keep the stats strip stable. |
 | 2026-07-06 | Added `js/no-jump-fixes.js` and loaded it before `voter-hotfix.js` on dashboard/voters. This hides/removes the late Assign stat and saves the old hotfix popup without `location.reload()`. |
 | 2026-07-06 | Removed duplicate bottom voter-card result row while keeping the status chips. |
 | 2026-07-06 | Added project-card voter card theme and popup card styling. |
@@ -170,7 +173,7 @@ Active screens:
 Important owners:
 - js/app.js owns core load, filters, modal save, and stats.
 - js/house-sync.js owns house dropdown, Dhafthar/Sinamale, and Top Houses.
-- js/no-jump-fixes.js prevents late Assign stat injection and old save reloads.
+- js/no-jump-fixes.js prevents late Assign stat injection, blocks old cleanup startup timer, and prevents old save reloads.
 - js/save-state-fix.js and js/house-filter-lock.js preserve house/filter/scroll after save.
 - js/assign-share.js owns self-assign links.
 
