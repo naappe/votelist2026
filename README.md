@@ -40,6 +40,7 @@ votelist2026/
 │   ├── config.js
 │   ├── read-view-public.js
 │   ├── read-only-view.js
+│   ├── modal-assignment-panel.js
 │   ├── assign-share.js
 │   ├── assign-results.js
 │   ├── assigned-person-filter.js
@@ -68,15 +69,15 @@ votelist2026/
 
 | File | Responsibility |
 |---|---|
-| `js/app.js` | Main logged-in app: auth, Supabase load, stats, filters, and base rendering. |
+| `js/app.js` | Main logged-in app: auth, Supabase load, stats, filters, new popup, and base rendering. |
 | `js/config.js` | Supabase URL/key, table name, login users, shared-page helpers. |
 | `js/read-view-public.js` | Allows `view=read` links to pass the app auth check without username/password. |
 | `js/read-only-view.js` | Owns public gallery rendering: photo, name, ID, house, and mobile only. |
+| `js/modal-assignment-panel.js` | Adds the Assign this voter section to the main popup and saves manual assignee names without auto-stamping the admin email. |
 | `js/assign-share.js` | Creates short public self-assign links and the Copy/Open share panel. |
 | `js/assign-results.js` | Adds the admin-only `Assigned Results` button and renders assigned voters. |
 | `js/assigned-person-filter.js` | Adds the Assigned Person dropdown inside Assigned Results so admins can identify who took which voters. |
-| `js/voter-hotfix.js` | Owns the practical voter popup on Voters: photo, assignment field, status fields, remarks, and save. Loaded before `app.js` so the old popup does not win clicks. |
-| `js/no-jump-fixes.js` | Prevents old save/reload behavior and keeps saves from jumping to the top. Loaded before popup/app scripts. |
+| `js/no-jump-fixes.js` | Prevents old save/reload behavior and keeps saves from jumping to the top. |
 | `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, and top-house helpers. |
 | `js/d2d-count-fix.js` | Keeps D2D count labels aligned with D2D status. |
 | `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, Top Houses. |
@@ -89,6 +90,7 @@ votelist2026/
 
 | File | Current Role |
 |---|---|
+| `js/voter-hotfix.js` | Legacy old popup layer. Do not load it on `voters.html`; it shows the removed Phone/Call/Reach/Party dropdown popup. |
 | `js/voter-final-cleanup.js` | Disabled compatibility shim. |
 | `js/dhafthar-force-filter.js` | Disabled compatibility shim. House logic is in `house-sync.js`. |
 | `js/house-click-filter.js` | Disabled compatibility shim. Top-house clicks belong to `house-sync.js`. |
@@ -102,7 +104,7 @@ votelist2026/
 |---|---|
 | Primary workspace | Use `voters.html`. `dashboard.html` immediately redirects there and keeps query parameters. |
 | Top navigation | Voters page shows only Voters and Logout, removing the duplicate Dashboard path. |
-| Voter popup | Card clicks open the structured assignment popup with photo, assigned person/team input, status fields, D2D, transport, remarks, and save. |
+| Voter popup | Card clicks open the main app popup with photo/status blocks. `modal-assignment-panel.js` adds the assignment field inside that same popup. |
 | Assigned Results | Admin can click `Assigned Results`, then filter by Assigned Person to identify who assigned each voter. |
 | System email cleanup | `naappe@gmail.com` is treated as a system/default value and should not appear as a real assignee. |
 | Share Read View | Opens with `view=read`, requires no username/password, and renders a public gallery. |
@@ -132,9 +134,9 @@ votelist2026/
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `js/modal-assignment-panel.js` so the main popup has an Assign this voter section without bringing back the old popup. |
 | 2026-07-06 | Made `voters.html` the primary workspace, removed the Dashboard nav button, and changed `dashboard.html` into a redirect to Voters. |
 | 2026-07-06 | Added `js/assigned-person-filter.js` so Assigned Results can be filtered by assigned person/team. |
-| 2026-07-06 | Reordered Voters scripts so `no-jump-fixes.js` and `voter-hotfix.js` load before `app.js`; the structured assignment popup now wins card clicks. |
 | 2026-07-06 | Added Supabase protection so `naappe@gmail.com` is cleaned from assignment results and not treated as a real assignee. |
 | 2026-07-06 | Added `js/assign-results.js` so the website shows admin-only assignment results from `vote_assigned_by` / `vote_assigned_at`. |
 | 2026-07-06 | Changed `js/read-only-view.js` into a public voter gallery showing photo, name, ID, house, and mobile only. |
@@ -151,8 +153,8 @@ votelist2026/
 
 | Feature Area | Put Logic Here |
 |---|---|
-| Main data, stats, and filters | `js/app.js` |
-| Voter popup assignment/save | `js/voter-hotfix.js` plus `js/no-jump-fixes.js` |
+| Main data, stats, filters, and popup status blocks | `js/app.js` |
+| Popup assignment field/manual assignee save | `js/modal-assignment-panel.js` |
 | Public read-only links | `js/read-view-public.js` and `js/read-only-view.js` |
 | Admin assignment results | `js/assign-results.js` and `js/assigned-person-filter.js` |
 | House dropdown, Dhafthar/Sinamale, Top Houses | `js/house-sync.js` |
