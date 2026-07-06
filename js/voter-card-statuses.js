@@ -13,6 +13,15 @@
     return String(value || '-').replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
+  function voteLabel(value) {
+    const normalized = String(value || 'pending').toLowerCase();
+    if (normalized === 'will-vote') return '👍 Will Vote';
+    if (normalized === 'no-vote') return 'Not Vote';
+    if (normalized === 'not-decided') return 'Not Decided';
+    if (normalized === 'guaranteed') return '👍 Guaranteed';
+    return 'Pending';
+  }
+
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, (char) => ({
       '&': '&amp;',
@@ -43,20 +52,20 @@
     return 'neutral';
   }
 
-  function tab(title, value, tabTone) {
+  function tab(title, value, tabTone, text) {
     return `
       <span class="card-status-tab ${tabTone}">
         <span>${escapeHtml(title)}</span>
-        <strong>${escapeHtml(label(value))}</strong>
+        <strong>${escapeHtml(text || label(value))}</strong>
       </span>
     `;
   }
 
   function render(row) {
     return [
-      tab('Vote', row.vote_status || 'pending', tone('vote', row.vote_status)),
-      tab('D2D', row.d2d_status || 'not-visited', tone('d2d', row.d2d_status)),
-      tab('Call', row.phone_status || 'need-call', tone('call', row.phone_status))
+      tab('Vote', row.vote_status || 'pending', tone('vote', row.vote_status), voteLabel(row.vote_status)),
+      tab('Result D2D', row.d2d_status || 'not-visited', tone('d2d', row.d2d_status)),
+      tab('Result Call Center', row.phone_status || 'need-call', tone('call', row.phone_status))
     ].join('');
   }
 
