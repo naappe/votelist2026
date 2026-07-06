@@ -363,3 +363,11 @@ body[data-view="management"] .stat-text strong{font-size:22px!important}
   .modal-head{grid-template-columns:82px minmax(0,1fr)!important;gap:10px!important}
   .modal-photo{width:82px!important;height:82px!important;border-radius:999px!important}
 }
+body[data-view="management"] main.page > #summary.stats-grid{
+  display:none!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
