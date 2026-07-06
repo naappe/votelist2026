@@ -41,6 +41,7 @@ votelist2026/
 │   ├── mobile-modal-fixes.css
 │   ├── voter-hotfix.css
 │   ├── pro-ui.css
+│   ├── voter-list-cards.css
 │   └── voters-stats.css
 │
 ├── js/
@@ -80,7 +81,7 @@ votelist2026/
 | `js/d2d-count-fix.js` | Keeps D2D counts aligned with current D2D status logic. |
 | `js/house-filter-lock.js` | Keeps selected house locked when status filters or saves rebuild the list. |
 | `js/house-sync.js` | Single source of truth for house dropdown, Dhafthar/Sinamale grouping, and Top Houses. |
-| `js/pro-ui.js` | Professional voter card actions: one Assign button and View Profile button per card. |
+| `js/pro-ui.js` | Professional voter card actions, Assign focus, View Profile button, and display-only meta cleanup. |
 | `js/save-state-fix.js` | Preserves active house/search/filter and scroll position after saving, including list rebuilds and accidental full-page reloads. |
 | `js/voter-hotfix.js` | Small voter page hotfixes. |
 
@@ -105,7 +106,8 @@ These files remain only so old script tags or old links do not break. They shoul
 | `css/dashboard-cleanup.css` | Dashboard polish and helper UI styling. |
 | `css/mobile-modal-fixes.css` | Mobile popup and responsive fixes. |
 | `css/voter-hotfix.css` | Voter page specific fixes. |
-| `css/pro-ui.css` | Professional profile-card voter theme, Assign/View actions, and matching profile-style modal photo/card spacing. |
+| `css/pro-ui.css` | Professional UI foundation, Assign/View actions, and matching modal photo/card spacing. |
+| `css/voter-list-cards.css` | Compact project-card style for the voter list: left photo, aligned text, tight badges, footer actions. |
 | `css/voters-stats.css` | Voters page override that keeps the stats strip and Assign stat visible above filters. |
 
 ## Supabase Map
@@ -136,7 +138,7 @@ vote_assigned_by, vote_assigned_at
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
 | Popup voter photo | `pro-ui.css` uses a larger circular profile photo inside a soft white modal card for easier identification. |
 | Voters stats strip | `voters.html` loads `css/voters-stats.css` after `pro-ui.css` so the All/Need Call/D2D/Will Vote and Assign stats stay visible. |
-| Voter card spacing | `pro-ui.css` uses a profile-card theme with larger circular photos, centered text, soft gray page spacing, footer action buttons, and Pick share checkboxes. |
+| Voter list card spacing | `voter-list-cards.css` uses compact project-card style voter cards: rectangular card, left photo, aligned text, smaller badges, footer actions, and Pick share checkbox. |
 | Voter card meta | `pro-ui.js` cleans the visible card and popup text to `house · phone`, hiding helper text like `(Box 392 | Villimale'-2)` without changing saved data. |
 | Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
 | Save from All voters | `save-state-fix.js` restores the saved voter card or previous scroll after the list rebuilds, so middle-list saves do not jump to the top. |
@@ -161,6 +163,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `css/voter-list-cards.css` and applied compact project-card styling to the voter list cards: left photo, aligned text, tighter badges, footer actions, and cleaner spacing. |
 | 2026-07-06 | Restored the Assign stat card inside the Voters page stats strip. |
 | 2026-07-06 | Restored the stats strip on the Voters page with a page-specific override loaded after the profile theme. |
 | 2026-07-06 | Tightened voter popup spacing: compact header, left-aligned voter text, aligned choice buttons, and reduced empty modal space. |
@@ -217,7 +220,7 @@ Important structure:
 - js/house-filter-lock.js keeps selected house active when status filters or saves rebuild the voter list.
 - js/assign-share.js owns short assignment share links and Copy/Open share panel.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
-- js/pro-ui.js owns clean card buttons, Assign focus, and display-only meta cleanup; css/pro-ui.css owns the profile-card voter theme, large circular card photos, modal photo/card styling, and spacing.
+- js/pro-ui.js owns clean card buttons, Assign focus, View Profile behavior, and display-only meta cleanup; css/pro-ui.css owns modal styling; css/voter-list-cards.css owns the voter list card layout.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
 When changing the app:
