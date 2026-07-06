@@ -17,7 +17,6 @@
   <header class="topbar">
     <div class="brand" aria-label="Villimale Campaign Manager"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></div>
     <nav class="toolbar">
-      <a id="dashboardLink" class="btn light" href="dashboard.html">Dashboard</a>
       <a id="votersLink" class="btn light" href="voters.html">Voters</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
@@ -77,19 +76,19 @@
   <script src="js/config.js?v=20260705-11"></script>
   <script>
     const partyParam = new URLSearchParams(location.search).get('party');
-    if (partyParam) {
-      document.getElementById('dashboardLink').href = 'dashboard.html?party=' + encodeURIComponent(partyParam);
-      document.getElementById('votersLink').href = 'voters.html?party=' + encodeURIComponent(partyParam);
-    }
+    const votersLink = document.getElementById('votersLink');
+    if (partyParam && votersLink) votersLink.href = 'voters.html?party=' + encodeURIComponent(partyParam);
   </script>
   <script src="js/read-view-public.js?v=20260706-1"></script>
+  <script src="js/no-jump-fixes.js?v=20260706-4"></script>
+  <script src="js/voter-hotfix.js?v=20260706-7"></script>
   <script src="js/app.js?v=20260706-16"></script>
   <script src="js/read-only-view.js?v=20260706-3"></script>
   <script src="js/assign-share.js?v=20260706-5"></script>
   <script src="js/assign-results.js?v=20260706-1"></script>
+  <script src="js/assigned-person-filter.js?v=20260706-1"></script>
   <script src="js/campaign-arrangement.js?v=20260705-4"></script>
   <script src="js/dhafthar-force-filter.js?v=20260706-disabled"></script>
-  <script src="js/no-jump-fixes.js?v=20260706-3"></script>
   <script src="js/dashboard-cleanup.js?v=20260706-27"></script>
   <script src="js/house-sync.js?v=20260706-3"></script>
   <script src="js/house-click-filter.js?v=20260706-disabled"></script>
