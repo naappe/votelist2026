@@ -1,11 +1,13 @@
 (function () {
-  const MAIN_KEY = 'villimale_preserve_main_view_v3';
-  const SHARED_KEY = 'villimale_preserve_shared_view_v3';
+  const MAIN_KEY = 'villimale_preserve_main_view_v4';
+  const SHARED_KEY = 'villimale_preserve_shared_view_v4';
   let mainSnapshot = null;
   let sharedSnapshot = null;
   let restoreMainUntil = 0;
   let restoreSharedUntil = 0;
   let restoring = false;
+  let lockedScrollY = null;
+  let lockUntil = 0;
 
   function isMainPage() {
     return document.body?.dataset?.page === 'dashboard';
@@ -89,17 +91,26 @@
     el.dispatchEvent(new Event(type, { bubbles: true }));
   }
 
-  function restoreScroll(selector, fallbackY) {
-    requestAnimationFrame(() => {
-      const card = selector ? document.querySelector(selector) : null;
-      if (card) {
-        card.scrollIntoView({ block: 'center', behavior: 'auto' });
-        return;
-      }
-      if (Number.isFinite(Number(fallbackY))) {
-        window.scrollTo({ top: Number(fallbackY), left: 0, behavior: 'auto' });
-      }
-    });
+  function lockScroll(y, duration = 1800) {
+    const top = Number(y);
+    if (!Number.isFinite(top)) return;
+    lockedScrollY = top;
+    lockUntil = Date.now() + duration;
+  }
+
+  function restoreScroll(fallbackY) {
+    const top = Number(fallbackY);
+    if (!Number.isFinite(top)) return;
+    lockScroll(top);
+    requestAnimationFrame(() => window.scrollTo({ top, left: 0, behavior: 'auto' }));
+    setTimeout(() => window.scrollTo({ top, left: 0, behavior: 'auto' }), 80);
+  }
+
+  function keepLockedScroll() {
+    if (lockedScrollY === null || Date.now() > lockUntil) return;
+    if (Math.abs(window.scrollY - lockedScrollY) > 24) {
+      requestAnimationFrame(() => window.scrollTo({ top: lockedScrollY, left: 0, behavior: 'auto' }));
+    }
   }
 
   function restoreMain(snapshot) {
@@ -131,9 +142,8 @@
       document.querySelector(`[data-filter="${cssEscape(item.activeFilter)}"]`)?.click();
     }
 
-    const selector = item.cardId ? `.voter-card[data-open-voter="${cssEscape(item.cardId)}"]` : '';
-    restoreScroll(selector, item.scrollY);
-    setTimeout(() => restoreScroll(selector, item.scrollY), 180);
+    restoreScroll(item.scrollY);
+    setTimeout(() => restoreScroll(item.scrollY), 180);
     setTimeout(() => { restoring = false; }, 220);
   }
 
@@ -147,24 +157,27 @@
     dispatch('searchInput', 'input');
     dispatch('houseSelect', 'change');
     dispatch('filterSelect', 'change');
-    const selector = item.rowId ? `[data-row-id="${cssEscape(item.rowId)}"]` : '';
-    restoreScroll(selector, item.scrollY);
+    restoreScroll(item.scrollY);
     setTimeout(() => { restoring = false; }, 120);
   }
 
   function scheduleMainRestore(snapshot) {
     restoreMainUntil = Date.now() + 5000;
-    [80, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
+    lockScroll(snapshot?.scrollY ?? window.scrollY, 2200);
+    [0, 40, 100, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
       setTimeout(() => restoreMain(snapshot), delay);
     });
   }
 
   function scheduleSharedRestore(snapshot) {
     restoreSharedUntil = Date.now() + 5000;
-    [80, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
+    lockScroll(snapshot?.scrollY ?? window.scrollY, 2200);
+    [0, 40, 100, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
       setTimeout(() => restoreShared(snapshot), delay);
     });
   }
+
+  document.addEventListener('scroll', keepLockedScroll, true);
 
   document.addEventListener('click', (event) => {
     const card = event.target.closest?.('.voter-card[data-open-voter]');
@@ -177,6 +190,11 @@
     if (toggle?.dataset?.toggleAssign) window.__lastTouchedAssignRow = toggle.dataset.toggleAssign;
 
     if (event.target.closest?.('[data-filter], [data-house-filter], [data-assign-filter]')) captureMain();
+
+    if (event.target.closest?.('#voterForm [type="submit"]')) {
+      const snapshot = captureMain();
+      scheduleMainRestore(snapshot);
+    }
 
     if (event.target.closest?.('#saveChangesBtn, #confirmSaveBtn')) {
       const snapshot = captureShared();
