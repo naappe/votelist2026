@@ -158,6 +158,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Tightened voter popup spacing: compact header, left-aligned voter text, aligned choice buttons, and reduced empty modal space. |
 | 2026-07-06 | Cleaned voter card/popup meta to hide bracket helper text and extended the profile-card theme to the voter popup. |
 | 2026-07-06 | Applied profile-card voter theme inspired by the reference: larger circular photos, centered typography, softer spacing, and footer action buttons. |
 | 2026-07-06 | Cleaned voter card spacing and share-link UX: share checkboxes now say Pick, long names wrap, and self-assign links show Copy/Open buttons. |
