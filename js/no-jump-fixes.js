@@ -11,11 +11,20 @@
   };
 
   const hiddenStyle = document.createElement('style');
-  hiddenStyle.textContent = '[data-hotfix-assign], .assign-stat[data-hotfix-assign]{display:none!important}';
+  hiddenStyle.textContent = '[data-hotfix-assign], .assign-stat[data-hotfix-assign], .panel-tools, .share-pick, [data-share-selected], [data-share-read-view], [data-jump-search]{display:none!important}';
   document.head.appendChild(hiddenStyle);
 
   function removeLateAssignControls() {
     document.querySelectorAll('[data-hotfix-assign]').forEach((node) => node.remove());
+  }
+
+  function removeDuplicateShareControls() {
+    document.querySelectorAll('.panel-tools, .share-pick, [data-share-selected], [data-share-read-view], [data-jump-search]').forEach((node) => node.remove());
+  }
+
+  function removeDuplicateControls() {
+    removeLateAssignControls();
+    removeDuplicateShareControls();
   }
 
   function clean(value) {
@@ -111,7 +120,7 @@
     }
   }, true);
 
-  removeLateAssignControls();
-  window.addEventListener('load', removeLateAssignControls);
-  new MutationObserver(removeLateAssignControls).observe(document.documentElement, { childList: true, subtree: true });
+  removeDuplicateControls();
+  window.addEventListener('load', removeDuplicateControls);
+  new MutationObserver(removeDuplicateControls).observe(document.documentElement, { childList: true, subtree: true });
 })();
