@@ -41,6 +41,7 @@ votelist2026/
 │   ├── read-view-public.js
 │   ├── read-only-view.js
 │   ├── assign-share.js
+│   ├── assign-results.js
 │   ├── campaign-arrangement.js
 │   ├── dashboard-cleanup.js
 │   ├── d2d-count-fix.js
@@ -71,6 +72,7 @@ votelist2026/
 | `js/read-view-public.js` | Allows `view=read` dashboard/voters links to pass the app auth check without username/password. |
 | `js/read-only-view.js` | Owns public gallery rendering: photo, name, ID, house, and mobile only; no party/status/edit fields. |
 | `js/assign-share.js` | Creates short public self-assign links and the Copy/Open share panel. |
+| `js/assign-results.js` | Adds the admin-only `Assigned Results` button and renders assigned voters with assignee/result details. |
 | `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, and top-house helpers. Its old startup interval has been removed. |
 | `js/d2d-count-fix.js` | Keeps D2D count labels aligned with D2D status. |
 | `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, Top Houses. |
@@ -101,6 +103,7 @@ votelist2026/
 | Public gallery filters | Public users can search by name, ID, house, or mobile and filter by house/address. |
 | Self-assign link | Friends tick/untick voters, then Save asks for name and mobile only when needed. |
 | Assignment privacy | Shared assignment links do not show other assignee names. They show only whether a voter is available/assigned/full. |
+| Admin assigned results | Logged-in admin/team users can click `Assigned Results` on Dashboard or Voters to see who assigned which voter. |
 | Public write access | Public users must not update voter rows directly. Assignment saves go through `claim_assignment` / `unclaim_assignment` only. |
 | Public username | Do not map `public` to the admin email. A `public` login must use a separate Supabase user and a non-edit role. Public share links should normally stay no-login. |
 | Voter card chips | Logged-in app keeps chips such as Reached, Will Vote, Need Call, Normal. |
@@ -118,6 +121,7 @@ votelist2026/
 | Project | `espezmdpkoixnfchomqb` / `voters` |
 | Table | `public.full_import` |
 | RLS | Enabled |
+| Assignment result columns | `vote_assigned_by` and `vote_assigned_at` in `public.full_import`. |
 | Public read links | `anon` can SELECT only the public gallery identity/contact columns plus hidden `party` for party-scoped filtering. |
 | Public visible fields | `photo_url`, `name`, `national_id`, `house`, `phone`. |
 | Hidden from public UI | Party, campaign statuses, support level, remarks, assignment names, and admin save fields. |
@@ -128,6 +132,7 @@ votelist2026/
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `js/assign-results.js` so the website shows admin-only assignment results from `vote_assigned_by` / `vote_assigned_at`. |
 | 2026-07-06 | Changed `js/read-only-view.js` into a public voter gallery showing photo, name, ID, house, and mobile only. |
 | 2026-07-06 | Updated Supabase public grants so anon can read mobile for public gallery links, while campaign/status fields and direct public row updates are blocked. |
 | 2026-07-06 | Added `js/read-only-view.js` for no-login read-only links. |
@@ -150,6 +155,7 @@ votelist2026/
 |---|---|
 | Main data, stats, filters, modal save | `js/app.js` |
 | Public read-only dashboard links | `js/read-view-public.js` and `js/read-only-view.js` |
+| Admin assignment results | `js/assign-results.js` |
 | House dropdown, Dhafthar/Sinamale, Top Houses | `js/house-sync.js` |
 | House/filter/scroll after save | `js/house-filter-lock.js` and `js/save-state-fix.js` |
 | Stop old hotfix jumps/reloads | `js/no-jump-fixes.js` |
@@ -157,7 +163,7 @@ votelist2026/
 | Voter card actions and visual cleanup | `js/pro-ui.js` and `css/voter-list-cards.css` |
 | Popup card layout | `css/voter-popup-card.css` |
 
-Do not add a second owner for save, filter, house grouping, voter-card rendering, or public gallery rendering. Update this README after important changes.
+Do not add a second owner for save, filter, house grouping, voter-card rendering, public gallery rendering, or assigned result rendering. Update this README after important changes.
 
 ## Deployment
 
