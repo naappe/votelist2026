@@ -1,5 +1,11 @@
 (function () {
   let focusAssign = false;
+  let enhanceTimer = 0;
+
+  function scheduleEnhance(delay = 40) {
+    clearTimeout(enhanceTimer);
+    enhanceTimer = setTimeout(enhance, delay);
+  }
 
   function enhance() {
     removeOldAssignControls();
@@ -99,19 +105,15 @@
   document.addEventListener('click', (event) => {
     const assign = event.target.closest('[data-pro-assign]');
     if (assign) focusAssign = true;
-    setTimeout(enhance, 80);
-    setTimeout(enhance, 350);
+    scheduleEnhance(80);
   }, true);
 
-  document.addEventListener('input', () => setTimeout(enhance, 80), true);
-  document.addEventListener('change', () => setTimeout(enhance, 80), true);
-  document.addEventListener('DOMContentLoaded', enhance);
-  window.addEventListener('load', () => setTimeout(enhance, 500));
-
-  let runs = 0;
-  const timer = setInterval(() => {
+  document.addEventListener('input', () => scheduleEnhance(80), true);
+  document.addEventListener('change', () => scheduleEnhance(80), true);
+  document.addEventListener('DOMContentLoaded', () => {
     enhance();
-    runs += 1;
-    if (runs > 80) clearInterval(timer);
-  }, 300);
+    const list = document.getElementById('voterList');
+    if (list) new MutationObserver(() => scheduleEnhance(40)).observe(list, { childList: true, subtree: true });
+  });
+  window.addEventListener('load', () => scheduleEnhance(200));
 })();
