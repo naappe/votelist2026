@@ -1,10 +1,13 @@
 (function () {
-  const config = window.APP_CONFIG;
-  if (!config || !window.supabase) return;
-
-  const client = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
   const byId = new Map();
   let loaded = false;
+  let loading = false;
+  let observerStarted = false;
+  let applyTimer = 0;
+
+  function configReady() {
+    return Boolean(window.APP_CONFIG && window.supabase);
+  }
 
   function label(value) {
     return String(value || '-').replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
@@ -70,36 +73,68 @@
     });
   }
 
-  async function loadStatuses() {
-    const party = (new URLSearchParams(location.search).get('party') || 'ALL').toUpperCase();
-    let from = 0;
-    const pageSize = 1000;
-    byId.clear();
-
-    while (true) {
-      let query = client
-        .from(config.table)
-        .select('id,vote_status,d2d_status,phone_status')
-        .range(from, from + pageSize - 1);
-      if (party !== 'ALL') query = query.eq('party', party);
-
-      const { data, error } = await query;
-      if (error) break;
-      (data || []).forEach((row) => byId.set(String(row.id), row));
-      if (!data || data.length < pageSize) break;
-      from += pageSize;
-    }
-
-    loaded = byId.size > 0;
-    apply();
+  function scheduleApply() {
+    clearTimeout(applyTimer);
+    applyTimer = setTimeout(apply, 80);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function startObserver() {
+    if (observerStarted) return;
+    observerStarted = true;
     const list = document.getElementById('voterList');
-    if (list) {
-      new MutationObserver(() => apply()).observe(list, { childList: true, subtree: true });
+    if (!list) return;
+    new MutationObserver(scheduleApply).observe(list, { childList: true, subtree: true });
+  }
+
+  async function loadStatuses() {
+    if (loading || loaded || !configReady()) return;
+    loading = true;
+
+    try {
+      const config = window.APP_CONFIG;
+      const client = window.supabase.createClient(config.supabaseUrl, config.supabaseKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      });
+      const party = (new URLSearchParams(location.search).get('party') || 'ALL').toUpperCase();
+      let from = 0;
+      const pageSize = 1000;
+      byId.clear();
+
+      while (true) {
+        let query = client
+          .from(config.table)
+          .select('id,vote_status,d2d_status,phone_status')
+          .range(from, from + pageSize - 1);
+        if (party !== 'ALL') query = query.eq('party', party);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        (data || []).forEach((row) => byId.set(String(row.id), row));
+        if (!data || data.length < pageSize) break;
+        from += pageSize;
+      }
+
+      loaded = byId.size > 0;
+      scheduleApply();
+    } catch (error) {
+      console.warn('Voter card statuses skipped:', error);
+    } finally {
+      loading = false;
     }
-    loadStatuses();
-    setInterval(apply, 800);
-  });
+  }
+
+  function boot() {
+    startObserver();
+    setTimeout(loadStatuses, 1200);
+  }
+
+  if (document.readyState === 'complete') {
+    boot();
+  } else {
+    window.addEventListener('load', boot, { once: true });
+  }
 })();
