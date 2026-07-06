@@ -1,4 +1,15 @@
 (function () {
+  const nativeSetInterval = window.setInterval.bind(window);
+  window.setInterval = function guardedSetInterval(callback, delay, ...args) {
+    const source = typeof callback === 'function' ? Function.prototype.toString.call(callback) : String(callback || '');
+    if (Number(delay) === 500 && source.includes('tidyDashboard')) {
+      requestAnimationFrame(() => callback());
+      window.addEventListener('load', () => requestAnimationFrame(() => callback()), { once: true });
+      return 0;
+    }
+    return nativeSetInterval(callback, delay, ...args);
+  };
+
   const hiddenStyle = document.createElement('style');
   hiddenStyle.textContent = '[data-hotfix-assign], .assign-stat[data-hotfix-assign]{display:none!important}';
   document.head.appendChild(hiddenStyle);
