@@ -68,16 +68,16 @@
     return `
       <span class="card-status-tab ${tabTone}">
         <span>${escapeHtml(title)}</span>
-        <strong>RESULT: ${escapeHtml(result)}</strong>
+        <strong>${escapeHtml(result)}</strong>
       </span>
     `;
   }
 
   function render(row) {
     return [
-      tab('🗳️ VOTE STATUS', voteResult(row.vote_status), tone('vote', row.vote_status)),
-      tab('📞 CALL CENTER STATUS', callResult(row.phone_status), tone('call', row.phone_status)),
-      tab('🏠 D2D STATUS', d2dResult(row.d2d_status), tone('d2d', row.d2d_status))
+      tab('🗳️ Vote', voteResult(row.vote_status), tone('vote', row.vote_status)),
+      tab('📞 Call', callResult(row.phone_status), tone('call', row.phone_status)),
+      tab('🏠 D2D', d2dResult(row.d2d_status), tone('d2d', row.d2d_status))
     ].join('');
   }
 
@@ -86,10 +86,10 @@
     const style = document.createElement('style');
     style.id = 'voter-result-style';
     style.textContent = `
+      .voter-card .card-status-strip,
       .pro-voter-card .card-status-strip{
-        grid-area:section!important;
-        width:calc(100% + 32px)!important;
-        margin:0 -16px!important;
+        width:100%!important;
+        margin:8px 0 0!important;
         padding:0!important;
         display:grid!important;
         grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -97,13 +97,13 @@
         background:#fff!important;
       }
       .card-status-tab{
-        min-height:58px!important;
-        padding:7px 6px!important;
+        min-height:34px!important;
+        padding:5px 4px!important;
         display:flex!important;
         flex-direction:column!important;
         align-items:center!important;
         justify-content:center!important;
-        gap:4px!important;
+        gap:2px!important;
         border-right:1px solid #edf0f3!important;
         text-align:center!important;
       }
@@ -114,9 +114,8 @@
         color:#64748b!important;
         font-size:8px!important;
         font-weight:900!important;
-        letter-spacing:.02em!important;
-        line-height:1.05!important;
-        text-transform:uppercase!important;
+        letter-spacing:.01em!important;
+        line-height:1!important;
         white-space:nowrap!important;
         overflow:hidden!important;
         text-overflow:ellipsis!important;
@@ -126,7 +125,7 @@
         max-width:100%!important;
         font-size:10px!important;
         font-weight:900!important;
-        line-height:1.1!important;
+        line-height:1.05!important;
         white-space:nowrap!important;
         overflow:hidden!important;
         text-overflow:ellipsis!important;
@@ -136,8 +135,7 @@
       .card-status-tab.danger strong{color:#b91c1c!important}
       .card-status-tab.neutral strong{color:#475467!important}
       @media (max-width:430px){
-        .pro-voter-card .card-status-strip{width:calc(100% + 24px)!important;margin-left:-12px!important;margin-right:-12px!important}
-        .card-status-tab{min-height:56px!important;padding:6px 4px!important}
+        .card-status-tab{min-height:32px!important;padding:4px 3px!important}
         .card-status-tab span{font-size:7px!important}
         .card-status-tab strong{font-size:9px!important}
       }
@@ -146,23 +144,19 @@
   }
 
   function ensureStrip(card) {
-    let strip = card.querySelector(':scope > .card-status-strip');
-    const old = card.querySelector('.section-label');
-    const actions = card.querySelector('.card-actions');
+    let strip = card.querySelector('.card-status-strip') || card.querySelector('.section-label');
+    const info = card.querySelector('.voter-info') || card;
+    const actions = info.querySelector('.card-actions');
 
-    if (!strip && old) {
-      strip = old;
-      strip.className = 'section-label card-status-strip';
-    }
     if (!strip) {
       strip = document.createElement('div');
-      strip.className = 'section-label card-status-strip';
+      if (actions) info.insertBefore(strip, actions);
+      else info.appendChild(strip);
     }
-    if (strip.parentElement !== card) {
-      if (actions) card.insertBefore(strip, actions);
-      else card.appendChild(strip);
-    } else if (actions && strip.nextElementSibling !== actions) {
-      card.insertBefore(strip, actions);
+    strip.className = 'section-label card-status-strip';
+    if (strip.parentElement !== info) {
+      if (actions) info.insertBefore(strip, actions);
+      else info.appendChild(strip);
     }
     return strip;
   }
