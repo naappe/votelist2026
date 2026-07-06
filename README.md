@@ -41,6 +41,7 @@ votelist2026/
 │   ├── read-view-public.js
 │   ├── read-only-view.js
 │   ├── modal-assignment-panel.js
+│   ├── vote-save-override.js
 │   ├── assign-share.js
 │   ├── assign-results.js
 │   ├── assigned-person-filter.js
@@ -74,6 +75,7 @@ votelist2026/
 | `js/read-view-public.js` | Allows `view=read` links to pass the app auth check without username/password. |
 | `js/read-only-view.js` | Owns public gallery rendering: photo, name, ID, house, and mobile only. |
 | `js/modal-assignment-panel.js` | Adds the Assign this voter section to the main popup and saves manual assignee names without auto-stamping the admin email. |
+| `js/vote-save-override.js` | Catches voter popup saves before `app.js` so the selected vote result wins; prevents Will Vote section from forcing `will-vote`, clears stale row cache, and preserves scroll. |
 | `js/assign-share.js` | Creates short public self-assign links and the Copy/Open share panel. |
 | `js/assign-results.js` | Adds the admin-only `Assigned Results` button and renders assigned voters. |
 | `js/assigned-person-filter.js` | Adds the Assigned Person dropdown inside Assigned Results so admins can identify who took which voters. |
@@ -105,6 +107,7 @@ votelist2026/
 | Primary workspace | Use `voters.html`. `dashboard.html` immediately redirects there and keeps query parameters. |
 | Top navigation | Voters page shows only Voters and Logout, removing the duplicate Dashboard path. |
 | Voter popup | Card clicks open the main app popup with photo/status blocks. `modal-assignment-panel.js` adds the assignment field inside that same popup. |
+| Vote save | `vote-save-override.js` makes the selected vote result win, so saving Not Vote from Will Vote does not get forced back to Will Vote. |
 | Assigned Results | Admin can click `Assigned Results`, then filter by Assigned Person to identify who assigned each voter. |
 | System email cleanup | `naappe@gmail.com` is treated as a system/default value and should not appear as a real assignee. |
 | Share Read View | Opens with `view=read`, requires no username/password, and renders a public gallery. |
@@ -134,6 +137,8 @@ votelist2026/
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `js/vote-save-override.js` and loaded it before `app.js` so selected vote results save correctly from any section and stale row cache is cleared. |
+| 2026-07-06 | Corrected Hussain Zahir in Supabase from Will Vote/Pending display to `no-vote`, `reached`, and `follow-up`. |
 | 2026-07-06 | Added `js/modal-assignment-panel.js` so the main popup has an Assign this voter section without bringing back the old popup. |
 | 2026-07-06 | Made `voters.html` the primary workspace, removed the Dashboard nav button, and changed `dashboard.html` into a redirect to Voters. |
 | 2026-07-06 | Added `js/assigned-person-filter.js` so Assigned Results can be filtered by assigned person/team. |
@@ -155,6 +160,7 @@ votelist2026/
 |---|---|
 | Main data, stats, filters, and popup status blocks | `js/app.js` |
 | Popup assignment field/manual assignee save | `js/modal-assignment-panel.js` |
+| Correct vote save override | `js/vote-save-override.js` |
 | Public read-only links | `js/read-view-public.js` and `js/read-only-view.js` |
 | Admin assignment results | `js/assign-results.js` and `js/assigned-person-filter.js` |
 | House dropdown, Dhafthar/Sinamale, Top Houses | `js/house-sync.js` |
@@ -163,7 +169,7 @@ votelist2026/
 | Voter card actions and visual cleanup | `js/pro-ui.js` and `css/voter-list-cards.css` |
 | Popup card layout | `css/voter-popup-card.css` |
 
-Do not add a second owner for save, filter, house grouping, voter-card rendering, public gallery rendering, or assigned result rendering. Update this README after important changes.
+Do not add a second owner for save, filter, house grouping, voter-card rendering, public gallery rendering, assigned result rendering, or vote-result saving. Update this README after important changes.
 
 ## Deployment
 
