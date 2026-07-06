@@ -66,16 +66,9 @@
 
   function boot() {
     const list = document.getElementById('voterList');
-    if (list) new MutationObserver(scheduleApply).observe(list, { childList: true, subtree: true, characterData: true });
+    if (list) new MutationObserver(scheduleApply).observe(list, { childList: true, subtree: true });
     apply();
     loadStatuses();
-    let runs = 0;
-    const timer = setInterval(() => {
-      if (!byId.size) loadStatuses();
-      apply();
-      runs += 1;
-      if (runs > 120) clearInterval(timer);
-    }, 300);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
