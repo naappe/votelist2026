@@ -84,12 +84,30 @@
     ].join('');
   }
 
+  function ensureStrip(card) {
+    let strip = card.querySelector('.card-status-strip');
+    if (strip) return strip;
+
+    const old = card.querySelector('.section-label');
+    if (old) {
+      old.className = 'section-label card-status-strip';
+      return old;
+    }
+
+    strip = document.createElement('div');
+    strip.className = 'section-label card-status-strip';
+    const actions = card.querySelector('.card-actions');
+    if (actions) actions.before(strip);
+    else card.querySelector('.voter-info')?.appendChild(strip);
+    return strip;
+  }
+
   function apply() {
     document.querySelectorAll('[data-open-voter]').forEach((card) => {
       const id = String(card.dataset.openVoter || '');
-      const row = byId.get(id);
-      const strip = card.querySelector('.section-label');
-      if (!row || !strip) return;
+      const row = byId.get(id) || {};
+      const strip = ensureStrip(card);
+      if (!strip) return;
       strip.className = 'section-label card-status-strip';
       strip.setAttribute('aria-label', 'Vote call center and D2D status results');
       strip.innerHTML = render(row);
@@ -123,25 +141,26 @@
         if (!data || data.length < pageSize) break;
         from += pageSize;
       }
-      apply();
     } catch (error) {
       console.warn('Voter card result blocks skipped:', error);
     } finally {
       loading = false;
+      apply();
     }
   }
 
   function boot() {
     const list = document.getElementById('voterList');
     if (list) new MutationObserver(scheduleApply).observe(list, { childList: true, subtree: true, characterData: true });
+    apply();
     loadStatuses();
     let runs = 0;
     const timer = setInterval(() => {
       if (!byId.size) loadStatuses();
       apply();
       runs += 1;
-      if (runs > 60) clearInterval(timer);
-    }, 500);
+      if (runs > 120) clearInterval(timer);
+    }, 300);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
