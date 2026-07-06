@@ -126,6 +126,49 @@
   color:#7c6cff!important;
   font-size:12px!important;
 }
+.pro-voter-card .card-status-strip{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;
+  padding:0!important;
+  color:#344054!important;
+  background:#fff!important;
+}
+.card-status-tab{
+  display:grid!important;
+  place-items:center!important;
+  align-content:center!important;
+  min-height:52px!important;
+  padding:8px 6px!important;
+  gap:3px!important;
+  border-right:1px solid #edf0f3!important;
+  text-align:center!important;
+}
+.card-status-tab:last-child{
+  border-right:0!important;
+}
+.card-status-tab span{
+  color:#667085!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:.08em!important;
+  line-height:1!important;
+  text-transform:uppercase!important;
+}
+.card-status-tab strong{
+  max-width:100%!important;
+  overflow:hidden!important;
+  color:#344054!important;
+  font-size:12px!important;
+  font-weight:900!important;
+  line-height:1.15!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.card-status-tab.good strong{color:#047857!important}
+.card-status-tab.warn strong{color:#b45309!important}
+.card-status-tab.danger strong{color:#b91c1c!important}
+.card-status-tab.neutral strong{color:#475467!important}
 
 @media (max-width:760px){
   .voter-list{grid-template-columns:1fr!important}
@@ -143,6 +186,9 @@
     width:calc(100% + 28px)!important;
     margin-left:-14px!important;
     margin-right:-14px!important;
+  }
+  .card-status-tab{
+    min-height:50px!important;
   }
 }
 
@@ -164,5 +210,8 @@
     width:calc(100% + 24px)!important;
     margin-left:-12px!important;
     margin-right:-12px!important;
+  }
+  .card-status-tab strong{
+    font-size:11px!important;
   }
 }
