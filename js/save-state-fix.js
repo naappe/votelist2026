@@ -8,6 +8,9 @@
   let restoring = false;
   let lockedScrollY = null;
   let lockUntil = 0;
+  let mainRestoreAttempts = 0;
+  let sharedRestoreAttempts = 0;
+  const MAX_RESTORE_ATTEMPTS = 3;
 
   function isMainPage() {
     return document.body?.dataset?.page === 'dashboard';
@@ -91,7 +94,7 @@
     el.dispatchEvent(new Event(type, { bubbles: true }));
   }
 
-  function lockScroll(y, duration = 1800) {
+  function lockScroll(y, duration = 900) {
     const top = Number(y);
     if (!Number.isFinite(top)) return;
     lockedScrollY = top;
@@ -101,21 +104,22 @@
   function restoreScroll(fallbackY) {
     const top = Number(fallbackY);
     if (!Number.isFinite(top)) return;
-    lockScroll(top);
+    lockScroll(top, 900);
     requestAnimationFrame(() => window.scrollTo({ top, left: 0, behavior: 'auto' }));
-    setTimeout(() => window.scrollTo({ top, left: 0, behavior: 'auto' }), 80);
   }
 
   function keepLockedScroll() {
     if (lockedScrollY === null || Date.now() > lockUntil) return;
-    if (Math.abs(window.scrollY - lockedScrollY) > 24) {
+    if (Math.abs(window.scrollY - lockedScrollY) > 32) {
       requestAnimationFrame(() => window.scrollTo({ top: lockedScrollY, left: 0, behavior: 'auto' }));
     }
   }
 
   function restoreMain(snapshot) {
+    if (mainRestoreAttempts >= MAX_RESTORE_ATTEMPTS) return;
     const item = snapshot || mainSnapshot || recall(MAIN_KEY);
     if (!item || !isMainPage() || restoring) return;
+    mainRestoreAttempts += 1;
     restoring = true;
 
     if (item.house) {
@@ -143,13 +147,14 @@
     }
 
     restoreScroll(item.scrollY);
-    setTimeout(() => restoreScroll(item.scrollY), 180);
-    setTimeout(() => { restoring = false; }, 220);
+    setTimeout(() => { restoring = false; }, 160);
   }
 
   function restoreShared(snapshot) {
+    if (sharedRestoreAttempts >= MAX_RESTORE_ATTEMPTS) return;
     const item = snapshot || sharedSnapshot || recall(SHARED_KEY);
     if (!item || !isSharedPage() || restoring) return;
+    sharedRestoreAttempts += 1;
     restoring = true;
     setValue('searchInput', item.search);
     setValue('houseSelect', item.house);
@@ -162,17 +167,19 @@
   }
 
   function scheduleMainRestore(snapshot) {
-    restoreMainUntil = Date.now() + 5000;
-    lockScroll(snapshot?.scrollY ?? window.scrollY, 2200);
-    [0, 40, 100, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
+    restoreMainUntil = Date.now() + 1200;
+    mainRestoreAttempts = 0;
+    lockScroll(snapshot?.scrollY ?? window.scrollY, 900);
+    [0, 120, 450].forEach((delay) => {
       setTimeout(() => restoreMain(snapshot), delay);
     });
   }
 
   function scheduleSharedRestore(snapshot) {
-    restoreSharedUntil = Date.now() + 5000;
-    lockScroll(snapshot?.scrollY ?? window.scrollY, 2200);
-    [0, 40, 100, 220, 500, 900, 1500, 2400, 3400, 4800].forEach((delay) => {
+    restoreSharedUntil = Date.now() + 1200;
+    sharedRestoreAttempts = 0;
+    lockScroll(snapshot?.scrollY ?? window.scrollY, 900);
+    [0, 120, 450].forEach((delay) => {
       setTimeout(() => restoreShared(snapshot), delay);
     });
   }
@@ -230,8 +237,8 @@
   });
 
   const observer = new MutationObserver(() => {
-    if (Date.now() < restoreMainUntil) restoreMain(mainSnapshot);
-    if (Date.now() < restoreSharedUntil) restoreShared(sharedSnapshot);
+    if (Date.now() < restoreMainUntil && mainRestoreAttempts < MAX_RESTORE_ATTEMPTS) restoreMain(mainSnapshot);
+    if (Date.now() < restoreSharedUntil && sharedRestoreAttempts < MAX_RESTORE_ATTEMPTS) restoreShared(sharedSnapshot);
   });
 
   function restoreSavedAfterLoad() {
