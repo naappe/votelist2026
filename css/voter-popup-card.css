@@ -1,0 +1,279 @@
+/* Voter card click popup: large photo, clear details, clean status form. */
+.modal{
+  padding:18px!important;
+  align-items:center!important;
+}
+.modal-card{
+  width:min(760px,calc(100vw - 32px))!important;
+  max-height:calc(100dvh - 28px)!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid #e5eaf2!important;
+  border-radius:16px!important;
+  background:#fff!important;
+  box-shadow:0 26px 80px rgba(15,23,42,.24)!important;
+}
+.modal-card::before{
+  display:none!important;
+}
+.modal-head{
+  display:grid!important;
+  grid-template-columns:144px minmax(0,1fr) auto!important;
+  grid-template-areas:"photo details close"!important;
+  align-items:stretch!important;
+  gap:18px!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:18px!important;
+  border-bottom:1px solid #edf1f7!important;
+  background:#fff!important;
+  text-align:left!important;
+}
+.modal-person{
+  display:contents!important;
+}
+.modal-photo{
+  grid-area:photo!important;
+  width:144px!important;
+  height:144px!important;
+  aspect-ratio:1!important;
+  align-self:start!important;
+  overflow:hidden!important;
+  border:1px solid #e3e8ef!important;
+  border-radius:20px!important;
+  background:#eef2ff!important;
+  box-shadow:0 14px 34px rgba(15,23,42,.16)!important;
+}
+.modal-photo img{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:19px!important;
+}
+.modal-photo .photo-placeholder{
+  border-radius:19px!important;
+}
+.modal-person>div:last-child{
+  grid-area:details!important;
+  min-width:0!important;
+  align-self:stretch!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:7px!important;
+  padding:16px 18px!important;
+  border:1px solid #fde7c7!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#fff7ed 0%,#fff 92%)!important;
+}
+.modal-person .eyebrow{
+  margin:0!important;
+  color:#6d5dfc!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  letter-spacing:.15em!important;
+  line-height:1.1!important;
+  text-transform:uppercase!important;
+}
+.modal-person h2{
+  margin:0!important;
+  color:#1f2937!important;
+  font-size:24px!important;
+  line-height:1.05!important;
+  font-weight:900!important;
+  letter-spacing:0!important;
+  text-align:left!important;
+  text-transform:uppercase!important;
+  overflow-wrap:anywhere!important;
+}
+.modal-person .muted{
+  max-width:none!important;
+  margin:0!important;
+  color:#526070!important;
+  font-size:13px!important;
+  font-weight:650!important;
+  line-height:1.45!important;
+  text-align:left!important;
+  overflow-wrap:anywhere!important;
+}
+.modal-head>.btn{
+  grid-area:close!important;
+  justify-self:end!important;
+  align-self:start!important;
+  min-height:40px!important;
+  padding:9px 16px!important;
+  border:1px solid #e3e8ef!important;
+  border-radius:13px!important;
+  background:#f9fafb!important;
+  color:#1f2937!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+}
+#voterForm{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px 10px!important;
+  min-height:0!important;
+  padding:16px 18px 18px!important;
+  overflow:auto!important;
+  background:#fff!important;
+}
+#voterForm .logic-box,
+#voterForm .rating-box,
+#voterForm .assign-panel,
+#voterForm .hotfix-message,
+#voterForm label:has(textarea),
+#voterForm .modal-actions,
+#voterForm > .hotfix-grid{
+  grid-column:1/-1!important;
+}
+#voterForm .assign-panel{
+  display:grid!important;
+  gap:9px!important;
+  padding:14px!important;
+  border:1px solid #b9d6ff!important;
+  border-radius:14px!important;
+  background:#eff6ff!important;
+}
+#voterForm .assign-panel strong{
+  margin:0!important;
+  color:#1d4ed8!important;
+  font-size:13px!important;
+  font-weight:900!important;
+}
+.assign-inline{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 92px!important;
+  gap:8px!important;
+  align-items:end!important;
+}
+.assign-inline .btn{
+  min-width:0!important;
+  min-height:40px!important;
+  border-radius:12px!important;
+  font-weight:900!important;
+}
+#voterForm label{
+  min-width:0!important;
+  gap:6px!important;
+  color:#667085!important;
+  font-size:11px!important;
+  font-weight:900!important;
+  letter-spacing:.035em!important;
+  line-height:1.1!important;
+  text-transform:uppercase!important;
+}
+#voterForm input,
+#voterForm select,
+#voterForm textarea{
+  width:100%!important;
+  min-width:0!important;
+  min-height:40px!important;
+  border:1px solid #d6e0ee!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  color:#1f2937!important;
+  box-shadow:none!important;
+  font-size:14px!important;
+  font-weight:700!important;
+}
+#voterForm textarea{
+  min-height:54px!important;
+  resize:vertical!important;
+}
+#voterForm > .hotfix-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px 10px!important;
+}
+.choice-grid{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+}
+.choice-btn{
+  min-height:30px!important;
+  padding:6px 11px!important;
+  border-radius:999px!important;
+  font-size:12px!important;
+  font-weight:850!important;
+}
+.modal-actions{
+  display:flex!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+  margin-top:4px!important;
+  padding-top:14px!important;
+  border-top:1px solid #edf1f7!important;
+  background:#fff!important;
+}
+.modal-actions .btn{
+  min-height:40px!important;
+  min-width:116px!important;
+  border-radius:12px!important;
+  font-weight:900!important;
+}
+.modal-actions .btn:not(.light):not(.whatsapp){
+  background:#1f3b66!important;
+  color:#fff!important;
+}
+
+@media (max-width:760px){
+  .modal{
+    padding:10px!important;
+  }
+  .modal-card{
+    width:calc(100vw - 20px)!important;
+    max-height:calc(100dvh - 20px)!important;
+  }
+  .modal-head{
+    grid-template-columns:112px minmax(0,1fr) auto!important;
+    gap:12px!important;
+    padding:14px!important;
+  }
+  .modal-photo{
+    width:112px!important;
+    height:112px!important;
+    border-radius:18px!important;
+  }
+  .modal-person>div:last-child{
+    padding:13px!important;
+    border-radius:16px!important;
+  }
+  .modal-person h2{
+    font-size:20px!important;
+  }
+  #voterForm,
+  #voterForm > .hotfix-grid{
+    grid-template-columns:1fr!important;
+  }
+}
+
+@media (max-width:520px){
+  .modal-head{
+    grid-template-columns:96px minmax(0,1fr)!important;
+    grid-template-areas:
+      "photo details"
+      "close close"!important;
+  }
+  .modal-photo{
+    width:96px!important;
+    height:96px!important;
+  }
+  .modal-head>.btn{
+    width:100%!important;
+    justify-self:stretch!important;
+  }
+  .assign-inline{
+    grid-template-columns:1fr!important;
+  }
+  .modal-actions{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+  .modal-actions .btn{
+    min-width:0!important;
+  }
+}
