@@ -1,8 +1,6 @@
 (function () {
   const byId = new Map();
-  let loaded = false;
   let loading = false;
-  let observerStarted = false;
   let applyTimer = 0;
 
   function ready() {
@@ -13,13 +11,30 @@
     return String(value || '-').replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
-  function voteLabel(value) {
-    const normalized = String(value || 'pending').toLowerCase();
-    if (normalized === 'will-vote') return 'Will Vote';
-    if (normalized === 'no-vote') return 'Not Vote';
-    if (normalized === 'not-decided') return 'Not Decided';
-    if (normalized === 'guaranteed') return 'Guaranteed';
-    return 'Pending';
+  function resultLabel(type, value) {
+    const normalized = String(value || '').toLowerCase();
+    if (type === 'vote') {
+      if (normalized === 'will-vote') return 'Will Vote';
+      if (normalized === 'guaranteed') return 'Guarantee';
+      if (normalized === 'no-vote') return 'Not Vote';
+      if (normalized === 'not-decided') return 'Not Decided';
+      return 'Pending';
+    }
+    if (type === 'call') {
+      if (normalized === 'called' || normalized === 'connected') return 'Connected';
+      if (normalized === 'out-of-range' || normalized === 'out-of-coverage') return 'Out of Coverage';
+      if (normalized === 'busy') return 'Busy';
+      if (normalized === 'no-answer') return 'Not Answer';
+      if (normalized === 'disconnected') return 'Disconnected';
+      return normalized ? label(normalized) : 'No Result';
+    }
+    if (type === 'd2d') {
+      if (normalized === 'visited' || normalized === 'reach') return 'Reach';
+      if (normalized === 'not-home') return 'Not Home';
+      if (normalized === 'live-another-place') return 'Live in Another Place';
+      return normalized ? label(normalized) : 'No Result';
+    }
+    return normalized ? label(normalized) : 'No Result';
   }
 
   function escapeHtml(value) {
@@ -39,15 +54,15 @@
       if (['no-vote', 'not-decided'].includes(normalized)) return 'danger';
       return 'warn';
     }
+    if (type === 'call') {
+      if (['called', 'connected'].includes(normalized)) return 'good';
+      if (['no-phone', 'wrong-number', 'disconnected', 'out-of-range', 'out-of-coverage'].includes(normalized)) return 'danger';
+      return 'warn';
+    }
     if (type === 'd2d') {
       if (['visited', 'reach'].includes(normalized)) return 'good';
       if (['follow-up', 'not-home'].includes(normalized)) return 'warn';
       return 'neutral';
-    }
-    if (type === 'call') {
-      if (['called', 'connected'].includes(normalized)) return 'good';
-      if (['no-phone', 'wrong-number', 'disconnected', 'out-of-range'].includes(normalized)) return 'danger';
-      return 'warn';
     }
     return 'neutral';
   }
@@ -63,16 +78,16 @@
 
   function render(row) {
     return [
-      tab('🗳️ Vote Status', voteLabel(row.vote_status), tone('vote', row.vote_status)),
-      tab('📞 Call Center Status', label(row.phone_status || 'need-call'), tone('call', row.phone_status)),
-      tab('🏠 D2D Status', label(row.d2d_status || 'not-visited'), tone('d2d', row.d2d_status))
+      tab('🗳️ Vote Status', resultLabel('vote', row.vote_status), tone('vote', row.vote_status)),
+      tab('📞 Call Center Status', resultLabel('call', row.phone_status), tone('call', row.phone_status)),
+      tab('🏠 D2D Status', resultLabel('d2d', row.d2d_status), tone('d2d', row.d2d_status))
     ].join('');
   }
 
   function apply() {
-    if (!loaded) return;
-    document.querySelectorAll('.voter-card[data-open-voter]').forEach((card) => {
-      const row = byId.get(String(card.dataset.openVoter || ''));
+    document.querySelectorAll('[data-open-voter]').forEach((card) => {
+      const id = String(card.dataset.openVoter || '');
+      const row = byId.get(id);
       const strip = card.querySelector('.section-label');
       if (!row || !strip) return;
       strip.className = 'section-label card-status-strip';
@@ -83,18 +98,11 @@
 
   function scheduleApply() {
     clearTimeout(applyTimer);
-    applyTimer = setTimeout(apply, 80);
-  }
-
-  function startObserver() {
-    if (observerStarted) return;
-    observerStarted = true;
-    const list = document.getElementById('voterList');
-    if (list) new MutationObserver(scheduleApply).observe(list, { childList: true, subtree: true });
+    applyTimer = setTimeout(apply, 40);
   }
 
   async function loadStatuses() {
-    if (loading || loaded || !ready()) return;
+    if (loading || !ready()) return;
     loading = true;
     try {
       const config = window.APP_CONFIG;
@@ -115,20 +123,27 @@
         if (!data || data.length < pageSize) break;
         from += pageSize;
       }
-      loaded = byId.size > 0;
-      scheduleApply();
+      apply();
     } catch (error) {
-      console.warn('Voter card footer status skipped:', error);
+      console.warn('Voter card result blocks skipped:', error);
     } finally {
       loading = false;
     }
   }
 
   function boot() {
-    startObserver();
-    setTimeout(loadStatuses, 1600);
+    const list = document.getElementById('voterList');
+    if (list) new MutationObserver(scheduleApply).observe(list, { childList: true, subtree: true, characterData: true });
+    loadStatuses();
+    let runs = 0;
+    const timer = setInterval(() => {
+      if (!byId.size) loadStatuses();
+      apply();
+      runs += 1;
+      if (runs > 60) clearInterval(timer);
+    }, 500);
   }
 
-  if (document.readyState === 'complete') boot();
-  else window.addEventListener('load', boot, { once: true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  else boot();
 })();
