@@ -1,10 +1,19 @@
 (function () {
   let focusAssign = false;
+  let enhanceFrame = 0;
   let enhanceTimer = 0;
 
-  function scheduleEnhance(delay = 40) {
+  function scheduleEnhance(delay = 0) {
     clearTimeout(enhanceTimer);
-    enhanceTimer = setTimeout(enhance, delay);
+    if (delay > 0) {
+      enhanceTimer = setTimeout(() => scheduleEnhance(0), delay);
+      return;
+    }
+    if (enhanceFrame) cancelAnimationFrame(enhanceFrame);
+    enhanceFrame = requestAnimationFrame(() => {
+      enhanceFrame = 0;
+      enhance();
+    });
   }
 
   function enhance() {
