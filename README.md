@@ -56,6 +56,7 @@ votelist2026/
 │   ├── house-sync.js
 │   ├── pro-ui.js
 │   ├── save-state-fix.js
+│   ├── voter-card-statuses.js
 │   ├── voter-hotfix.js
 │   │
 │   ├── assign-filter.js
@@ -84,6 +85,7 @@ votelist2026/
 | `js/house-sync.js` | Single source of truth for house dropdown, Dhafthar/Sinamale grouping, and Top Houses. |
 | `js/pro-ui.js` | Professional voter card actions, Assign focus, View Profile button, and display-only meta cleanup. |
 | `js/save-state-fix.js` | Preserves active house/search/filter and scroll position after saving, including list rebuilds and accidental full-page reloads. |
+| `js/voter-card-statuses.js` | Adds the three bottom status tabs on voter cards: Vote, D2D, and Call status. |
 | `js/voter-hotfix.js` | Small voter page hotfixes. |
 
 ## Legacy / Disabled JavaScript
@@ -141,6 +143,7 @@ vote_assigned_by, vote_assigned_at
 | Voter card click popup | `voter-popup-card.css` owns the card-click assignment popup: large photo on the left, voter details beside it, and clean Assign/status/D2D/remarks sections below. |
 | Voters stats strip | `voters.html` loads `css/voters-stats.css` after `pro-ui.css` so the All/Need Call/D2D/Will Vote and Assign stats stay visible. |
 | Voter list card spacing | `voter-list-cards.css` uses compact project-card style voter cards: rectangular card, left photo, aligned text, smaller badges, footer actions, and Pick share checkbox. |
+| Voter card bottom statuses | `voter-card-statuses.js` adds three bottom tabs on each voter card: Vote, D2D, and Call; `voter-list-cards.css` owns the spacing and colors. |
 | Voter card meta | `pro-ui.js` cleans the visible card and popup text to `house · phone`, hiding helper text like `(Box 392 | Villimale'-2)` without changing saved data. |
 | Save after house filter | `save-state-fix.js` and `house-filter-lock.js` restore selected house/search/filter after saving. |
 | Save from All voters | `save-state-fix.js` restores the saved voter card or previous scroll after the list rebuilds, so middle-list saves do not jump to the top. |
@@ -165,6 +168,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `js/voter-card-statuses.js` for three bottom status tabs on voter cards: Vote, D2D, and Call status. |
 | 2026-07-06 | Added `css/voter-popup-card.css` for the voter card click popup: larger image block, details block, and cleaner Assign/status/D2D form spacing. |
 | 2026-07-06 | Added `css/voter-list-cards.css` and applied compact project-card styling to the voter list cards: left photo, aligned text, tighter badges, footer actions, and cleaner spacing. |
 | 2026-07-06 | Restored the Assign stat card inside the Voters page stats strip. |
@@ -223,7 +227,7 @@ Important structure:
 - js/house-filter-lock.js keeps selected house active when status filters or saves rebuild the voter list.
 - js/assign-share.js owns short assignment share links and Copy/Open share panel.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
-- js/pro-ui.js owns clean card buttons, Assign focus, View Profile behavior, and display-only meta cleanup; css/voter-list-cards.css owns the voter list card layout; css/voter-popup-card.css owns the voter card click popup layout.
+- js/pro-ui.js owns clean card buttons, Assign focus, View Profile behavior, and display-only meta cleanup; js/voter-card-statuses.js owns the Vote/D2D/Call bottom tabs; css/voter-list-cards.css owns the voter list card layout; css/voter-popup-card.css owns the voter card click popup layout.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
 When changing the app:
