@@ -15,10 +15,10 @@
 
   function voteLabel(value) {
     const normalized = String(value || 'pending').toLowerCase();
-    if (normalized === 'will-vote') return '👍 Will Vote';
+    if (normalized === 'will-vote') return 'Will Vote';
     if (normalized === 'no-vote') return 'Not Vote';
     if (normalized === 'not-decided') return 'Not Decided';
-    if (normalized === 'guaranteed') return '👍 Guaranteed';
+    if (normalized === 'guaranteed') return 'Guaranteed';
     return 'Pending';
   }
 
@@ -52,20 +52,20 @@
     return 'neutral';
   }
 
-  function tab(title, value, tabTone, text) {
+  function tab(title, result, tabTone) {
     return `
       <span class="card-status-tab ${tabTone}">
         <span>${escapeHtml(title)}</span>
-        <strong>${escapeHtml(text || label(value))}</strong>
+        <strong>RESULT: ${escapeHtml(result)}</strong>
       </span>
     `;
   }
 
   function render(row) {
     return [
-      tab('Vote', row.vote_status || 'pending', tone('vote', row.vote_status), voteLabel(row.vote_status)),
-      tab('Result D2D', row.d2d_status || 'not-visited', tone('d2d', row.d2d_status)),
-      tab('Result Call Center', row.phone_status || 'need-call', tone('call', row.phone_status))
+      tab('🗳️ Vote Status', voteLabel(row.vote_status), tone('vote', row.vote_status)),
+      tab('📞 Call Center Status', label(row.phone_status || 'need-call'), tone('call', row.phone_status)),
+      tab('🏠 D2D Status', label(row.d2d_status || 'not-visited'), tone('d2d', row.d2d_status))
     ].join('');
   }
 
@@ -76,7 +76,7 @@
       const strip = card.querySelector('.section-label');
       if (!row || !strip) return;
       strip.className = 'section-label card-status-strip';
-      strip.setAttribute('aria-label', 'Vote D2D and call status');
+      strip.setAttribute('aria-label', 'Vote call center and D2D status results');
       strip.innerHTML = render(row);
     });
   }
