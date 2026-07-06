@@ -89,7 +89,7 @@
       .voter-card .card-status-strip,
       .pro-voter-card .card-status-strip{
         width:100%!important;
-        margin:8px 0 0!important;
+        margin:0!important;
         padding:0!important;
         display:grid!important;
         grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -97,8 +97,8 @@
         background:#fff!important;
       }
       .card-status-tab{
-        min-height:34px!important;
-        padding:5px 4px!important;
+        min-height:40px!important;
+        padding:6px 4px!important;
         display:flex!important;
         flex-direction:column!important;
         align-items:center!important;
@@ -135,7 +135,7 @@
       .card-status-tab.danger strong{color:#b91c1c!important}
       .card-status-tab.neutral strong{color:#475467!important}
       @media (max-width:430px){
-        .card-status-tab{min-height:32px!important;padding:4px 3px!important}
+        .card-status-tab{min-height:38px!important;padding:5px 3px!important}
         .card-status-tab span{font-size:7px!important}
         .card-status-tab strong{font-size:9px!important}
       }
@@ -150,13 +150,13 @@
 
     if (!strip) {
       strip = document.createElement('div');
-      if (actions) info.insertBefore(strip, actions);
-      else info.appendChild(strip);
+      strip.className = 'section-label card-status-strip';
     }
     strip.className = 'section-label card-status-strip';
-    if (strip.parentElement !== info) {
-      if (actions) info.insertBefore(strip, actions);
-      else info.appendChild(strip);
+    if (actions) {
+      actions.insertAdjacentElement('afterend', strip);
+    } else if (strip.parentElement !== info) {
+      info.appendChild(strip);
     }
     return strip;
   }
