@@ -129,6 +129,34 @@
     }
   }
 
+  function shareDashboardFilterLink() {
+    const url = new URL('dashboard.html', location.href);
+    const current = new URL(location.href);
+    const party = current.searchParams.get('party') || 'ALL';
+    const activeFilter = document.querySelector('[data-filter].active')?.dataset.filter || current.searchParams.get('filter') || 'all';
+    const search = document.getElementById('searchInput')?.value?.trim() || '';
+    const house = document.getElementById('houseSelect')?.value || '';
+    url.search = '';
+    url.searchParams.set('party', party);
+    url.searchParams.set('view', 'read');
+    url.searchParams.set('filter', activeFilter);
+    url.searchParams.set('zero', '0');
+    if (house) url.searchParams.set('q', house);
+    else if (search) url.searchParams.set('q', search.toLowerCase());
+    return url.toString();
+  }
+
+  async function copyDashboardFilterLink() {
+    const link = shareDashboardFilterLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      showStatus('Dashboard filter link copied.', false);
+    } catch {
+      showStatus('Dashboard filter link ready in the box below.', false);
+    }
+    showLink(link, 'Dashboard filter/read link ready.');
+  }
+
   function showStatus(message, isError) {
     const status = document.getElementById('statusMessage');
     if (!status) return;
@@ -149,7 +177,7 @@
     }
     box.innerHTML = `
       <div style="display:grid;gap:3px">
-        <strong style="font-size:14px;color:#1e3a8a">Self-assign link ready</strong>
+        <strong style="font-size:14px;color:#1e3a8a">Link ready</strong>
         <span style="font-size:13px;color:#475467">${escapeHtml(message)}</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -186,7 +214,7 @@
       if (!link) return;
       try {
         await navigator.clipboard.writeText(link);
-        showStatus('Self-assign link copied.', false);
+        showStatus('Link copied.', false);
       } catch {
         const input = box.querySelector('input');
         input?.select();
@@ -202,7 +230,14 @@
       await shareAssignment(false);
       return;
     }
-    if (event.target.closest('[data-share-read-view], #shareViewBtn')) {
+    if (event.target.closest('[data-share-read-view]')) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      await copyDashboardFilterLink();
+      return;
+    }
+    if (event.target.closest('#shareViewBtn')) {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -210,6 +245,6 @@
     }
   }, true);
 
+  document.addEventListener('DOMContentLoaded', labelAssignButtons);
   window.addEventListener('load', labelAssignButtons);
-  setInterval(labelAssignButtons, 800);
 })();
