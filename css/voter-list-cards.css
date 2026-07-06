@@ -29,135 +29,25 @@
   box-shadow:0 8px 18px rgba(15,23,42,.10)!important;
 }
 .pro-voter-card .voter-photo img,
-.pro-voter-card .photo-placeholder{
-  border-radius:11px!important;
-}
-.pro-voter-card .voter-info{
-  grid-area:info!important;
-  align-items:flex-start!important;
-  text-align:left!important;
-}
-.pro-voter-card .voter-title{
-  flex-direction:row!important;
-  align-items:flex-start!important;
-  justify-content:space-between!important;
-  gap:10px!important;
-  width:100%!important;
-  margin-bottom:6px!important;
-}
-.pro-voter-card .voter-info h3{
-  font-size:16px!important;
-  line-height:1.22!important;
-  font-weight:800!important;
-  color:#1f2937!important;
-  text-align:left!important;
-}
-.pro-voter-card .party-tag{
-  flex:0 0 auto!important;
-  padding:3px 8px!important;
-  font-size:10px!important;
-}
-.pro-voter-card .voter-info p,
-.pro-meta-line{
-  max-width:none!important;
-  margin:0 0 10px!important;
-  color:#5f6b7a!important;
-  font-size:12px!important;
-  line-height:1.42!important;
-  font-weight:500!important;
-  text-align:left!important;
-}
-.pro-voter-card .chips{
-  display:none!important;
-}
-.pro-voter-card .share-pick{
-  grid-area:pick!important;
-  position:static!important;
-  width:30px!important;
-  height:30px!important;
-  padding:0!important;
-  justify-content:center!important;
-  border-color:#edf0f3!important;
-  background:#fff!important;
-}
-.pro-voter-card .share-pick span{
-  display:none!important;
-}
-.pro-voter-card .share-pick input{
-  width:16px!important;
-  min-height:16px!important;
-  accent-color:#7c6cff!important;
-}
-.card-actions{
-  grid-area:actions!important;
-  width:calc(100% + 32px)!important;
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:0!important;
-  margin:2px -16px 0!important;
-  border-top:1px solid #edf0f3!important;
-}
-.card-actions .btn{
-  min-height:42px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:#fff!important;
-  box-shadow:none!important;
-  color:#7c6cff!important;
-  font-size:12px!important;
-  font-weight:700!important;
-}
-.card-actions .btn + .btn{
-  border-left:1px solid #edf0f3!important;
-}
-.pro-voter-card .section-label{
-  grid-area:section!important;
-  width:calc(100% + 32px)!important;
-  margin:0 -16px!important;
-  padding:10px 16px!important;
-  border-top:1px solid #edf0f3!important;
-  color:#7c6cff!important;
-  font-size:12px!important;
-}
-.pro-voter-card .card-status-strip{
-  display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:0!important;
-  padding:0!important;
-  color:#344054!important;
-  background:#fff!important;
-}
-.card-status-tab{
-  display:grid!important;
-  place-items:center!important;
-  align-content:center!important;
-  min-height:52px!important;
-  padding:8px 6px!important;
-  gap:3px!important;
-  border-right:1px solid #edf0f3!important;
-  text-align:center!important;
-}
-.card-status-tab:last-child{
-  border-right:0!important;
-}
-.card-status-tab span{
-  color:#667085!important;
-  font-size:10px!important;
-  font-weight:900!important;
-  letter-spacing:.08em!important;
-  line-height:1!important;
-  text-transform:uppercase!important;
-}
-.card-status-tab strong{
-  max-width:100%!important;
-  overflow:hidden!important;
-  color:#344054!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  line-height:1.15!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
-}
+.pro-voter-card .photo-placeholder{border-radius:11px!important}
+.pro-voter-card .voter-info{grid-area:info!important;align-items:flex-start!important;text-align:left!important}
+.pro-voter-card .voter-title{flex-direction:row!important;align-items:flex-start!important;justify-content:space-between!important;gap:10px!important;width:100%!important;margin-bottom:6px!important}
+.pro-voter-card .voter-info h3{font-size:16px!important;line-height:1.22!important;font-weight:800!important;color:#1f2937!important;text-align:left!important}
+.pro-voter-card .party-tag{flex:0 0 auto!important;padding:3px 8px!important;font-size:10px!important}
+.pro-voter-card .voter-info p,.pro-meta-line{max-width:none!important;margin:0 0 10px!important;color:#5f6b7a!important;font-size:12px!important;line-height:1.42!important;font-weight:500!important;text-align:left!important}
+.pro-voter-card .chips{display:none!important}
+.pro-voter-card .share-pick{grid-area:pick!important;position:static!important;width:30px!important;height:30px!important;padding:0!important;justify-content:center!important;border-color:#edf0f3!important;background:#fff!important}
+.pro-voter-card .share-pick span{display:none!important}
+.pro-voter-card .share-pick input{width:16px!important;min-height:16px!important;accent-color:#7c6cff!important}
+.card-actions{grid-area:actions!important;width:calc(100% + 32px)!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:0!important;margin:2px -16px 0!important;border-top:1px solid #edf0f3!important}
+.card-actions .btn{min-height:42px!important;border:0!important;border-radius:0!important;background:#fff!important;box-shadow:none!important;color:#7c6cff!important;font-size:12px!important;font-weight:700!important}
+.card-actions .btn + .btn{border-left:1px solid #edf0f3!important}
+.pro-voter-card .section-label{grid-area:section!important;width:calc(100% + 32px)!important;margin:0 -16px!important;padding:10px 16px!important;border-top:1px solid #edf0f3!important;color:#7c6cff!important;font-size:12px!important}
+.pro-voter-card .card-status-strip{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0!important;padding:0!important;color:#344054!important;background:#fff!important;overflow:visible!important}
+.card-status-tab{display:grid!important;place-items:center!important;align-content:center!important;min-height:68px!important;padding:8px 5px!important;gap:5px!important;border-right:1px solid #edf0f3!important;text-align:center!important;overflow:visible!important}
+.card-status-tab:last-child{border-right:0!important}
+.card-status-tab span{display:block!important;color:#667085!important;font-size:9px!important;font-weight:900!important;letter-spacing:.04em!important;line-height:1.2!important;text-transform:uppercase!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+.card-status-tab strong{display:block!important;max-width:100%!important;overflow:visible!important;color:#344054!important;font-size:11px!important;font-weight:900!important;line-height:1.2!important;text-overflow:clip!important;white-space:normal!important}
 .card-status-tab.good strong{color:#047857!important}
 .card-status-tab.warn strong{color:#b45309!important}
 .card-status-tab.danger strong{color:#b91c1c!important}
@@ -165,46 +55,16 @@
 
 @media (max-width:760px){
   .voter-list{grid-template-columns:1fr!important}
-  .pro-voter-card{
-    grid-template-columns:72px minmax(0,1fr) 30px!important;
-    padding:14px 14px 0!important;
-    gap:0 12px!important;
-  }
-  .pro-voter-card .voter-photo{
-    width:72px!important;
-    height:72px!important;
-  }
-  .card-actions,
-  .pro-voter-card .section-label{
-    width:calc(100% + 28px)!important;
-    margin-left:-14px!important;
-    margin-right:-14px!important;
-  }
-  .card-status-tab{
-    min-height:50px!important;
-  }
+  .pro-voter-card{grid-template-columns:72px minmax(0,1fr) 30px!important;padding:14px 14px 0!important;gap:0 12px!important}
+  .pro-voter-card .voter-photo{width:72px!important;height:72px!important}
+  .card-actions,.pro-voter-card .section-label{width:calc(100% + 28px)!important;margin-left:-14px!important;margin-right:-14px!important}
+  .card-status-tab{min-height:70px!important}
 }
-
 @media (max-width:430px){
-  .pro-voter-card{
-    grid-template-columns:64px minmax(0,1fr) 28px!important;
-    padding:12px 12px 0!important;
-    gap:0 10px!important;
-  }
-  .pro-voter-card .voter-photo{
-    width:64px!important;
-    height:64px!important;
-  }
-  .pro-voter-card .voter-info h3{
-    font-size:15px!important;
-  }
-  .card-actions,
-  .pro-voter-card .section-label{
-    width:calc(100% + 24px)!important;
-    margin-left:-12px!important;
-    margin-right:-12px!important;
-  }
-  .card-status-tab strong{
-    font-size:11px!important;
-  }
+  .pro-voter-card{grid-template-columns:64px minmax(0,1fr) 28px!important;padding:12px 12px 0!important;gap:0 10px!important}
+  .pro-voter-card .voter-photo{width:64px!important;height:64px!important}
+  .pro-voter-card .voter-info h3{font-size:15px!important}
+  .card-actions,.pro-voter-card .section-label{width:calc(100% + 24px)!important;margin-left:-12px!important;margin-right:-12px!important}
+  .card-status-tab span{font-size:8px!important}
+  .card-status-tab strong{font-size:10px!important}
 }
