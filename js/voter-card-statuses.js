@@ -13,29 +13,29 @@
 
   function voteResult(value) {
     const normalized = String(value || '').toLowerCase();
-    if (normalized === 'will-vote') return 'Will Vote';
-    if (normalized === 'guaranteed') return 'Guarantee';
-    if (normalized === 'no-vote') return 'Not Vote';
-    if (normalized === 'not-decided') return 'Not Decided';
-    return 'Pending';
+    if (normalized === 'guaranteed' || normalized === 'guarantee') return '✅ Guarantee';
+    if (normalized === 'will-vote') return '👍 Will Vote';
+    if (normalized === 'not-vote' || normalized === 'no-vote') return '👎 Not Vote';
+    if (normalized === 'not-decided') return '🤔 Not Decided';
+    return '⏳ Pending';
   }
 
   function callResult(value) {
     const normalized = String(value || '').toLowerCase();
-    if (normalized === 'called' || normalized === 'connected') return 'Connected';
-    if (normalized === 'out-of-range' || normalized === 'out-of-coverage') return 'Out of Coverage';
-    if (normalized === 'busy') return 'Busy';
-    if (normalized === 'no-answer') return 'Not Answer';
-    if (normalized === 'disconnected') return 'Disconnected';
-    return normalized ? label(normalized) : 'No Result';
+    if (normalized === 'called' || normalized === 'connected') return '✅ Connected';
+    if (normalized === 'out-of-range' || normalized === 'out-of-coverage') return '📡 Out of Coverage';
+    if (normalized === 'busy') return '📵 Busy';
+    if (normalized === 'no-answer' || normalized === 'not-answer') return '🔇 Not Answer';
+    if (normalized === 'disconnected') return '❌ Disconnected';
+    return normalized ? `⏳ ${label(normalized)}` : '⏳ No Result';
   }
 
   function d2dResult(value) {
     const normalized = String(value || '').toLowerCase();
-    if (normalized === 'visited' || normalized === 'reach') return 'Reach';
-    if (normalized === 'not-home') return 'Not Home';
-    if (normalized === 'live-another-place') return 'Live in Another Place';
-    return normalized ? label(normalized) : 'No Result';
+    if (normalized === 'visited' || normalized === 'reach' || normalized === 'reached') return '✅ Reach';
+    if (normalized === 'not-home') return '🚪 Not Home';
+    if (normalized === 'live-another-place' || normalized === 'live-in-another-place') return '📍 Live in Another Place';
+    return normalized ? `⏳ ${label(normalized)}` : '⏳ No Result';
   }
 
   function escapeHtml(value) {
@@ -51,18 +51,18 @@
   function tone(type, value) {
     const normalized = String(value || '').toLowerCase();
     if (type === 'vote') {
-      if (['will-vote', 'guaranteed'].includes(normalized)) return 'good';
-      if (['no-vote', 'not-decided'].includes(normalized)) return 'danger';
+      if (['will-vote', 'guaranteed', 'guarantee'].includes(normalized)) return 'good';
+      if (['not-vote', 'no-vote'].includes(normalized)) return 'danger';
       return 'warn';
     }
     if (type === 'call') {
       if (['called', 'connected'].includes(normalized)) return 'good';
-      if (['no-phone', 'wrong-number', 'disconnected', 'out-of-range', 'out-of-coverage'].includes(normalized)) return 'danger';
+      if (['disconnected', 'out-of-range', 'out-of-coverage'].includes(normalized)) return 'danger';
       return 'warn';
     }
     if (type === 'd2d') {
-      if (['visited', 'reach'].includes(normalized)) return 'good';
-      if (['follow-up', 'not-home'].includes(normalized)) return 'warn';
+      if (['visited', 'reach', 'reached'].includes(normalized)) return 'good';
+      if (['not-home'].includes(normalized)) return 'warn';
       return 'neutral';
     }
     return 'neutral';
@@ -79,9 +79,9 @@
 
   function render(row) {
     return [
-      tab('🗳️ Vote Status', voteResult(row.vote_status), tone('vote', row.vote_status)),
-      tab('📞 Call Center Status', callResult(row.phone_status), tone('call', row.phone_status)),
-      tab('🏠 D2D Status', d2dResult(row.d2d_status), tone('d2d', row.d2d_status))
+      tab('🗳️ VOTE STATUS', voteResult(row.vote_status), tone('vote', row.vote_status)),
+      tab('📞 CALL CENTER STATUS', callResult(row.phone_status), tone('call', row.phone_status)),
+      tab('🏠 D2D STATUS', d2dResult(row.d2d_status), tone('d2d', row.d2d_status))
     ].join('');
   }
 
@@ -104,11 +104,7 @@
   function updateMeta(card, row) {
     if (!row || !row.id) return;
     const meta = card.querySelector('.pro-meta-line, .voter-info p');
-    if (meta) {
-      const address = row.house || '-';
-      const id = row.national_id || 'No ID';
-      meta.textContent = `${address} · ${id}`;
-    }
+    if (meta) meta.textContent = `${row.house || '-'} · ${row.national_id || 'No ID'}`;
     const partyTag = card.querySelector('.party-tag');
     if (partyTag && row.party) partyTag.textContent = row.party;
   }
@@ -136,9 +132,7 @@
     loading = true;
     try {
       const config = window.APP_CONFIG;
-      const client = window.supabase.createClient(config.supabaseUrl, config.supabaseKey, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-      });
+      const client = window.supabase.createClient(config.supabaseUrl, config.supabaseKey);
       const party = (new URLSearchParams(location.search).get('party') || 'ALL').toUpperCase();
       let from = 0;
       const pageSize = 1000;
