@@ -23,6 +23,7 @@
   function stripNormalShareParams() {
     const url = new URL(location.href);
     if (url.searchParams.get('view') === 'read') return false;
+    if (url.searchParams.has('party')) return false;
     const stale = ['filter', 'zero', 'q'].some((key) => url.searchParams.has(key));
     if (!stale) return false;
     ['filter', 'zero', 'q'].forEach((key) => url.searchParams.delete(key));
@@ -726,12 +727,6 @@
     }
     tidyDashboard();
   }, true);
-  let startupRuns = 0;
-  const startupTimer = setInterval(() => {
-    tidyDashboard();
-    startupRuns += 1;
-    if (startupRuns >= 20) clearInterval(startupTimer);
-  }, 500);
   window.addEventListener('load', tidyDashboard);
   window.addEventListener('popstate', () => {
     const modal = document.getElementById('voterModal');
