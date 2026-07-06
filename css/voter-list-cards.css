@@ -1,0 +1,168 @@
+/* Compact project-card style for the voter list only. */
+.voter-list{
+  grid-template-columns:repeat(auto-fit,minmax(340px,1fr))!important;
+  gap:16px!important;
+  align-items:stretch!important;
+}
+.pro-voter-card{
+  display:grid!important;
+  grid-template-columns:78px minmax(0,1fr) 30px!important;
+  grid-template-areas:
+    "photo info pick"
+    "actions actions actions"
+    "section section section"!important;
+  align-items:start!important;
+  gap:0 14px!important;
+  padding:16px 16px 0!important;
+  border-radius:10px!important;
+  background:#fff!important;
+  box-shadow:0 10px 24px rgba(15,23,42,.065)!important;
+  text-align:left!important;
+}
+.pro-voter-card .voter-photo{
+  grid-area:photo!important;
+  width:78px!important;
+  height:78px!important;
+  margin:0 0 14px!important;
+  border:1px solid #e7ebf0!important;
+  border-radius:12px!important;
+  box-shadow:0 8px 18px rgba(15,23,42,.10)!important;
+}
+.pro-voter-card .voter-photo img,
+.pro-voter-card .photo-placeholder{
+  border-radius:11px!important;
+}
+.pro-voter-card .voter-info{
+  grid-area:info!important;
+  align-items:flex-start!important;
+  text-align:left!important;
+}
+.pro-voter-card .voter-title{
+  flex-direction:row!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  width:100%!important;
+  margin-bottom:6px!important;
+}
+.pro-voter-card .voter-info h3{
+  font-size:16px!important;
+  line-height:1.22!important;
+  font-weight:800!important;
+  color:#1f2937!important;
+  text-align:left!important;
+}
+.pro-voter-card .party-tag{
+  flex:0 0 auto!important;
+  padding:3px 8px!important;
+  font-size:10px!important;
+}
+.pro-voter-card .voter-info p,
+.pro-meta-line{
+  max-width:none!important;
+  margin:0 0 10px!important;
+  color:#5f6b7a!important;
+  font-size:12px!important;
+  line-height:1.42!important;
+  font-weight:500!important;
+  text-align:left!important;
+}
+.pro-voter-card .chips{
+  justify-content:flex-start!important;
+  gap:7px!important;
+  margin:0 0 12px!important;
+}
+.pro-voter-card .chip{
+  padding:4px 8px!important;
+  font-size:11px!important;
+  border-radius:999px!important;
+}
+.pro-voter-card .share-pick{
+  grid-area:pick!important;
+  position:static!important;
+  width:30px!important;
+  height:30px!important;
+  padding:0!important;
+  justify-content:center!important;
+  border-color:#edf0f3!important;
+  background:#fff!important;
+}
+.pro-voter-card .share-pick span{
+  display:none!important;
+}
+.pro-voter-card .share-pick input{
+  width:16px!important;
+  min-height:16px!important;
+  accent-color:#7c6cff!important;
+}
+.card-actions{
+  grid-area:actions!important;
+  width:calc(100% + 32px)!important;
+  display:grid!important;
+  grid-template-columns:1fr 1fr!important;
+  gap:0!important;
+  margin:2px -16px 0!important;
+  border-top:1px solid #edf0f3!important;
+}
+.card-actions .btn{
+  min-height:42px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  color:#7c6cff!important;
+  font-size:12px!important;
+  font-weight:700!important;
+}
+.card-actions .btn + .btn{
+  border-left:1px solid #edf0f3!important;
+}
+.pro-voter-card .section-label{
+  grid-area:section!important;
+  width:calc(100% + 32px)!important;
+  margin:0 -16px!important;
+  padding:10px 16px!important;
+  border-top:1px solid #edf0f3!important;
+  color:#7c6cff!important;
+  font-size:12px!important;
+}
+
+@media (max-width:760px){
+  .voter-list{grid-template-columns:1fr!important}
+  .pro-voter-card{
+    grid-template-columns:72px minmax(0,1fr) 30px!important;
+    padding:14px 14px 0!important;
+    gap:0 12px!important;
+  }
+  .pro-voter-card .voter-photo{
+    width:72px!important;
+    height:72px!important;
+  }
+  .card-actions,
+  .pro-voter-card .section-label{
+    width:calc(100% + 28px)!important;
+    margin-left:-14px!important;
+    margin-right:-14px!important;
+  }
+}
+
+@media (max-width:430px){
+  .pro-voter-card{
+    grid-template-columns:64px minmax(0,1fr) 28px!important;
+    padding:12px 12px 0!important;
+    gap:0 10px!important;
+  }
+  .pro-voter-card .voter-photo{
+    width:64px!important;
+    height:64px!important;
+  }
+  .pro-voter-card .voter-info h3{
+    font-size:15px!important;
+  }
+  .card-actions,
+  .pro-voter-card .section-label{
+    width:calc(100% + 24px)!important;
+    margin-left:-12px!important;
+    margin-right:-12px!important;
+  }
+}
