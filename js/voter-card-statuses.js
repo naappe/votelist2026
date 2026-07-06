@@ -7,10 +7,6 @@
     return Boolean(window.APP_CONFIG && window.supabase);
   }
 
-  function label(value) {
-    return String(value || '-').replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-  }
-
   function voteResult(value) {
     const normalized = String(value || '').toLowerCase();
     if (normalized === 'guaranteed' || normalized === 'guarantee') return '✅ Guarantee';
@@ -27,7 +23,7 @@
     if (normalized === 'busy') return '📵 Busy';
     if (normalized === 'no-answer' || normalized === 'not-answer') return '🔇 Not Answer';
     if (normalized === 'disconnected') return '❌ Disconnected';
-    return normalized ? `⏳ ${label(normalized)}` : '⏳ No Result';
+    return '⏳ No Result';
   }
 
   function d2dResult(value) {
@@ -35,7 +31,7 @@
     if (normalized === 'visited' || normalized === 'reach' || normalized === 'reached') return '✅ Reach';
     if (normalized === 'not-home') return '🚪 Not Home';
     if (normalized === 'live-another-place' || normalized === 'live-in-another-place') return '📍 Live in Another Place';
-    return normalized ? `⏳ ${label(normalized)}` : '⏳ No Result';
+    return '⏳ No Result';
   }
 
   function escapeHtml(value) {
