@@ -5,7 +5,18 @@ body[data-view="management"] main.page > #summary.stats-grid{
   margin:0 0 12px!important;
   padding:0!important;
   overflow:visible!important;
+  align-content:start!important;
+  grid-auto-rows:minmax(64px,auto)!important;
 }
-body[data-view="management"] main.page > #summary.stats-grid .assign-stat.stat-card{
+body[data-view="management"] main.page > #summary.stats-grid [data-hotfix-assign],
+body[data-view="management"] main.page > #sections [data-hotfix-assign],
+body[data-view="management"] main.page > #summary.stats-grid [data-assign-filter],
+body[data-view="management"] main.page > #sections [data-assign-filter]{
+  display:none!important;
+}
+body[data-view="management"] main.page > #summary.stats-grid .assign-stat.stat-card:not([data-filter="assign"]){
+  display:none!important;
+}
+body[data-view="management"] main.page > #summary.stats-grid [data-filter="assign"]{
   display:flex!important;
 }
