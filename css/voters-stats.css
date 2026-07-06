@@ -1,0 +1,8 @@
+body[data-view="management"] main.page > #summary.stats-grid{
+  display:grid!important;
+  height:auto!important;
+  min-height:0!important;
+  margin:0 0 12px!important;
+  padding:0!important;
+  overflow:visible!important;
+}
