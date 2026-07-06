@@ -18,10 +18,6 @@
     return String(value || '-').replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
   }
 
-  function hasPhone(row) {
-    return Boolean(String(row.phone || '').trim());
-  }
-
   function isFollowUp(row) {
     return row.d2d_status === 'follow-up'
       || row.vote_status === 'not-decided'
@@ -30,11 +26,11 @@
 
   function matchFilter(row, filter) {
     if (!filter || filter === 'all') return true;
-    if (filter === 'need-call') return row.phone_status === 'need-call' && hasPhone(row);
+    if (filter === 'need-call') return row.phone_status === 'need-call';
     if (filter === 'reached') return row.reach_status === 'reached';
     if (filter === 'will-vote') return row.vote_status === 'will-vote';
     if (filter === 'pending') return row.vote_status === 'pending';
-    if (filter === 'no-phone') return row.phone_status === 'no-phone' || !hasPhone(row);
+    if (filter === 'no-phone') return row.phone_status === 'no-phone';
     if (filter === 'need-transport') return row.transport_status === 'need-transport';
     if (filter === 'follow-up') return isFollowUp(row);
     return true;
@@ -82,7 +78,7 @@
     window.__readOnlyClient = client;
 
     const party = (params.get('party') || 'ALL').toUpperCase();
-    const columns = 'id,photo_url,name,national_id,house,party,election_box,phone,phone_status,reach_status,vote_status,transport_status,d2d_status,support_level';
+    const columns = 'id,image_number,photo_url,name,national_id,house,party,election_box,phone_status,reach_status,vote_status,transport_status,d2d_status,support_level';
     const pageSize = 1000;
     let from = 0;
     let rows = [];
