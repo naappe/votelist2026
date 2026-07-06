@@ -39,6 +39,7 @@ votelist2026/
 │   ├── app.js
 │   ├── config.js
 │   ├── read-view-public.js
+│   ├── read-only-view.js
 │   ├── assign-share.js
 │   ├── campaign-arrangement.js
 │   ├── dashboard-cleanup.js
@@ -49,12 +50,12 @@ votelist2026/
 │   ├── pro-ui.js
 │   ├── save-state-fix.js
 │   ├── voter-card-statuses.js
-│   ├── voter-hotfix.js
 │   ├── assign-filter.js
 │   ├── dhafthar-force-filter.js
 │   ├── house-click-filter.js
 │   ├── house-dropdown-group.js
 │   ├── voter-final-cleanup.js
+│   ├── voter-hotfix.js
 │   └── zero-day.js
 └── .github/
     └── workflows/
@@ -67,22 +68,23 @@ votelist2026/
 |---|---|
 | `js/app.js` | Main logged-in app: auth, Supabase load, stats, filters, voter modal, and save logic. |
 | `js/config.js` | Supabase URL/key, table name, login users, shared-page helpers. |
-| `js/read-view-public.js` | Allows `view=read` dashboard/voters links to open without username/password while keeping the app read-only. |
+| `js/read-view-public.js` | Allows `view=read` dashboard/voters links to pass the app auth check without username/password. |
+| `js/read-only-view.js` | Owns public read-only voter rendering: photo, name, ID, and address only; blocks voter-card edit popups. |
 | `js/assign-share.js` | Creates short public self-assign links and the Copy/Open share panel. |
 | `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, and top-house helpers. Its old startup interval has been removed. |
 | `js/d2d-count-fix.js` | Keeps D2D count labels aligned with D2D status. |
 | `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, Top Houses. |
 | `js/house-filter-lock.js` | Keeps selected house/search active while filtering or saving. |
-| `js/no-jump-fixes.js` | Loads before cleanup/hotfix scripts; removes late old Assign stats and saves the old hotfix popup without `location.reload()`. |
+| `js/no-jump-fixes.js` | Removes late old Assign stats and prevents old save/reload behavior if legacy code appears. |
 | `js/pro-ui.js` | Clean card actions, Assign focus, View Profile button, visible meta cleanup; scheduled with `requestAnimationFrame`, not intervals. |
 | `js/save-state-fix.js` | Preserves selected filter/search/house/scroll when lists rebuild, capped at 3 restore attempts. |
 | `js/voter-card-statuses.js` | Voter card status display cleanup. |
-| `js/voter-hotfix.js` | Legacy popup/save layer still loaded, but guarded by `no-jump-fixes.js`. |
 
 ## Legacy / Disabled JavaScript
 
 | File | Current Role |
 |---|---|
+| `js/voter-hotfix.js` | Legacy popup/save layer. Not loaded by `dashboard.html` or `voters.html` because it caused the duplicate old popup. |
 | `js/voter-final-cleanup.js` | Disabled compatibility shim. |
 | `js/dhafthar-force-filter.js` | Disabled compatibility shim. House logic is in `house-sync.js`. |
 | `js/house-click-filter.js` | Disabled compatibility shim. Top-house clicks belong to `house-sync.js`. |
@@ -94,8 +96,10 @@ votelist2026/
 
 | Feature | Rule |
 |---|---|
-| Share Read View | Opens with `view=read` and should not ask for username/password. |
+| Share Read View | Opens with `view=read`, requires no username/password, and shows only safe read-only voter details. |
+| Read-only voter details | Public read links show photo, name, ID, and address. They do not show phone/mobile and do not allow edit/save. |
 | Voter card chips | Keep the chips such as Reached, Will Vote, Need Call, Normal. |
+| Duplicate popup | `voter-hotfix.js` must stay unloaded from dashboard/voters to prevent the old Phone/Call/Reach/Party popup. |
 | Bottom duplicate result row | Removed from voter cards. Do not re-add duplicate Will Vote at the bottom. |
 | Voters stats | Do not inject Assign stat late after page load; it causes layout jump. Duplicate old Assign stats are hidden by `voters-stats.css` and removed by `no-jump-fixes.js`. |
 | Save from middle of list | Must not refresh the page or jump to the top. |
@@ -104,17 +108,30 @@ votelist2026/
 | Assignment privacy | Shared links do not show other assignee names. |
 | Dhafthar/Sinamale | House grouping belongs to `house-sync.js`. |
 
+## Supabase Access Notes
+
+| Item | Current Setup |
+|---|---|
+| Project | `espezmdpkoixnfchomqb` / `voters` |
+| Table | `public.full_import` |
+| RLS | Enabled |
+| Public read links | `anon` has SELECT only on safe columns needed by `js/read-only-view.js`. |
+| Public write access | Not granted. Anonymous users cannot update voter rows. |
+| Private fields | Phone/mobile is not granted to `anon` and must not be selected by public read-only code. |
+
 ## Update Log
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `js/read-only-view.js` for no-login read-only links showing photo, name, ID, and address only. |
+| 2026-07-06 | Removed `js/voter-hotfix.js` from dashboard/voters script tags to stop the duplicate old popup. |
+| 2026-07-06 | Added Supabase `anon` read-only access for safe `full_import` columns only; phone/mobile remains blocked. |
 | 2026-07-06 | Removed the old `dashboard-cleanup.js` startup interval and kept valid `party` dashboard links from being stripped. |
 | 2026-07-06 | Bumped `js/dashboard-cleanup.js` to `v=20260706-27` on dashboard/voters. |
 | 2026-07-06 | Added `js/read-view-public.js` so Share Read View links open without login while staying read-only. |
 | 2026-07-06 | Removed `js/top-house-stabilizer.js` from dashboard/voters script tags to avoid conflicts. |
 | 2026-07-06 | Limited `js/save-state-fix.js` restore attempts to 3 tries max. |
 | 2026-07-06 | Bumped `css/pro-ui.css` to `v=20260706-11` on dashboard/voters. |
-| 2026-07-06 | Loaded `js/no-jump-fixes.js` before `dashboard-cleanup.js` so old hotfix behavior is guarded before it starts. |
 | 2026-07-06 | Changed `js/pro-ui.js` scheduling to `requestAnimationFrame` instead of timer-style enhancement. |
 | 2026-07-06 | Updated `css/voters-stats.css` to hide duplicate old Assign stats and keep the stats strip stable. |
 | 2026-07-06 | Removed duplicate bottom voter-card result row while keeping the status chips. |
@@ -126,7 +143,7 @@ votelist2026/
 | Feature Area | Put Logic Here |
 |---|---|
 | Main data, stats, filters, modal save | `js/app.js` |
-| Public read-only dashboard links | `js/read-view-public.js` |
+| Public read-only dashboard links | `js/read-view-public.js` and `js/read-only-view.js` |
 | House dropdown, Dhafthar/Sinamale, Top Houses | `js/house-sync.js` |
 | House/filter/scroll after save | `js/house-filter-lock.js` and `js/save-state-fix.js` |
 | Stop old hotfix jumps/reloads | `js/no-jump-fixes.js` |
@@ -134,7 +151,7 @@ votelist2026/
 | Voter card actions and visual cleanup | `js/pro-ui.js` and `css/voter-list-cards.css` |
 | Popup card layout | `css/voter-popup-card.css` |
 
-Do not add a second owner for save, filter, house grouping, or voter-card rendering. Update this README after important changes.
+Do not add a second owner for save, filter, house grouping, voter-card rendering, or read-only rendering. Update this README after important changes.
 
 ## Deployment
 
