@@ -85,19 +85,89 @@
     ].join('');
   }
 
+  function ensureStyle() {
+    if (document.getElementById('voter-result-style')) return;
+    const style = document.createElement('style');
+    style.id = 'voter-result-style';
+    style.textContent = `
+      .pro-voter-card .card-status-strip{
+        grid-area:section!important;
+        width:calc(100% + 32px)!important;
+        margin:0 -16px!important;
+        padding:0!important;
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        border-top:1px solid #edf0f3!important;
+        background:#fff!important;
+      }
+      .card-status-tab{
+        min-height:58px!important;
+        padding:7px 6px!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:4px!important;
+        border-right:1px solid #edf0f3!important;
+        text-align:center!important;
+      }
+      .card-status-tab:last-child{border-right:0!important}
+      .card-status-tab span{
+        display:block!important;
+        max-width:100%!important;
+        color:#64748b!important;
+        font-size:8px!important;
+        font-weight:900!important;
+        letter-spacing:.02em!important;
+        line-height:1.05!important;
+        text-transform:uppercase!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+      }
+      .card-status-tab strong{
+        display:block!important;
+        max-width:100%!important;
+        font-size:10px!important;
+        font-weight:900!important;
+        line-height:1.1!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+      }
+      .card-status-tab.good strong{color:#047857!important}
+      .card-status-tab.warn strong{color:#b45309!important}
+      .card-status-tab.danger strong{color:#b91c1c!important}
+      .card-status-tab.neutral strong{color:#475467!important}
+      @media (max-width:430px){
+        .pro-voter-card .card-status-strip{width:calc(100% + 24px)!important;margin-left:-12px!important;margin-right:-12px!important}
+        .card-status-tab{min-height:56px!important;padding:6px 4px!important}
+        .card-status-tab span{font-size:7px!important}
+        .card-status-tab strong{font-size:9px!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function ensureStrip(card) {
-    let strip = card.querySelector('.card-status-strip');
-    if (strip) return strip;
+    let strip = card.querySelector(':scope > .card-status-strip');
     const old = card.querySelector('.section-label');
-    if (old) {
-      old.className = 'section-label card-status-strip';
-      return old;
-    }
-    strip = document.createElement('div');
-    strip.className = 'section-label card-status-strip';
     const actions = card.querySelector('.card-actions');
-    if (actions) actions.before(strip);
-    else card.querySelector('.voter-info')?.appendChild(strip);
+
+    if (!strip && old) {
+      strip = old;
+      strip.className = 'section-label card-status-strip';
+    }
+    if (!strip) {
+      strip = document.createElement('div');
+      strip.className = 'section-label card-status-strip';
+    }
+    if (strip.parentElement !== card) {
+      if (actions) card.insertBefore(strip, actions);
+      else card.appendChild(strip);
+    } else if (actions && strip.nextElementSibling !== actions) {
+      card.insertBefore(strip, actions);
+    }
     return strip;
   }
 
@@ -110,13 +180,12 @@
   }
 
   function apply() {
+    ensureStyle();
     document.querySelectorAll('[data-open-voter]').forEach((card) => {
       const id = String(card.dataset.openVoter || '');
       const row = byId.get(id) || {};
       updateMeta(card, row);
       const strip = ensureStrip(card);
-      if (!strip) return;
-      strip.className = 'section-label card-status-strip';
       strip.setAttribute('aria-label', 'Vote call center and D2D status results');
       strip.innerHTML = render(row);
     });
