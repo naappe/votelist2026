@@ -35,7 +35,19 @@
 .pro-voter-card .voter-info h3{font-size:16px!important;line-height:1.22!important;font-weight:800!important;color:#1f2937!important;text-align:left!important}
 .pro-voter-card .party-tag{flex:0 0 auto!important;padding:3px 8px!important;font-size:10px!important}
 .pro-voter-card .voter-info p,.pro-meta-line{max-width:none!important;margin:0 0 10px!important;color:#5f6b7a!important;font-size:12px!important;line-height:1.42!important;font-weight:500!important;text-align:left!important}
-.pro-voter-card .chips{display:none!important}
+.pro-voter-card .chips{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  margin:0 0 14px!important;
+}
+.pro-voter-card .chip{
+  padding:5px 9px!important;
+  font-size:11px!important;
+  border-radius:999px!important;
+  font-weight:800!important;
+}
 .pro-voter-card .share-pick{grid-area:pick!important;position:static!important;width:30px!important;height:30px!important;padding:0!important;justify-content:center!important;border-color:#edf0f3!important;background:#fff!important}
 .pro-voter-card .share-pick span{display:none!important}
 .pro-voter-card .share-pick input{width:16px!important;min-height:16px!important;accent-color:#7c6cff!important}
