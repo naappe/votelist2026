@@ -6,3 +6,6 @@ body[data-view="management"] main.page > #summary.stats-grid{
   padding:0!important;
   overflow:visible!important;
 }
+body[data-view="management"] main.page > #summary.stats-grid .assign-stat.stat-card{
+  display:flex!important;
+}
