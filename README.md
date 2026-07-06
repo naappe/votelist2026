@@ -69,11 +69,11 @@ votelist2026/
 | `js/config.js` | Supabase URL/key, table name, login users, shared-page helpers. |
 | `js/read-view-public.js` | Allows `view=read` dashboard/voters links to open without username/password while keeping the app read-only. |
 | `js/assign-share.js` | Creates short public self-assign links and the Copy/Open share panel. |
-| `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, top-house helpers. Its old startup interval is blocked by `no-jump-fixes.js`. |
+| `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, and top-house helpers. Its old startup interval has been removed. |
 | `js/d2d-count-fix.js` | Keeps D2D count labels aligned with D2D status. |
 | `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, Top Houses. |
 | `js/house-filter-lock.js` | Keeps selected house/search active while filtering or saving. |
-| `js/no-jump-fixes.js` | Loads before cleanup/hotfix scripts; blocks the cleanup startup timer, removes late old Assign stats, and saves the old hotfix popup without `location.reload()`. |
+| `js/no-jump-fixes.js` | Loads before cleanup/hotfix scripts; removes late old Assign stats and saves the old hotfix popup without `location.reload()`. |
 | `js/pro-ui.js` | Clean card actions, Assign focus, View Profile button, visible meta cleanup; scheduled with `requestAnimationFrame`, not intervals. |
 | `js/save-state-fix.js` | Preserves selected filter/search/house/scroll when lists rebuild, capped at 3 restore attempts. |
 | `js/voter-card-statuses.js` | Voter card status display cleanup. |
@@ -108,11 +108,13 @@ votelist2026/
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Removed the old `dashboard-cleanup.js` startup interval and kept valid `party` dashboard links from being stripped. |
+| 2026-07-06 | Bumped `js/dashboard-cleanup.js` to `v=20260706-27` on dashboard/voters. |
 | 2026-07-06 | Added `js/read-view-public.js` so Share Read View links open without login while staying read-only. |
 | 2026-07-06 | Removed `js/top-house-stabilizer.js` from dashboard/voters script tags to avoid conflicts. |
 | 2026-07-06 | Limited `js/save-state-fix.js` restore attempts to 3 tries max. |
 | 2026-07-06 | Bumped `css/pro-ui.css` to `v=20260706-11` on dashboard/voters. |
-| 2026-07-06 | Loaded `js/no-jump-fixes.js` before `dashboard-cleanup.js` so the old startup timer is blocked before it starts. |
+| 2026-07-06 | Loaded `js/no-jump-fixes.js` before `dashboard-cleanup.js` so old hotfix behavior is guarded before it starts. |
 | 2026-07-06 | Changed `js/pro-ui.js` scheduling to `requestAnimationFrame` instead of timer-style enhancement. |
 | 2026-07-06 | Updated `css/voters-stats.css` to hide duplicate old Assign stats and keep the stats strip stable. |
 | 2026-07-06 | Removed duplicate bottom voter-card result row while keeping the status chips. |
