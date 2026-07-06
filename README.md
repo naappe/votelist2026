@@ -42,6 +42,7 @@ votelist2026/
 │   ├── voter-hotfix.css
 │   ├── pro-ui.css
 │   ├── voter-list-cards.css
+│   ├── voter-popup-card.css
 │   └── voters-stats.css
 │
 ├── js/
@@ -108,6 +109,7 @@ These files remain only so old script tags or old links do not break. They shoul
 | `css/voter-hotfix.css` | Voter page specific fixes. |
 | `css/pro-ui.css` | Professional UI foundation, Assign/View actions, and matching modal photo/card spacing. |
 | `css/voter-list-cards.css` | Compact project-card style for the voter list: left photo, aligned text, tight badges, footer actions. |
+| `css/voter-popup-card.css` | Voter card click popup layout: large image block, details block, clean Assign/status form spacing. |
 | `css/voters-stats.css` | Voters page override that keeps the stats strip and Assign stat visible above filters. |
 
 ## Supabase Map
@@ -136,7 +138,7 @@ vote_assigned_by, vote_assigned_at
 | House dropdown | Controlled by `house-sync.js`; selected house is locked by `house-filter-lock.js` while filtering/saving. |
 | Top Houses | Shows only focused groups like Dhafthar and Sinamale on the voters page. |
 | Dhafthar grouping | Detects Dhafthar, DH R, No DH R, No RS, RS No, DF, and similar text. |
-| Popup voter photo | `pro-ui.css` uses a larger circular profile photo inside a soft white modal card for easier identification. |
+| Voter card click popup | `voter-popup-card.css` owns the card-click assignment popup: large photo on the left, voter details beside it, and clean Assign/status/D2D/remarks sections below. |
 | Voters stats strip | `voters.html` loads `css/voters-stats.css` after `pro-ui.css` so the All/Need Call/D2D/Will Vote and Assign stats stay visible. |
 | Voter list card spacing | `voter-list-cards.css` uses compact project-card style voter cards: rectangular card, left photo, aligned text, smaller badges, footer actions, and Pick share checkbox. |
 | Voter card meta | `pro-ui.js` cleans the visible card and popup text to `house · phone`, hiding helper text like `(Box 392 | Villimale'-2)` without changing saved data. |
@@ -163,6 +165,7 @@ vote_assigned_by, vote_assigned_at
 
 | Date | Update |
 |---|---|
+| 2026-07-06 | Added `css/voter-popup-card.css` for the voter card click popup: larger image block, details block, and cleaner Assign/status/D2D form spacing. |
 | 2026-07-06 | Added `css/voter-list-cards.css` and applied compact project-card styling to the voter list cards: left photo, aligned text, tighter badges, footer actions, and cleaner spacing. |
 | 2026-07-06 | Restored the Assign stat card inside the Voters page stats strip. |
 | 2026-07-06 | Restored the stats strip on the Voters page with a page-specific override loaded after the profile theme. |
@@ -220,7 +223,7 @@ Important structure:
 - js/house-filter-lock.js keeps selected house active when status filters or saves rebuild the voter list.
 - js/assign-share.js owns short assignment share links and Copy/Open share panel.
 - js/save-state-fix.js preserves selected house/filter/scroll after save, including list rebuilds and accidental full-page reloads.
-- js/pro-ui.js owns clean card buttons, Assign focus, View Profile behavior, and display-only meta cleanup; css/pro-ui.css owns modal styling; css/voter-list-cards.css owns the voter list card layout.
+- js/pro-ui.js owns clean card buttons, Assign focus, View Profile behavior, and display-only meta cleanup; css/voter-list-cards.css owns the voter list card layout; css/voter-popup-card.css owns the voter card click popup layout.
 - voter-final-cleanup.js, dhafthar-force-filter.js, and house-click-filter.js are disabled shims.
 
 When changing the app:
