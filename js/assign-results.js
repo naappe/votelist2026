@@ -103,7 +103,6 @@
             <strong>${esc(assignedTo)}</strong>
             ${assignedAt ? `<small>${esc(assignedAt)}</small>` : ''}
           </div>
-          <div class="section-label blue">Assigned Result</div>
         </div>
       </article>
     `;
@@ -126,7 +125,7 @@
 
     const rows = visibleRows();
     title.textContent = 'Assigned Results';
-    filter.textContent = 'Admin view of voters assigned by friends or team members.';
+    filter.textContent = 'Filter assigned voters by person, house, or search.';
     total.textContent = `${number(rows.length)} assigned`;
     list.innerHTML = rows.length
       ? rows.map(assignedCard).join('')
@@ -167,19 +166,36 @@
     return allAssignedRows;
   }
 
+  function markAssignedUrl() {
+    const url = new URL(location.href);
+    url.searchParams.set('filter', 'assigned');
+    history.replaceState(null, '', url);
+  }
+
+  function scrollToAssignedResults() {
+    const panel = document.querySelector('.voter-panel');
+    if (!panel) return;
+    const y = panel.getBoundingClientRect().top + window.scrollY - 76;
+    window.scrollTo({ top: Math.max(0, y), left: 0, behavior: 'smooth' });
+  }
+
   async function showAssignedResults() {
     const button = document.getElementById('assignedResultsBtn');
     const list = document.getElementById('voterList');
     if (button) {
       button.disabled = true;
-      button.textContent = 'Loading Assigned...';
+      button.innerHTML = 'Loading Assigned...';
     }
     if (list) list.innerHTML = '<div class="empty">Loading assigned results...</div>';
+    markAssignedUrl();
+    scrollToAssignedResults();
 
     try {
       await fetchAssignedRows();
       renderAssignedResults();
       updateButtonCount();
+      setTimeout(scrollToAssignedResults, 80);
+      setTimeout(scrollToAssignedResults, 350);
     } catch (error) {
       setStatus(error.message || 'Could not load assigned results.', true);
       if (list) list.innerHTML = `<div class="empty">${esc(error.message || 'Could not load assigned results.')}</div>`;
@@ -195,7 +211,7 @@
       try { await fetchAssignedRows(); } catch {}
     }
     const count = allAssignedRows.length;
-    button.innerHTML = `Assigned Results <span>${number(count)}</span>`;
+    button.innerHTML = `<span class="assigned-icon">A</span><span class="assigned-label">Assigned Results</span><strong>${number(count)}</strong>`;
   }
 
   function installStyles() {
@@ -203,13 +219,19 @@
     const style = document.createElement('style');
     style.id = 'assignResultsStyles';
     style.textContent = `
-      #assignedResultsBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px}
-      #assignedResultsBtn span{display:inline-flex;min-width:24px;height:24px;align-items:center;justify-content:center;padding:0 8px;border-radius:999px;background:#eef4ff;color:#1d4ed8;font-size:12px;font-weight:900}
+      .search-grid.assigned-results-ready{grid-template-columns:minmax(280px,1fr) minmax(180px,.5fr) 132px 170px 184px!important;align-items:end!important}
+      #assignedResultsBtn.assigned-results-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;min-height:40px!important;border:0!important;border-radius:12px!important;background:#1f3b66!important;color:#fff!important;box-shadow:0 10px 22px rgba(31,59,102,.18)!important;font-weight:900!important;white-space:nowrap!important}
+      #assignedResultsBtn .assigned-icon{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;font-size:12px;font-weight:950}
+      #assignedResultsBtn .assigned-label{font-size:13px;font-weight:900}
+      #assignedResultsBtn strong{display:inline-flex;min-width:26px;height:24px;align-items:center;justify-content:center;padding:0 8px;border-radius:999px;background:#fff;color:#1d4ed8;font-size:12px;font-weight:950}
       .assigned-result-box{display:grid!important;gap:3px!important;margin:2px 0 14px!important;padding:10px 12px!important;border:1px solid #bfdbfe!important;border-radius:12px!important;background:#eff6ff!important;color:#1f3b66!important;text-align:left!important}
       .assigned-result-box span{font-size:10px!important;font-weight:950!important;text-transform:uppercase!important;letter-spacing:.08em!important;color:#2563eb!important}
       .assigned-result-box strong{font-size:13px!important;line-height:1.3!important;color:#111827!important;overflow-wrap:anywhere!important}
       .assigned-result-box small{font-size:11px!important;font-weight:800!important;color:#667085!important}
       .admin-assigned-card{border-color:#bfdbfe!important;box-shadow:0 12px 28px rgba(37,99,235,.08)!important}
+      body[data-view="management"] #aiBrainLive{display:none!important}
+      @media(max-width:960px){.search-grid.assigned-results-ready{grid-template-columns:1fr 1fr!important}.search-grid.assigned-results-ready .btn{width:100%!important}}
+      @media(max-width:640px){.search-grid.assigned-results-ready{grid-template-columns:1fr!important}#assignedResultsBtn.assigned-results-btn{min-height:46px!important}}
     `;
     document.head.appendChild(style);
   }
@@ -219,11 +241,12 @@
     const searchPanel = document.querySelector('[aria-label="Search voters"] .form');
     const shareButton = document.getElementById('shareViewBtn');
     if (!searchPanel || !shareButton) return;
+    searchPanel.classList.add('assigned-results-ready');
     const button = document.createElement('button');
     button.id = 'assignedResultsBtn';
-    button.className = 'btn light';
+    button.className = 'btn assigned-results-btn';
     button.type = 'button';
-    button.textContent = 'Assigned Results';
+    button.innerHTML = '<span class="assigned-icon">A</span><span class="assigned-label">Assigned Results</span><strong>...</strong>';
     button.addEventListener('click', showAssignedResults);
     shareButton.after(button);
     updateButtonCount();
