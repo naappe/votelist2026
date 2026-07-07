@@ -40,6 +40,14 @@
 
     const metrics = metricMap(panel);
     const assignedMetric = metrics.get('assigned');
+
+    if (document.body.dataset.view === 'management') {
+      if (assignedMetric) assignedMetric.hidden = true;
+      panel.querySelector('#aiAssignmentStatus')?.remove();
+      relabelCallQueue(panel);
+      return;
+    }
+
     if (assignedMetric) assignedMetric.hidden = true;
 
     const all = metricValue(metrics.get('all'));
@@ -67,6 +75,10 @@
       panel.querySelector('.ai-brain-metrics')?.after(wrap);
     }
 
+    relabelCallQueue(panel);
+  }
+
+  function relabelCallQueue(panel) {
     panel.querySelectorAll('.ai-metric span').forEach((label) => {
       if (label.textContent.trim().toLowerCase() === 'need call') label.textContent = 'Call Queue';
     });
@@ -96,6 +108,7 @@
     const style = document.createElement('style');
     style.id = 'aiBrainCleanupStyles';
     style.textContent = `
+      body[data-view="management"] #aiAssignmentStatus{display:none!important}
       #aiAssignmentStatus{margin:0 0 10px!important}
       .ai-assignment-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,.35fr);gap:12px;align-items:center;border:1px solid #bfdbfe;border-radius:13px;background:#eff6ff;padding:12px;color:#1f3b66}
       .ai-assignment-card span{display:block;margin-bottom:4px;color:#2563eb;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.06em}
