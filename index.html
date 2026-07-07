@@ -11,9 +11,9 @@
     <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
     <nav class="toolbar">
       <a class="btn light" href="index.html">Home</a>
-      <a class="btn light" href="dashboard.html">Dashboard</a>
-      <a class="btn light" href="voters.html">Voters</a>
       <a class="btn light" href="ai-dashboard.html?party=ALL">AI Dashboard</a>
+      <a class="btn light" href="voters.html">Voters</a>
+      <a class="btn light" href="zero-day.html">Zero Day</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -21,43 +21,38 @@
   <main class="home-wrap">
     <section class="home-hero">
       <p class="eyebrow">Campaign dashboard</p>
-      <h1>Select party work area</h1>
-      <p>Each party opens the same dashboard engine, but every section filters and saves only that party's campaign work.</p>
+      <h1>Select your AI workspace</h1>
+      <p>Open the AI Dashboard for your party, then jump into voter work only when you need to search, assign, call, or update records.</p>
     </section>
 
-    <section class="party-grid">
-      <a class="party-card mdp" href="dashboard.html?party=MDP">
-        <span class="party-label">MDP</span>
-        <strong>Open MDP Dashboard</strong>
-        <small>Need call, reached, will vote, pending, no phone, transport and follow-up.</small>
-      </a>
-      <a class="party-card pnc" href="dashboard.html?party=PNC">
-        <span class="party-label">PNC</span>
-        <strong>Open PNC Dashboard</strong>
-        <small>Same sections, only PNC voters and PNC graphs.</small>
-      </a>
-      <a class="party-card admin" href="login.html">
-        <span class="party-label">Admin</span>
-        <strong>Admin Login</strong>
-        <small>See all voters, MDP, PNC, no party and total graphs.</small>
-      </a>
-    </section>
-
-    <section class="party-grid" aria-label="AI status pages">
+    <section class="party-grid" aria-label="AI dashboard workspaces">
       <a class="party-card mdp" href="ai-dashboard.html?party=MDP">
-        <span class="party-label">AI</span>
-        <strong>MDP AI Status</strong>
-        <small>Smart Insights, assignment status, follow-up, and house information for MDP.</small>
+        <span class="party-label">MDP</span>
+        <strong>MDP AI Dashboard</strong>
+        <small>Smart Insights, assignment status, follow-up, and house information for MDP campaign work.</small>
       </a>
       <a class="party-card pnc" href="ai-dashboard.html?party=PNC">
-        <span class="party-label">AI</span>
-        <strong>PNC AI Status</strong>
+        <span class="party-label">PNC</span>
+        <strong>PNC AI Dashboard</strong>
         <small>Smart Insights, assignment status, follow-up, and house information for PNC only.</small>
       </a>
       <a class="party-card admin" href="ai-dashboard.html?party=ALL">
-        <span class="party-label">AI</span>
-        <strong>Admin AI Status</strong>
-        <small>All-scope information status page for admins.</small>
+        <span class="party-label">Admin</span>
+        <strong>Admin AI Dashboard</strong>
+        <small>All-scope information for admins across MDP, PNC, no party, and total campaign status.</small>
+      </a>
+    </section>
+
+    <section class="party-grid" aria-label="Quick links">
+      <a class="party-card admin" href="voters.html">
+        <span class="party-label">Work</span>
+        <strong>Voters Management</strong>
+        <small>Main workspace for search, filters, assignments, calls, and voter updates.</small>
+      </a>
+      <a class="party-card pnc" href="zero-day.html">
+        <span class="party-label">Day</span>
+        <strong>Zero Day</strong>
+        <small>Election-day tracking for will-vote and guaranteed voters.</small>
       </a>
     </section>
   </main>
