@@ -58,7 +58,7 @@
     `;
 
     if (existing) {
-      existing.innerHTML = markup;
+      if (existing.innerHTML !== markup) existing.innerHTML = markup;
     } else {
       const wrap = document.createElement('section');
       wrap.id = 'aiAssignmentStatus';
