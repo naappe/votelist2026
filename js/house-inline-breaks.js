@@ -22,6 +22,7 @@
     window.addEventListener('assigned-person-filtered', scheduleRender);
     document.addEventListener('input', scheduleRender, true);
     document.addEventListener('change', scheduleRender, true);
+    window.addEventListener('load', scheduleRender);
   }
 
   function scheduleRender() {
@@ -49,7 +50,7 @@
       var key = normalize(house);
       if (!key || key === lastHouse) return;
       lastHouse = key;
-      card.parentNode.insertBefore(createBreak(house, countHouse(cards, house)), card);
+      list.insertBefore(createBreak(house, countHouse(cards, house)), card);
     });
   }
 
@@ -98,38 +99,45 @@
     style.id = 'houseInlineBreakStyles';
     style.textContent = '' +
       '.house-inline-break{' +
-        'position:static!important;' +
-        'z-index:auto!important;' +
-        'display:grid;' +
-        'gap:3px;' +
-        'margin:14px 0 8px;' +
-        'padding:10px 12px;' +
-        'border:1px solid #dbeafe;' +
-        'border-radius:12px;' +
-        'background:#eff6ff;' +
-        'color:#1e3a8a;' +
-        'box-shadow:none;' +
+        'grid-column:1/-1!important;' +
+        'position:relative!important;' +
+        'z-index:0!important;' +
+        'display:grid!important;' +
+        'width:100%!important;' +
+        'clear:both!important;' +
+        'gap:3px!important;' +
+        'margin:18px 0 10px!important;' +
+        'padding:10px 12px!important;' +
+        'border:1px solid #dbeafe!important;' +
+        'border-radius:12px!important;' +
+        'background:#eff6ff!important;' +
+        'color:#1e3a8a!important;' +
+        'box-shadow:none!important;' +
+        'pointer-events:none!important;' +
+      '}' +
+      '.house-inline-break + .voter-card{' +
+        'margin-top:0!important;' +
       '}' +
       '.house-inline-break span{' +
-        'font-size:10px;' +
-        'font-weight:950;' +
-        'letter-spacing:.08em;' +
-        'text-transform:uppercase;' +
-        'color:#2563eb;' +
+        'font-size:10px!important;' +
+        'font-weight:950!important;' +
+        'letter-spacing:.08em!important;' +
+        'text-transform:uppercase!important;' +
+        'color:#2563eb!important;' +
       '}' +
       '.house-inline-break strong{' +
-        'font-size:18px;' +
-        'font-weight:950;' +
-        'line-height:1.1;' +
+        'font-size:18px!important;' +
+        'font-weight:950!important;' +
+        'line-height:1.1!important;' +
       '}' +
       '.house-inline-break small{' +
-        'font-size:12px;' +
-        'font-weight:850;' +
-        'color:#64748b;' +
+        'font-size:12px!important;' +
+        'font-weight:850!important;' +
+        'color:#64748b!important;' +
       '}' +
       '@media(max-width:640px){' +
-        '.house-inline-break{margin:12px 0 8px;padding:9px 10px;}' +
-        '.house-inline-break strong{font-size:16px;}' +
+        '.house-inline-break{margin:20px 0 12px!important;padding:9px 10px!important;}' +
+        '.house-inline-break strong{font-size:16px!important;}' +
       '}';
     document.head.appendChild(style);
   }
