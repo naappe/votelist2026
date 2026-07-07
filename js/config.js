@@ -18,6 +18,40 @@ window.APP_CONFIG = {
 };
 
 (function () {
+  if (!window.supabase?.createClient || window.__villimaleSupabaseFactoryReady) return;
+
+  const nativeCreateClient = window.supabase.createClient.bind(window.supabase);
+  const clients = new Map();
+
+  window.__villimaleGetSupabaseClient = function getVillimaleSupabaseClient(url, key, options) {
+    const config = window.APP_CONFIG || {};
+    const finalUrl = url || config.supabaseUrl;
+    const finalKey = key || config.supabaseKey;
+    if (!finalUrl || !finalKey) return null;
+
+    const cacheKey = `${finalUrl}|${finalKey}`;
+    if (!options && clients.has(cacheKey)) return clients.get(cacheKey);
+
+    const client = nativeCreateClient(finalUrl, finalKey, options);
+    if (!options && finalUrl === config.supabaseUrl && finalKey === config.supabaseKey) {
+      clients.set(cacheKey, client);
+      window.__villimaleSupabaseClient = client;
+    }
+    return client;
+  };
+
+  window.supabase.createClient = function createSharedVillimaleClient(url, key, options) {
+    const config = window.APP_CONFIG || {};
+    if (!options && url === config.supabaseUrl && key === config.supabaseKey) {
+      return window.__villimaleGetSupabaseClient(url, key);
+    }
+    return nativeCreateClient(url, key, options);
+  };
+
+  window.__villimaleSupabaseFactoryReady = true;
+})();
+
+(function () {
   if (!/shared\.html$/i.test(location.pathname)) return;
 
   let lastTouchedRowId = '';
