@@ -78,6 +78,15 @@
     return String(value || '').split(',').map((item) => item.trim()).filter(Boolean).length;
   }
 
+  function safeRows(rows) {
+    return rows.map((row) => ({
+      id: row.id || '',
+      name: row.name || '',
+      house: row.house || '',
+      mobile: row.mobile || ''
+    }));
+  }
+
   function token() {
     const random = new Uint32Array(2);
     crypto.getRandomValues(random);
@@ -109,8 +118,10 @@
       return;
     }
 
+    const payloadRows = safeListMode ? safeRows(rows) : rows;
+
     try {
-      const shareToken = await saveShare(rows);
+      const shareToken = await saveShare(payloadRows);
       const url = new URL(safeListMode ? 'safe-share.html' : 'shared.html', location.href);
       url.username = '';
       url.password = '';
@@ -118,11 +129,11 @@
       url.hash = '';
       url.searchParams.set('s', shareToken);
       const link = url.toString();
-      const safeMessage = `Safe voter list copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`;
-      const assignMessage = `Self-assign link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
+      const safeMessage = `Safe voter list copied for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`;
+      const assignMessage = `Self-assign link copied for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
       const fallbackMessage = safeListMode
-        ? `Safe voter list ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`
-        : `Self-assign link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
+        ? `Safe voter list ready for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`
+        : `Self-assign link ready for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
 
       try {
         await navigator.clipboard.writeText(link);
