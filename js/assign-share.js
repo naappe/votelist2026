@@ -5,6 +5,7 @@
 
   function visibleIds() {
     return Array.from(document.querySelectorAll('.voter-card[data-open-voter]'))
+      .filter((card) => !card.hidden && window.getComputedStyle(card).display !== 'none')
       .map((card) => card.dataset.openVoter)
       .filter(Boolean);
   }
@@ -94,11 +95,11 @@
     return shareToken;
   }
 
-  async function shareAssignment(useVisible) {
+  async function shareAssignment(useVisible, safeListMode) {
     const ids = selectedIds();
     const finalIds = ids.length ? ids : (useVisible ? visibleIds() : []);
     if (!finalIds.length) {
-      showStatus('Select voters to assign first.', true);
+      showStatus('Select voters to share first.', true);
       return;
     }
 
@@ -110,19 +111,24 @@
 
     try {
       const shareToken = await saveShare(rows);
-      const url = new URL('shared.html', location.href);
+      const url = new URL(safeListMode ? 'safe-share.html' : 'shared.html', location.href);
       url.username = '';
       url.password = '';
       url.search = '';
       url.hash = '';
       url.searchParams.set('s', shareToken);
       const link = url.toString();
+      const safeMessage = `Safe voter list copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`;
+      const assignMessage = `Self-assign link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
+      const fallbackMessage = safeListMode
+        ? `Safe voter list ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`
+        : `Self-assign link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
 
       try {
         await navigator.clipboard.writeText(link);
-        showLink(link, `Self-assign link copied for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`);
+        showLink(link, safeListMode ? safeMessage : assignMessage);
       } catch {
-        showLink(link, `Self-assign link ready for ${rows.length} voter${rows.length === 1 ? '' : 's'}. Friends can write their name and save.`);
+        showLink(link, fallbackMessage);
       }
     } catch (error) {
       showStatus(error.message || 'Could not create short assignment link.', true);
@@ -223,11 +229,18 @@
       return;
     }
 
+    if (event.target.closest('[data-share-safe-list]')) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      await shareAssignment(true, true);
+      return;
+    }
     if (event.target.closest('[data-share-selected]')) {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-      await shareAssignment(false);
+      await shareAssignment(false, false);
       return;
     }
     if (event.target.closest('[data-share-read-view]')) {
@@ -241,7 +254,7 @@
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
-      await shareAssignment(true);
+      await shareAssignment(true, false);
     }
   }, true);
 
