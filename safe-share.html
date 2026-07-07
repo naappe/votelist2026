@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shared Voter List</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--soft:#eef4ff;--shadow:0 16px 40px rgba(16,24,40,.08)}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .wrap{width:min(860px,calc(100% - 24px));margin:14px auto 44px}
+    .top,.tools,.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+    .top{padding:16px;margin-bottom:12px}
+    h1{margin:0 0 6px;font-size:26px;letter-spacing:-.03em;line-height:1.08}
+    p{margin:0;color:var(--muted);line-height:1.4;font-weight:700}
+    .count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}
+    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 220px auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
+    label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
+    input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
+    button{border:1px solid #d0d5dd;border-radius:11px;min-height:42px;padding:9px 13px;font-weight:950;cursor:pointer;background:#fff;color:#1f3b66;white-space:nowrap}
+    .grid{display:grid;gap:10px}
+    .card{display:grid;gap:8px;padding:14px;text-align:left}
+    .name{font-size:19px;font-weight:950;letter-spacing:-.02em;line-height:1.15}
+    .line{display:grid;grid-template-columns:74px 1fr;gap:8px;color:#344054;font-size:15px;font-weight:800;line-height:1.35;word-break:break-word}
+    .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+    .empty,.message{padding:18px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:14px}
+    .message{margin-bottom:12px;text-align:left;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+    .message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.wrap{width:min(100% - 18px,860px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.line{grid-template-columns:64px 1fr;font-size:14px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="top">
+      <h1>Shared Voter List</h1>
+      <p>Read-only list. Only name, ID, address, and phone are shown.</p>
+      <div id="count" class="count">Loading...</div>
+    </section>
+
+    <section class="tools" aria-label="Search shared voters">
+      <label>Search voters
+        <input id="searchInput" type="search" placeholder="Name, ID, address, phone">
+      </label>
+      <label>House
+        <select id="houseSelect"><option value="">All houses</option></select>
+      </label>
+      <button id="clearBtn" type="button">Clear</button>
+    </section>
+
+    <div id="message" class="message" hidden></div>
+    <section id="content" class="grid"></section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js?v=20260707-1"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get('s') || '';
+    let rows = [];
+
+    function esc(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+      }[char]));
+    }
+
+    function cleanRows(items) {
+      return (Array.isArray(items) ? items : [])
+        .filter((row) => row && (row.name || row.id || row.house || row.mobile || row.phone))
+        .map((row) => ({
+          id: row.id || row.national_id || '',
+          name: row.name || '',
+          house: row.house || '',
+          mobile: row.mobile || row.phone || ''
+        }));
+    }
+
+    function houseKey(value) {
+      return String(value || '').trim().toLowerCase();
+    }
+
+    function setMessage(text, isError) {
+      const message = document.getElementById('message');
+      message.hidden = !text;
+      message.textContent = text || '';
+      message.className = `message${isError ? ' error' : ''}`;
+    }
+
+    function renderHouseOptions() {
+      const selected = document.getElementById('houseSelect').value;
+      const counts = new Map();
+      rows.forEach((row) => {
+        const house = String(row.house || 'No house').trim();
+        const key = houseKey(house);
+        const current = counts.get(key) || { house, count: 0 };
+        current.count += 1;
+        counts.set(key, current);
+      });
+      const options = Array.from(counts.values()).sort((a, b) => a.house.localeCompare(b.house, undefined, { numeric: true }));
+      document.getElementById('houseSelect').innerHTML = '<option value="">All houses</option>' + options.map((item) => `
+        <option value="${esc(houseKey(item.house))}" ${houseKey(item.house) === selected ? 'selected' : ''}>${esc(item.house)} (${item.count})</option>
+      `).join('');
+    }
+
+    function filteredRows() {
+      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      const house = document.getElementById('houseSelect').value;
+      return rows.filter((row) => {
+        if (house && houseKey(row.house || 'No house') !== house) return false;
+        if (!term) return true;
+        return [row.name, row.id, row.house, row.mobile].some((value) => String(value || '').toLowerCase().includes(term));
+      });
+    }
+
+    function render() {
+      const visible = filteredRows();
+      document.getElementById('count').textContent = `${visible.length} of ${rows.length} voter${rows.length === 1 ? '' : 's'} showing`;
+      document.getElementById('content').innerHTML = visible.length ? visible.map((row) => `
+        <article class="card">
+          <div class="name">${esc(row.name || 'Unknown voter')}</div>
+          <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
+          <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
+          <div class="line"><span class="label">Phone</span><span>${esc(row.mobile || 'No phone')}</span></div>
+        </article>
+      `).join('') : '<div class="empty">No voters match this search.</div>';
+    }
+
+    async function loadShare() {
+      document.getElementById('searchInput').addEventListener('input', render);
+      document.getElementById('houseSelect').addEventListener('change', render);
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('houseSelect').value = '';
+        render();
+      });
+
+      if (!token) {
+        document.getElementById('count').textContent = 'No link token';
+        document.getElementById('content').innerHTML = '<div class="empty">This shared list link is missing its token.</div>';
+        return;
+      }
+
+      try {
+        const client = window.supabase.createClient(window.APP_CONFIG.supabaseUrl, window.APP_CONFIG.supabaseKey);
+        const { data, error } = await client
+          .from('assignment_shares')
+          .select('payload')
+          .eq('token', token)
+          .maybeSingle();
+        if (error) throw error;
+        rows = cleanRows(data?.payload);
+        renderHouseOptions();
+        render();
+      } catch (error) {
+        document.getElementById('count').textContent = 'Could not open link';
+        document.getElementById('content').innerHTML = `<div class="empty">${esc(error.message || 'This shared list could not be loaded.')}</div>`;
+        setMessage('Could not load this shared list.', true);
+      }
+    }
+
+    loadShare();
+  </script>
+</body>
+</html>
