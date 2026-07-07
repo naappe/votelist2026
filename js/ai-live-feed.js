@@ -80,17 +80,19 @@
   }
 
   function readMetrics() {
+    const rows = readRows();
+    if (rows.length) return normalizeMetrics(metricsFromRows(rows));
+
     if (window.aiLearningSystem && typeof window.aiLearningSystem.metrics === 'function') {
       try {
         const m = window.aiLearningSystem.metrics();
-        if (m && m.total) return normalizeMetrics(m);
+        if (m && String(m.scope || '').toUpperCase() === partyScope()) return normalizeMetrics(m);
       } catch (error) {
         console.warn('AI news metrics fallback used', error);
       }
     }
 
-    const rows = readRows();
-    return normalizeMetrics(metricsFromRows(rows));
+    return normalizeMetrics(metricsFromRows([]));
   }
 
   function normalizeMetrics(m) {
@@ -243,20 +245,27 @@
   }
 
   function readRows() {
-    if (Array.isArray(window.__villimaleRows) && window.__villimaleRows.length) return window.__villimaleRows;
-    const keys = [
-      `${storagePrefix}:${partyScope()}:rows`,
-      `${storagePrefix}:ALL:rows`,
-      `${storagePrefix}:PNC:rows`,
-      `${storagePrefix}:MDP:rows`
-    ];
-    for (const key of keys) {
-      try {
-        const rows = JSON.parse(localStorage.getItem(key) || '[]');
-        if (Array.isArray(rows) && rows.length) return rows;
-      } catch {}
+    const scope = partyScope();
+    if (Array.isArray(window.__villimaleRows) && window.__villimaleRows.length) {
+      return filterRowsForScope(window.__villimaleRows, scope);
     }
-    return [];
+
+    const keys = scope === 'ALL'
+      ? [`${storagePrefix}:ALL:rows`, `${storagePrefix}:PNC:rows`, `${storagePrefix}:MDP:rows`]
+      : [`${storagePrefix}:${scope}:rows`];
+    const rows = [];
+    keys.forEach((key) => {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(parsed) && parsed.length) rows.push(...parsed);
+      } catch {}
+    });
+    return filterRowsForScope(rows, scope);
+  }
+
+  function filterRowsForScope(rows, scope) {
+    if (scope === 'ALL') return rows;
+    return rows.filter((row) => clean(row.party).toUpperCase() === scope);
   }
 
   function partyScope() {
