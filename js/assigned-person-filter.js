@@ -62,10 +62,11 @@
     const style = document.createElement('style');
     style.id = 'assignedPersonFilterStyles';
     style.textContent = `
-      .assigned-person-filter{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:end;margin:10px 0 16px;padding:12px;border:1px solid #dbeafe;border-radius:14px;background:#eff6ff}
+      .assigned-person-filter{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:10px;align-items:end;margin:10px 0 16px;padding:12px;border:1px solid #dbeafe;border-radius:14px;background:#eff6ff}
       .assigned-person-filter label{display:grid;gap:6px;color:#1e3a8a;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
       .assigned-person-filter select{width:100%;min-height:40px;border:1px solid #bfdbfe;border-radius:12px;background:#fff;color:#111827;font-size:14px;font-weight:800}
       .assigned-person-filter .btn{min-height:40px;border-radius:12px;white-space:nowrap}
+      .assigned-person-filter [data-share-safe-list]{background:#2563eb;color:#fff;border-color:#2563eb}
       @media(max-width:640px){.assigned-person-filter{grid-template-columns:1fr}.assigned-person-filter .btn{width:100%}}
     `;
     document.head.appendChild(style);
@@ -86,6 +87,7 @@
           ${options.map((item) => `<option value="${esc(lower(item.name))}" ${lower(item.name) === activePerson ? 'selected' : ''}>${esc(item.name)} (${number(item.count)})</option>`).join('')}
         </select>
       </label>
+      <button class="btn light" type="button" data-share-safe-list>Share List</button>
       <button class="btn light" type="button" id="clearAssignedPerson">Clear</button>
     `;
 
