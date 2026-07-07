@@ -67,6 +67,7 @@
       .assigned-person-filter select{width:100%;min-height:40px;border:1px solid #bfdbfe;border-radius:12px;background:#fff;color:#111827;font-size:14px;font-weight:800}
       .assigned-person-filter .btn{min-height:40px;border-radius:12px;white-space:nowrap}
       .assigned-person-filter [data-share-safe-list]{background:#2563eb;color:#fff;border-color:#2563eb}
+      .assigned-person-hidden{display:none!important}
       @media(max-width:640px){.assigned-person-filter{grid-template-columns:1fr}.assigned-person-filter .btn{width:100%}}
     `;
     document.head.appendChild(style);
@@ -112,6 +113,10 @@
   function applyFilter() {
     if (!sectionIsAssignedResults()) {
       document.getElementById('assignedPersonFilter')?.remove();
+      cards().forEach((card) => {
+        card.classList.remove('assigned-person-hidden');
+        card.hidden = false;
+      });
       return;
     }
 
@@ -122,7 +127,9 @@
     let shown = 0;
     allCards.forEach((card) => {
       const match = !activePerson || personNames(assignedText(card)).some((name) => lower(name) === activePerson);
+      card.classList.toggle('assigned-person-hidden', !match);
       card.hidden = !match;
+      card.setAttribute('aria-hidden', match ? 'false' : 'true');
       if (match) shown += 1;
     });
 
@@ -136,6 +143,8 @@
         : `Showing ${number(shown)} assigned voter${shown === 1 ? '' : 's'}.`;
       status.className = `status-message ${shown ? 'ok' : 'error'}`;
     }
+
+    window.dispatchEvent(new Event('assigned-person-filtered'));
   }
 
   window.addEventListener('assign-results-rendered', applyFilter);
