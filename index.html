@@ -13,6 +13,7 @@
       <a class="btn light" href="index.html">Home</a>
       <a class="btn light" href="dashboard.html">Dashboard</a>
       <a class="btn light" href="voters.html">Voters</a>
+      <a class="btn light" href="ai-dashboard.html?party=ALL">AI Dashboard</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -39,6 +40,24 @@
         <span class="party-label">Admin</span>
         <strong>Admin Login</strong>
         <small>See all voters, MDP, PNC, no party and total graphs.</small>
+      </a>
+    </section>
+
+    <section class="party-grid" aria-label="AI status pages">
+      <a class="party-card mdp" href="ai-dashboard.html?party=MDP">
+        <span class="party-label">AI</span>
+        <strong>MDP AI Status</strong>
+        <small>Smart Insights, assignment status, follow-up, and house information for MDP.</small>
+      </a>
+      <a class="party-card pnc" href="ai-dashboard.html?party=PNC">
+        <span class="party-label">AI</span>
+        <strong>PNC AI Status</strong>
+        <small>Smart Insights, assignment status, follow-up, and house information for PNC only.</small>
+      </a>
+      <a class="party-card admin" href="ai-dashboard.html?party=ALL">
+        <span class="party-label">AI</span>
+        <strong>Admin AI Status</strong>
+        <small>All-scope information status page for admins.</small>
       </a>
     </section>
   </main>
