@@ -1,9 +1,9 @@
 (function () {
   const samples = [
-    'What is the structure of this website?',
-    'Show me all voter fields',
-    'What features does this site have?',
-    'Show campaign stats'
+    'Show campaign stats',
+    'Show predictions',
+    'What should I do next?',
+    'What is the structure of this website?'
   ];
 
   const pages = [
@@ -41,13 +41,14 @@
   const features = [
     'Party-scoped voter pages for PNC, MDP, and Admin/ALL.',
     'Search by voter details, house, and party fields.',
-    'House filter and sticky house/address breaks while scrolling.',
+    'Inline house/address breaks between voter groups.',
     'Voter popup for campaign updates.',
     'Assignment panel and assigned-results view.',
+    'Safe share list with only name, ID, house/address, and phone.',
     'Phone tap-to-call behavior.',
     'Follow-up, call, transport, pending, and will-vote filters.',
-    'AI Brain Live status panel with Show details.',
     'Separate AI Dashboard information/status page.',
+    'AI learning system for campaign stats, predictions, recommendations, and memory.',
     'Offline save queue/local cache support.'
   ];
 
@@ -55,7 +56,7 @@
     'Event creation and RSVP tracking are not fully implemented.',
     'Automated email/SMS/Slack notifications are not connected.',
     'PDF or scheduled report generation is not connected.',
-    'Real AI model calls are not connected in the browser.',
+    'External AI model calls are not connected in the browser.',
     'Full audit/activity log and 2FA are not currently implemented.',
     'Device, city, country, and IP tracking are not currently implemented.'
   ];
@@ -75,10 +76,10 @@
     container.innerHTML = `
       <button id="aiChatToggle" type="button" aria-label="Open Smart Chat">AI</button>
       <section id="aiChatWindow" aria-label="Smart Chat" hidden>
-        <header><div><strong>Smart Chat</strong><span>Read-only voter help</span></div><button type="button" id="aiChatClose" aria-label="Close chat">Close</button></header>
+        <header><div><strong>Smart Chat</strong><span>AI learning / read-only</span></div><button type="button" id="aiChatClose" aria-label="Close chat">Close</button></header>
         <div id="aiChatMessages" role="log" aria-live="polite"></div>
         <form id="aiChatForm">
-          <input id="aiChatInput" autocomplete="off" placeholder="Ask structure, fields, stats...">
+          <input id="aiChatInput" autocomplete="off" placeholder="Ask stats, predictions, fields...">
           <button type="submit">Send</button>
         </form>
       </section>
@@ -113,13 +114,12 @@
     const messages = document.getElementById('aiChatMessages');
     if (!messages || messages.dataset.seeded) return;
     messages.dataset.seeded = '1';
-    addMessage('Ask me about website structure, pages, voter fields, current features, missing features, visible voters, follow-ups, calls, houses, transport, or PNC status. I read the current page and never save data.', 'bot');
+    addMessage('Ask me campaign stats, predictions, recommendations, assignments, houses, website structure, voter fields, current features, or missing features. I read the current page and never save voter data.', 'bot');
     addMessage(`Try: ${samples.join(' | ')}`, 'hint');
   }
 
   function answer(question) {
     const q = question.toLowerCase();
-    const data = analyzeVisibleCards();
     const pageParty = new URLSearchParams(location.search).get('party') || 'current page';
 
     if (/(structure|organized|organisation|pages|page exist|website)/.test(q)) {
@@ -127,7 +127,7 @@
         'Website structure:',
         ...pages.map(([page, purpose]) => `- ${page}: ${purpose}`),
         '',
-        'Recommendation: keep voters.html as the main work page, and use ai-dashboard.html for information/status so the voter list stays clean.'
+        'Recommendation: keep voters.html as the main fast work page, and use ai-dashboard.html for information/status so the voter list stays clean.'
       ].join('\n');
     }
     if (/(field|schema|data column|columns|all voter fields)/.test(q)) {
@@ -157,55 +157,83 @@
         'Best next UI move: avoid adding more clutter to voters.html. Put status, reports, and broad information in ai-dashboard.html.'
       ].join('\n');
     }
-    if (/(tab|tabs|separate pages|separate page|recommend|organize|organise)/.test(q)) {
+    if (/(tab|tabs|separate pages|separate page|organize|organise)/.test(q)) {
       return 'Recommendation: do not split every status into many new pages yet. Keep voters.html as the single fast work page with filters, and use ai-dashboard.html for information/status. Separate pages only make sense later for big team workflows like Call Center, D2D, Transport, or Zero Day.';
     }
-    if (/(assign|assigned|assignment|who assign|last assign)/.test(q)) {
-      return assignmentAnswer();
-    }
-    if (/(pnc|party|scope)/.test(q)) {
+    if (/(pnc|mdp|party|scope)/.test(q) && !/(stat|status|predict|forecast|trend|recommend|next|assign|house|call|follow|phone|transport|vote)/.test(q)) {
       return `This page scope is ${pageParty}. PNC pages should show only PNC voters, MDP pages only MDP voters, and Admin/ALL can show the full allowed scope. I do not change that scope.`;
     }
-    if (/(dhaf|daf|df|house)/.test(q)) {
-      if (/dhaf|daf|df/.test(q)) {
-        return `${data.dhafthar} visible voter(s) appear to be in Dhafthar-related houses. Use the House filter/search for Dhafthar to focus them.`;
-      }
-      return data.topHouse ? `Top visible house: ${data.topHouse.name} (${data.topHouse.count} voter(s)). House breaks on the list show where each address group starts.` : 'No visible house data yet.';
+
+    if (shouldAskLearningSystem(q)) {
+      return learningAnswer(question);
     }
-    if (/(follow|d2d|not home|another place)/.test(q)) {
-      return `${data.followUp} visible voter(s) need follow-up. Start with cards marked Follow-up, Busy, Switched Off, Wrong Number, or Not Decided.`;
-    }
-    if (/(call|phone|contact)/.test(q)) {
-      return `${data.needCall} visible voter(s) need calls and ${data.noPhone} visible voter(s) have no phone. Call voters with phone numbers first, then send no-phone voters to D2D.`;
-    }
-    if (/(transport|pickup|ride)/.test(q)) {
-      return `${data.transport} visible voter(s) need transport. Keep these separate for pickup planning.`;
-    }
-    if (/(will|vote|support|guaranteed)/.test(q)) {
-      return `${data.willVote} visible voter(s) are marked Will Vote. ${data.guaranteed} visible voter(s) look guaranteed.`;
-    }
-    if (/(stat|count|summary|total|analytics)/.test(q)) {
-      return `Visible: ${data.visible}. Page total label: ${data.totalLabel}. Will Vote: ${data.willVote}. Need Call: ${data.needCall}. Follow-up: ${data.followUp}. No Phone: ${data.noPhone}. Houses visible: ${data.houses.size}.`;
-    }
+
     if (/(help|commands|ask)/.test(q)) {
-      return 'You can ask: website structure, what pages exist, show voter fields, status meanings, current features, missing features, tabs or separate pages, assignments, campaign stats, follow-up, calls, Dhafthar, transport, or PNC page status.';
+      return 'You can ask: campaign stats, show predictions, what should I do next, memory, houses, assignments, calls, follow-up, transport, will vote, website structure, pages, fields, features, or missing features.';
     }
-    return `I can answer project-structure questions and read the current visible voter cards. ${data.visible} voter card(s) are visible now. Ask about structure, pages, fields, features, stats, calls, follow-up, house, Dhafthar, transport, or will vote.`;
+
+    return learningAnswer(question);
   }
 
-  function assignmentAnswer() {
+  function shouldAskLearningSystem(q) {
+    return /(campaign|stat|count|summary|total|analytics|health|risk|predict|prediction|forecast|trend|what should|next|recommend|memory|learn|assign|assigned|assignment|who assign|last assign|house|dhaf|daf|df\b|follow|d2d|not home|another place|call|phone|contact|transport|pickup|ride|will vote|support|guaranteed|pending|reached|status)/.test(q);
+  }
+
+  function learningAnswer(question) {
+    try {
+      if (typeof window.askAI === 'function') return window.askAI(question);
+      if (window.aiLearningSystem && typeof window.aiLearningSystem.ask === 'function') return window.aiLearningSystem.ask(question);
+    } catch (error) {
+      console.warn('AI learning answer failed', error);
+    }
+    return visibleFallback(question);
+  }
+
+  function visibleFallback(question) {
+    const data = analyzeVisibleCards();
+    const q = question.toLowerCase();
+    if (/(predict|forecast|trend)/.test(q)) {
+      return [
+        'Prediction / Trend',
+        'The learning system is still loading, so this is based on visible cards only.',
+        `Visible voters: ${data.visible}`,
+        `Will Vote: ${data.willVote}`,
+        `Need Call: ${data.needCall}`,
+        `Pending label: ${data.totalLabel}`
+      ].join('\n');
+    }
+    if (/(assign|assigned|assignment)/.test(q)) return assignmentFallback();
+    if (/(house|dhaf|daf|df\b)/.test(q)) {
+      return data.topHouse ? `Top visible house: ${data.topHouse.name} (${data.topHouse.count} voter(s)). Houses visible: ${data.houses.size}.` : 'No visible house data yet.';
+    }
+    return [
+      'Campaign Status (visible page fallback)',
+      `Visible: ${data.visible}`,
+      `Page total label: ${data.totalLabel}`,
+      `Will Vote: ${data.willVote}`,
+      `Need Call: ${data.needCall}`,
+      `Follow-up: ${data.followUp}`,
+      `No Phone: ${data.noPhone}`,
+      `Transport: ${data.transport}`,
+      `Houses visible: ${data.houses.size}`
+    ].join('\n');
+  }
+
+  function assignmentFallback() {
     const rows = readCachedRows();
     const assigned = rows.filter((row) => clean(row.vote_assigned_by));
     if (!assigned.length) {
       const domAssigned = Array.from(document.querySelectorAll('.assigned-result-box strong')).map((el) => clean(el.textContent)).filter(Boolean);
       return domAssigned.length
-        ? `Visible assigned results show ${domAssigned.length} assigned voter(s). Open AI Brain details for assignment summary.`
+        ? `Visible assigned results show ${domAssigned.length} assigned voter(s). Open AI Dashboard for assignment summary.`
         : 'No assignment data is visible in the current page cache yet. Open AI Dashboard or Assigned Results to load more assignment details.';
     }
 
     const latest = assigned.slice().sort((a, b) => dateMs(b.vote_assigned_at) - dateMs(a.vote_assigned_at))[0];
     const counts = new Map();
-    assigned.forEach((row) => counts.set(row.vote_assigned_by, (counts.get(row.vote_assigned_by) || 0) + 1));
+    assigned.forEach((row) => {
+      clean(row.vote_assigned_by).split(',').map(clean).filter(Boolean).forEach((name) => counts.set(name, (counts.get(name) || 0) + 1));
+    });
     const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, count]) => `${name}: ${count}`).join(' | ');
     return `Assigned voters in this scope: ${assigned.length}. Latest assignment: ${latest.vote_assigned_by || 'Assigned'}${latest.vote_assigned_at ? ` at ${formatTime(latest.vote_assigned_at)}` : ''}. Top assignees: ${top || 'none'}.`;
   }
@@ -222,7 +250,6 @@
       transport: 0,
       willVote: 0,
       guaranteed: 0,
-      dhafthar: 0,
       houses,
       topHouse: null
     };
@@ -238,7 +265,6 @@
       if (/transport|need transport/.test(text)) data.transport += 1;
       if (/will vote/.test(text)) data.willVote += 1;
       if (/guaranteed/.test(text)) data.guaranteed += 1;
-      if (/dhaf|daf|df\b|dh r|no dh r/.test(normalize(house))) data.dhafthar += 1;
     });
 
     data.topHouse = Array.from(houses.values()).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))[0] || null;
