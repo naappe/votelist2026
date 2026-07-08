@@ -28,6 +28,7 @@
     const target = document.getElementById('voterList') || document.body;
     new MutationObserver(schedule).observe(target, { childList: true, subtree: true });
     setInterval(render, 30000);
+    [250, 750, 1500, 3000].forEach((delay) => setTimeout(schedule, delay));
   }
 
   function schedule() {
@@ -76,7 +77,7 @@
         <a class="btn light compact" href="${esc(scopedUrl('ai-dashboard.html'))}">AI Dashboard</a>
       </div>
       <div class="voter-info-metrics">
-        ${metric('Visible', m.visible, 'all')}
+        ${metric('Voters', m.visible, 'all')}
         ${metric('Need Call', m.needCall, 'need-call')}
         ${metric('Will Vote', m.willVote, 'will-vote')}
         ${metric('Assigned', m.assigned, 'assigned')}
@@ -85,7 +86,7 @@
         <span>${esc(m.scope)} scope</span>
         <span>${esc(m.houses)} houses</span>
         <span>${navigator.onLine ? 'Connected' : 'Offline'}</span>
-        <span>Updated ${esc(updated)}</span>
+        <span>Updated: ${esc(updated)}</span>
       </div>
     `;
   }
@@ -99,7 +100,7 @@
     return {
       scope: partyScope(),
       total: sourceRows.length || sectionTotal || cards.length,
-      visible: sectionTotal || cards.length || sourceRows.length,
+      visible: Math.max(sectionTotal, cards.length, sourceRows.length),
       needCall: sourceRows.filter((row) => row.phone_status === 'need-call' && hasPhone(row)).length,
       willVote: sourceRows.filter((row) => row.vote_status === 'will-vote').length,
       assigned: sourceRows.filter((row) => clean(row.vote_assigned_by)).length,
@@ -115,7 +116,7 @@
     if (m.search) return `${m.visible} matching voters`;
     if (m.house && m.house !== 'All houses') return `${m.visible} voters in ${m.house}`;
     if (m.filter && m.filter !== 'All') return `${m.visible} ${m.filter} voters`;
-    return `${m.visible} voters visible`;
+    return `${m.visible} voters`;
   }
 
   function statusText(m) {
@@ -172,7 +173,8 @@
 
   function readSectionTotal(fallback) {
     const totalText = document.getElementById('sectionTotal')?.textContent || '';
-    return Number((totalText.match(/\d+/) || [fallback])[0]) || fallback;
+    const match = totalText.match(/[\d,]+/);
+    return match ? Number(match[0].replace(/,/g, '')) || fallback : fallback;
   }
 
   function hasPhone(row) {
