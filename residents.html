@@ -7,11 +7,11 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Residents | Villimale Campaign</title>
-  <link rel="stylesheet" href="css/residents-simple.css?v=20260709-assign-summary-1">
+  <link rel="stylesheet" href="css/residents-simple.css?v=20260709-section-cards-1">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="index.html?v=20260709-assign-summary-1"><span class="mark"></span><span>Villimale Campaign</span></a>
+    <a class="brand" href="index.html?v=20260709-section-cards-1"><span class="mark"></span><span>Villimale Campaign</span></a>
     <nav id="nav" class="nav"></nav>
   </header>
   <main class="page">
@@ -23,12 +23,8 @@
       </div>
       <button id="refreshBtn" class="btn" type="button" onclick="location.reload()">Refresh</button>
     </section>
-    <section class="stats">
-      <article class="stat"><span>Total Residents</span><strong id="total">0</strong></article>
-      <article class="stat green"><span>Will Vote</span><strong id="will">0</strong></article>
-      <article class="stat red"><span>Not Vote</span><strong id="notvote">0</strong></article>
-      <article class="stat orange"><span>Pending</span><strong id="pending">0</strong></article>
-      <article class="stat red"><span>Need Call / Visit</span><strong id="need">0</strong></article>
+    <section class="stats" id="sectionResultCards">
+      <article class="stat"><span>Loading</span><strong>...</strong></article>
     </section>
     <section class="panel">
       <div class="search">
@@ -44,9 +40,9 @@
     </section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260709-assign-summary-1"></script>
+  <script src="js/config.js?v=20260709-section-cards-1"></script>
   <script src="js/residents-loader.js?v=20260709-statsfix-3"></script>
   <script src="js/residents-display-fix.js?v=20260709-assigned-visible-2"></script>
-  <script src="js/assignment-summary-panel.js?v=20260709-assign-summary-1"></script>
+  <script src="js/section-result-cards.js?v=20260709-section-cards-1"></script>
 </body>
 </html>
