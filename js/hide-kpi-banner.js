@@ -1,6 +1,19 @@
 (function () {
   if (document.body.dataset.view !== 'management') return;
 
+  function assignedUrl() {
+    const params = new URLSearchParams(location.search);
+    const party = params.get('party') || 'PNC';
+    return 'assign.html?party=' + encodeURIComponent(party);
+  }
+
+  function redirectAssignedFilter() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('filter') === 'assigned') {
+      location.replace(assignedUrl());
+    }
+  }
+
   function hideKpiBanner() {
     const summary = document.getElementById('summary');
     if (!summary) return;
@@ -12,15 +25,37 @@
     }
   }
 
+  function moveAssignedClicks() {
+    document.querySelectorAll('a[href*="filter=assigned"]').forEach((link) => {
+      link.href = assignedUrl();
+    });
+
+    document.querySelectorAll('[data-section="assigned"],[data-filter="assigned"],[data-open-assigned],#assignedResultsBtn').forEach((el) => {
+      el.onclick = function (event) {
+        event.preventDefault();
+        location.href = assignedUrl();
+      };
+    });
+  }
+
   function hideAssignmentControls() {
     const shareButton = document.getElementById('shareViewBtn');
     const assignedButton = document.getElementById('assignedResultsBtn');
 
-    [shareButton, assignedButton].forEach((button) => {
-      if (!button) return;
-      button.setAttribute('aria-hidden', 'true');
-      button.style.setProperty('display', 'none', 'important');
-    });
+    if (shareButton) {
+      shareButton.setAttribute('aria-hidden', 'true');
+      shareButton.style.setProperty('display', 'none', 'important');
+    }
+
+    if (assignedButton) {
+      assignedButton.setAttribute('aria-hidden', 'false');
+      assignedButton.style.removeProperty('display');
+      assignedButton.textContent = 'Open Assign Page';
+      assignedButton.onclick = function (event) {
+        event.preventDefault();
+        location.href = assignedUrl();
+      };
+    }
 
     const grid = document.querySelector('[aria-label="Search voters"] .form.search-grid');
     if (grid) {
@@ -30,7 +65,9 @@
   }
 
   function run() {
+    redirectAssignedFilter();
     hideKpiBanner();
+    moveAssignedClicks();
     hideAssignmentControls();
   }
 
