@@ -6,13 +6,14 @@
   <title>Villimale Campaign Manager</title>
   <link rel="stylesheet" href="css/style.css?v=20260705-2">
   <link rel="stylesheet" href="css/shared-header.css?v=20260708-1">
+  <style>#campaignGlobalStatus,.app-header-stats{display:none!important}</style>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
     <nav class="toolbar">
-      <a class="btn light" href="voters.html">Voters</a>
-      <a class="btn light" href="ai-dashboard.html?party=ALL">AI Dashboard</a>
+      <a class="btn light" href="voters.html?party=PNC">Voters</a>
+      <a class="btn light" href="ai-dashboard.html?party=PNC">AI Dashboard</a>
       <button id="logoutBtn" class="btn dark" type="button">Logout</button>
     </nav>
   </header>
@@ -24,31 +25,31 @@
       <p>Select your party workspace.</p>
     </section>
 
-    <section class="party-grid" aria-label="AI dashboard workspaces">
-      <a class="party-card mdp" href="ai-dashboard.html?party=MDP">
+    <section class="party-grid" aria-label="Campaign workspaces">
+      <a class="party-card mdp" href="voters.html?party=MDP">
         <span class="party-label">MDP</span>
-        <strong>MDP AI Dashboard</strong>
-        <small>Smart Insights, assignment status, follow-up, and house information for MDP campaign work.</small>
+        <strong>MDP Workspace</strong>
+        <small>Open MDP voters, assignment, call center, vote, D2D, transport, and AI dashboard.</small>
       </a>
-      <a class="party-card pnc" href="ai-dashboard.html?party=PNC">
+      <a class="party-card pnc" href="voters.html?party=PNC">
         <span class="party-label">PNC</span>
-        <strong>PNC AI Dashboard</strong>
-        <small>Smart Insights, assignment status, follow-up, and house information for PNC only.</small>
+        <strong>PNC Workspace</strong>
+        <small>Open PNC voters, assignment, call center, vote, D2D, transport, and AI dashboard.</small>
       </a>
-      <a class="party-card admin" href="ai-dashboard.html?party=ALL">
+      <a class="party-card admin" href="voters.html?party=ALL">
         <span class="party-label">Admin</span>
-        <strong>Admin AI Dashboard</strong>
-        <small>All-scope information for admins across MDP, PNC, no party, and total campaign status.</small>
+        <strong>All Voters Workspace</strong>
+        <small>Open all-scope voters, assignment, call center, vote, D2D, transport, and AI dashboard.</small>
       </a>
     </section>
 
     <section class="party-grid" aria-label="Quick links">
-      <a class="party-card admin" href="voters.html">
+      <a class="party-card admin" href="voters.html?party=PNC">
         <span class="party-label">Work</span>
         <strong>Voters Management</strong>
         <small>Main workspace for search, filters, assignments, calls, and voter updates.</small>
       </a>
-      <a class="party-card pnc" href="zero-day.html">
+      <a class="party-card pnc" href="zero-day.html?party=PNC">
         <span class="party-label">Day</span>
         <strong>Zero Day</strong>
         <small>Election-day tracking for will-vote and guaranteed voters.</small>
