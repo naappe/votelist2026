@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', async function () {
   const params = new URLSearchParams(location.search);
   const party = (params.get('party') || 'PNC').toUpperCase();
+  const section = (params.get('section') || 'voters').toLowerCase() === 'residents' ? 'voters' : (params.get('section') || 'voters').toLowerCase();
   const cfg = window.APP_CONFIG || {};
-  const supabaseUrl = cfg.supabaseUrl || 'https://espezmdpkoixnfchomqb.supabase.co';
-  const supabaseKey = cfg.supabaseKey || 'sb_publishable_xP8z74zcMuCkj6xlu1bJ3w_Kudqbcu1';
-  const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
   const status = document.getElementById('status');
   const list = document.getElementById('list');
   const total = document.getElementById('total');
@@ -12,7 +11,21 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (partyName) partyName.textContent = party === 'ALL' ? 'All' : party;
   const nav = document.getElementById('nav');
   if (nav) {
-    nav.innerHTML = '<a class="btn active" href="residents.html?party=' + party + '&section=residents&v=clean-nav1">Residents</a><a class="btn" href="residents.html?party=' + party + '&section=assign&v=clean-nav1">Assign</a><a class="btn" href="residents.html?party=' + party + '&section=calls&v=clean-nav1">Calls</a><a class="btn" href="residents.html?party=' + party + '&section=votes&v=clean-nav1">Votes</a><a class="btn" href="residents.html?party=' + party + '&section=visits&v=clean-nav1">Visits</a><a class="btn" href="residents.html?party=' + party + '&section=transport&v=clean-nav1">Transport</a><a class="btn" href="residents.html?party=' + party + '&section=insights&v=clean-nav1">Insights</a>';
+    const links = [
+      ['voters', 'Residents'],
+      ['assign', 'Assign'],
+      ['calls', 'Calls'],
+      ['votes', 'Votes'],
+      ['visits', 'Visits'],
+      ['transport', 'Transport'],
+      ['insights', 'Insights']
+    ];
+    nav.innerHTML = links.map(function (item) {
+      const key = item[0];
+      const label = item[1];
+      const href = 'residents.html?party=' + encodeURIComponent(party) + '&section=' + encodeURIComponent(key) + '&v=nav1';
+      return '<a class="btn ' + (key === section ? 'active' : '') + '" href="' + href + '">' + label + '</a>';
+    }).join('') + '<a class="btn" href="index.html?v=nav1">Logout</a>';
   }
   if (status) status.textContent = 'Loading residents...';
   let query = client.from('campaign').select('id,name,national_id,house,phone,party,election_box,photo_url,vote_status,phone_status,reach_status').limit(1000);
