@@ -4,76 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Residents | Villimale Campaign</title>
-  <link rel="stylesheet" href="css/style.css?v=20260705-13">
-  <link rel="stylesheet" href="css/dashboard-cleanup.css?v=20260707-1">
-  <link rel="stylesheet" href="css/mobile-modal-fixes.css?v=20260705-1">
-  <link rel="stylesheet" href="css/voter-hotfix.css?v=20260705-2">
-  <link rel="stylesheet" href="css/pro-ui.css?v=20260706-11">
-  <link rel="stylesheet" href="css/voter-list-cards.css?v=20260706-6">
-  <link rel="stylesheet" href="css/voter-popup-card.css?v=20260706-1">
-  <link rel="stylesheet" href="css/voters-stats.css?v=20260706-3">
-  <link rel="stylesheet" href="css/shared-header.css?v=20260708-11">
-  <style>#voterInfoStatus,.voter-info-status,#summary,#sections{display:none!important}</style>
+  <script>
+    const p=new URLSearchParams(location.search).get('party')||'PNC';
+    location.replace('residents.html?party='+encodeURIComponent(p)+'&v=simple1');
+  </script>
 </head>
-<body data-page="dashboard" data-view="management">
-  <header class="topbar">
-    <a class="brand" href="index.html" aria-label="Villimale Campaign home"><span class="brand-mark"></span><span>Villimale Campaign</span></a>
-    <nav class="toolbar">
-      <a id="votersLink" class="btn light active" href="voters.html">Residents</a>
-      <a id="assignLink" class="btn light" href="assign.html">Assign</a>
-      <a id="callLink" class="btn light" href="call.html">Calls</a>
-      <a id="voteLink" class="btn light" href="vote.html">Votes</a>
-      <a id="d2dLink" class="btn light" href="d2d.html">Visits</a>
-      <a id="transportLink" class="btn light" href="transport.html">Transport</a>
-      <a id="aiDashboardLink" class="btn light" href="ai-dashboard.html">Insights</a>
-      <button id="logoutBtn" class="btn dark" type="button">Logout</button>
-    </nav>
-  </header>
-
-  <main class="page">
-    <section class="hero">
-      <div><p class="eyebrow">Residents</p><h1 id="dashboardTitle">Residents</h1><p id="dashboardSubtitle"></p></div>
-      <button id="refreshBtn" class="btn light" type="button">Refresh</button>
-    </section>
-    <section id="summary" class="stats-grid" aria-label="Campaign statistics" hidden></section>
-    <section id="sections" class="tabs" aria-label="Voter filters" hidden></section>
-    <section class="panel" aria-label="Search voters"><div class="form search-grid"><label>Search residents<input id="searchInput" type="search" placeholder="Name, ID, phone, house, party"></label><label>House<select id="houseSelect"><option value="">All houses</option></select></label><button id="clearSearchBtn" class="btn light" type="button">Clear Search</button></div></section>
-    <div id="syncNotice" class="sync-notice" role="status" hidden></div>
-    <section class="insight-grid" aria-label="Campaign insights"><article class="panel"><div class="panel-head"><div><h2>Target To Win</h2></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article><article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2></div></div><div id="topHouses" class="house-list"></div></article></section>
-    <section class="panel voter-panel"><div class="panel-head"><div><h2 id="sectionTitle">Residents</h2><p id="sectionFilter"></p></div><span id="sectionTotal" class="status-pill">0 residents</span></div><div id="statusMessage" class="status-message" role="status"></div><div id="sectionStats" hidden></div><div id="voterList" class="voter-list"></div></section>
-    <div hidden><div id="logicTitle"></div><div id="logicText"></div><div id="logicList"></div></div>
-  </main>
-
-  <div id="voterModal" class="modal" hidden><button class="modal-backdrop" type="button" data-close-modal aria-label="Close"></button><article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><header class="modal-head"><div class="modal-person"><div class="voter-photo modal-photo"><img id="modalPhoto" alt=""></div><div><p class="eyebrow" id="modalSection">Section</p><h2 id="modalTitle">Resident</h2><p id="modalMeta" class="muted"></p></div></div><button class="btn light" type="button" data-close-modal>Close</button></header><form id="voterForm" class="form"></form></article></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260708-4"></script>
-  <script src="js/shared-header.js?v=20260708-11"></script>
-  <script>const partyParam=new URLSearchParams(location.search).get('party')||'PNC';['voters','assign','call','vote','d2d','transport','ai-dashboard'].forEach(function(p){var id=p==='ai-dashboard'?'aiDashboardLink':p+'Link';var a=document.getElementById(id);if(a)a.href=p+'.html?party='+encodeURIComponent(partyParam)+'&v=11';});</script>
-  <script src="js/logout-return.js?v=20260707-1"></script>
-  <script src="js/read-view-public.js?v=20260706-1"></script>
-  <script src="js/no-jump-fixes.js?v=20260706-4"></script>
-  <script src="js/vote-save-override.js?v=20260706-1"></script>
-  <script src="js/voter-url-router.js?v=20260707-1"></script>
-  <script src="js/app.js?v=20260708-11"></script>
-  <script src="js/ai-brain-actions.js?v=20260707-1"></script>
-  <script src="js/read-only-view.js?v=20260706-3"></script>
-  <script src="js/campaign-arrangement.js?v=20260705-4"></script>
-  <script src="js/dhafthar-force-filter.js?v=20260706-disabled"></script>
-  <script src="js/dashboard-cleanup.js?v=20260706-27"></script>
-  <script src="js/house-sync.js?v=20260706-3"></script>
-  <script src="js/house-click-filter.js?v=20260706-disabled"></script>
-  <script src="js/pro-ui.js?v=20260706-5"></script>
-  <script src="js/modal-phone-call.js?v=20260706-1"></script>
-  <script src="js/voter-card-statuses.js?v=20260706-16"></script>
-  <script src="js/voter-final-cleanup.js?v=20260706-disabled"></script>
-  <script src="js/d2d-count-fix.js?v=20260705-1"></script>
-  <script src="js/save-state-fix.js?v=20260706-6"></script>
-  <script src="js/house-filter-lock.js?v=20260706-1"></script>
-  <script src="js/house-inline-breaks.js?v=20260707-2"></script>
-  <script src="js/ai-learning-system.js?v=20260707-1"></script>
-  <script src="js/voter-info-nav-fix.js?v=20260708-11"></script>
-  <script src="js/ai-chat.js?v=20260708-1"></script>
-  <script src="js/hide-kpi-banner.js?v=20260708-11"></script>
+<body>
+  <p>Opening Residents...</p>
+  <a id="link" href="residents.html?party=PNC&v=simple1">Open Residents</a>
+  <script>
+    document.getElementById('link').href='residents.html?party='+encodeURIComponent(new URLSearchParams(location.search).get('party')||'PNC')+'&v=simple1';
+  </script>
 </body>
 </html>
