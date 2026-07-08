@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', async function () {
   const params = new URLSearchParams(location.search);
   const party = (params.get('party') || 'PNC').toUpperCase();
   const cfg = window.APP_CONFIG || {};
-  const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+  const supabaseUrl = cfg.supabaseUrl || 'https://espezmdpkoixnfchomqb.supabase.co';
+  const supabaseKey = cfg.supabaseKey || 'sb_publishable_xP8z74zcMuCkj6xlu1bJ3w_Kudqbcu1';
+  const client = window.supabase.createClient(supabaseUrl, supabaseKey);
   const status = document.getElementById('status');
   const list = document.getElementById('list');
   const total = document.getElementById('total');
@@ -10,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (partyName) partyName.textContent = party === 'ALL' ? 'All' : party;
   const nav = document.getElementById('nav');
   if (nav) {
-    nav.innerHTML = '<a class="btn active" href="residents.html?party=' + party + '&v=loader1">Residents</a><a class="btn" href="assign.html?party=' + party + '&v=loader1">Assign</a><a class="btn" href="call.html?party=' + party + '&v=loader1">Calls</a><a class="btn" href="vote.html?party=' + party + '&v=loader1">Votes</a><a class="btn" href="d2d.html?party=' + party + '&v=loader1">Visits</a><a class="btn" href="transport.html?party=' + party + '&v=loader1">Transport</a><a class="btn" href="ai-dashboard.html?party=' + party + '&v=loader1">Insights</a>';
+    nav.innerHTML = '<a class="btn active" href="residents.html?party=' + party + '&v=loader2">Residents</a><a class="btn" href="assign.html?party=' + party + '&v=loader2">Assign</a><a class="btn" href="call.html?party=' + party + '&v=loader2">Calls</a><a class="btn" href="vote.html?party=' + party + '&v=loader2">Votes</a><a class="btn" href="d2d.html?party=' + party + '&v=loader2">Visits</a><a class="btn" href="transport.html?party=' + party + '&v=loader2">Transport</a><a class="btn" href="ai-dashboard.html?party=' + party + '&v=loader2">Insights</a>';
   }
   if (status) status.textContent = 'Loading residents...';
   let query = client.from('campaign').select('id,name,national_id,house,phone,party,election_box,photo_url,vote_status,phone_status,reach_status').limit(1000);
