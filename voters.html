@@ -3,111 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Voters Management | Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="css/style.css?v=20260705-13">
-  <link rel="stylesheet" href="css/dashboard-cleanup.css?v=20260707-1">
-  <link rel="stylesheet" href="css/mobile-modal-fixes.css?v=20260705-1">
-  <link rel="stylesheet" href="css/voter-hotfix.css?v=20260705-2">
-  <link rel="stylesheet" href="css/pro-ui.css?v=20260706-11">
-  <link rel="stylesheet" href="css/voter-list-cards.css?v=20260706-6">
-  <link rel="stylesheet" href="css/voter-popup-card.css?v=20260706-1">
-  <link rel="stylesheet" href="css/voters-stats.css?v=20260706-3">
-</head>
-<body data-page="dashboard" data-view="management">
-  <header class="topbar">
-    <a class="brand" href="index.html" aria-label="Villimale Campaign Manager home"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
-    <nav class="toolbar">
-      <a id="votersLink" class="btn light active" href="voters.html">Voters</a>
-      <a id="aiDashboardLink" class="btn light" href="ai-dashboard.html">AI Dashboard</a>
-      <button id="logoutBtn" class="btn dark" type="button">Logout</button>
-    </nav>
-  </header>
-
-  <main class="page">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">Voter workspace</p>
-        <h1 id="dashboardTitle">Voters Management</h1>
-        <p id="dashboardSubtitle">Search, filter, assign, and update campaign status.</p>
-      </div>
-      <button id="refreshBtn" class="btn light" type="button">Refresh</button>
-    </section>
-
-    <section id="summary" class="stats-grid" aria-label="Campaign statistics" hidden style="display:none!important"></section>
-    <section id="sections" class="tabs" aria-label="Voter filters" hidden></section>
-
-    <section class="panel" aria-label="Search voters">
-      <div class="form search-grid">
-        <label>Search voters
-          <input id="searchInput" type="search" placeholder="Name, ID, phone, house, party">
-        </label>
-        <label>House
-          <select id="houseSelect"><option value="">All houses</option></select>
-        </label>
-        <button id="clearSearchBtn" class="btn light" type="button">Clear Search</button>
-        <button id="shareViewBtn" class="btn light" type="button">Create Self-Assign Link</button>
-      </div>
-    </section>
-    <div id="syncNotice" class="sync-notice" role="status" hidden></div>
-
-    <section class="insight-grid" aria-label="Campaign insights">
-      <article class="panel"><div class="panel-head"><div><h2>Target To Win</h2></div></div><div id="targetStats" class="stats-grid"></div><div class="progress"><span id="targetProgressBar"></span></div><p id="targetPrediction" class="muted">Loading prediction...</p></article>
-      <article class="panel"><div class="panel-head"><div><h2>Top 10 Houses</h2></div></div><div id="topHouses" class="house-list"></div></article>
-    </section>
-
-    <section class="panel voter-panel">
-      <div class="panel-head"><div><h2 id="sectionTitle">All</h2><p id="sectionFilter">Search and manage voters below.</p></div><span id="sectionTotal" class="status-pill">0 voters</span></div>
-      <div id="statusMessage" class="status-message" role="status"></div>
-      <div id="sectionStats" hidden></div>
-      <div id="voterList" class="voter-list"></div>
-    </section>
-
-    <div hidden><div id="logicTitle"></div><div id="logicText"></div><div id="logicList"></div></div>
-  </main>
-
-  <div id="voterModal" class="modal" hidden>
-    <button class="modal-backdrop" type="button" data-close-modal aria-label="Close"></button>
-    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <header class="modal-head"><div class="modal-person"><div class="voter-photo modal-photo"><img id="modalPhoto" alt=""></div><div><p class="eyebrow" id="modalSection">Section</p><h2 id="modalTitle">Voter</h2><p id="modalMeta" class="muted"></p></div></div><button class="btn light" type="button" data-close-modal>Close</button></header>
-      <form id="voterForm" class="form"></form>
-    </article>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260707-1"></script>
+  <title>Opening Residents | Villimale Campaign Manager</title>
+  <meta http-equiv="refresh" content="0; url=residents.html?party=PNC&section=voters">
   <script>
-    const partyParam = new URLSearchParams(location.search).get('party');
-    const votersLink = document.getElementById('votersLink');
-    const aiDashboardLink = document.getElementById('aiDashboardLink');
-    if (partyParam && votersLink) votersLink.href = 'voters.html?party=' + encodeURIComponent(partyParam);
-    if (aiDashboardLink) aiDashboardLink.href = 'ai-dashboard.html' + (partyParam ? '?party=' + encodeURIComponent(partyParam) : '?party=ALL');
+    const params = new URLSearchParams(location.search);
+    const party = params.get('party') || 'PNC';
+    const section = params.get('section') || 'voters';
+    const target = new URL('residents.html', location.href);
+    target.searchParams.set('party', party);
+    target.searchParams.set('section', section);
+    location.replace(target.toString());
   </script>
-  <script src="js/logout-return.js?v=20260707-1"></script>
-  <script src="js/read-view-public.js?v=20260706-1"></script>
-  <script src="js/no-jump-fixes.js?v=20260706-4"></script>
-  <script src="js/vote-save-override.js?v=20260706-1"></script>
-  <script src="js/modal-assignment-panel.js?v=20260706-1"></script>
-  <script src="js/voter-url-router.js?v=20260707-1"></script>
-  <script src="js/app.js?v=20260706-16"></script>
-  <script src="js/read-only-view.js?v=20260706-3"></script>
-  <script src="js/assign-share.js?v=20260707-2"></script>
-  <script src="js/assign-results.js?v=20260707-3"></script>
-  <script src="js/assigned-person-filter.js?v=20260707-2"></script>
-  <script src="js/campaign-arrangement.js?v=20260705-4"></script>
-  <script src="js/dhafthar-force-filter.js?v=20260706-disabled"></script>
-  <script src="js/dashboard-cleanup.js?v=20260706-27"></script>
-  <script src="js/house-sync.js?v=20260706-3"></script>
-  <script src="js/house-click-filter.js?v=20260706-disabled"></script>
-  <script src="js/pro-ui.js?v=20260706-5"></script>
-  <script src="js/modal-phone-call.js?v=20260706-1"></script>
-  <script src="js/voter-card-statuses.js?v=20260706-16"></script>
-  <script src="js/voter-final-cleanup.js?v=20260706-disabled"></script>
-  <script src="js/d2d-count-fix.js?v=20260705-1"></script>
-  <script src="js/save-state-fix.js?v=20260706-6"></script>
-  <script src="js/house-filter-lock.js?v=20260706-1"></script>
-  <script src="js/house-inline-breaks.js?v=20260707-2"></script>
-  <script src="js/voter-info-status.js?v=20260708-native-filter-1"></script>
-  <script src="js/voter-info-nav-fix.js?v=20260708-working-1"></script>
-  <script src="js/hide-kpi-banner.js?v=20260707-2"></script>
+</head>
+<body>
+  <p>Opening Residents...</p>
+  <a href="residents.html?party=PNC&section=voters">Open Residents</a>
 </body>
 </html>
