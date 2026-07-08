@@ -3,38 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login | Villimale Campaign</title>
-  <link rel="stylesheet" href="css/style.css?v=20260705-13">
+  <title>Opening Voters | Villimale Campaign Manager</title>
+  <meta http-equiv="refresh" content="0; url=voters.html?party=PNC">
+  <script>
+    const params = new URLSearchParams(location.search);
+    const party = params.get('party') || 'PNC';
+    location.replace('voters.html?party=' + encodeURIComponent(party));
+  </script>
 </head>
-<body data-page="login">
-  <header class="topbar">
-    <a class="brand" href="index.html?v=login2" aria-label="Villimale Campaign home"><span class="brand-mark"></span><span>Villimale Campaign</span></a>
-  </header>
-
-  <main class="login-wrap">
-    <section class="login-card">
-      <p class="eyebrow">Secure access</p>
-      <h1>Campaign Login</h1>
-      <p class="muted">Use admin, pnc2026, or mdp2026 with the Supabase password.</p>
-
-      <form id="loginForm" class="form">
-        <label>
-          Username
-          <input name="username" autocomplete="username" placeholder="admin / pnc2026 / mdp2026" required>
-        </label>
-        <label>
-          Password
-          <input name="password" type="password" autocomplete="current-password" required>
-        </label>
-        <div id="loginMessage" class="message" role="alert"></div>
-        <button class="btn full" type="submit">Login</button>
-      </form>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260708-4"></script>
-  <script src="js/login-users-override.js?v=20260708-1"></script>
-  <script src="js/app.js?v=20260708-login1"></script>
+<body>
+  <p>Opening Voters...</p>
+  <a href="voters.html?party=PNC">Open Voters</a>
 </body>
 </html>
