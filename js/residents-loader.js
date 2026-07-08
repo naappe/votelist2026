@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (partyName) partyName.textContent = party === 'ALL' ? 'All' : party;
   const nav = document.getElementById('nav');
   if (nav) {
-    nav.innerHTML = '<a class="btn active" href="residents.html?party=' + party + '&v=loader2">Residents</a><a class="btn" href="assign.html?party=' + party + '&v=loader2">Assign</a><a class="btn" href="call.html?party=' + party + '&v=loader2">Calls</a><a class="btn" href="vote.html?party=' + party + '&v=loader2">Votes</a><a class="btn" href="d2d.html?party=' + party + '&v=loader2">Visits</a><a class="btn" href="transport.html?party=' + party + '&v=loader2">Transport</a><a class="btn" href="ai-dashboard.html?party=' + party + '&v=loader2">Insights</a>';
+    nav.innerHTML = '<a class="btn active" href="residents.html?party=' + party + '&section=residents&v=clean-nav1">Residents</a><a class="btn" href="residents.html?party=' + party + '&section=assign&v=clean-nav1">Assign</a><a class="btn" href="residents.html?party=' + party + '&section=calls&v=clean-nav1">Calls</a><a class="btn" href="residents.html?party=' + party + '&section=votes&v=clean-nav1">Votes</a><a class="btn" href="residents.html?party=' + party + '&section=visits&v=clean-nav1">Visits</a><a class="btn" href="residents.html?party=' + party + '&section=transport&v=clean-nav1">Transport</a><a class="btn" href="residents.html?party=' + party + '&section=insights&v=clean-nav1">Insights</a>';
   }
   if (status) status.textContent = 'Loading residents...';
   let query = client.from('campaign').select('id,name,national_id,house,phone,party,election_box,photo_url,vote_status,phone_status,reach_status').limit(1000);
