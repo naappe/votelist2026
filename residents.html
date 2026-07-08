@@ -3,22 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Residents | Villimale Campaign</title>
-  <link rel="stylesheet" href="css/residents-simple.css?v=simple1">
+  <title>Opening Voters | Villimale Campaign Manager</title>
+  <meta http-equiv="refresh" content="0; url=voters.html">
+  <script>
+    const params = new URLSearchParams(location.search);
+    const target = new URL('voters.html', location.href);
+    const party = params.get('party') || 'PNC';
+    target.searchParams.set('party', party);
+    location.replace(target.toString());
+  </script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html?v=loader1"><span class="mark"></span><span>Villimale Campaign</span></a>
-    <nav id="nav" class="nav"></nav>
-  </header>
-  <main class="page">
-    <section class="hero"><div><p class="eyebrow">Residents</p><h1><span id="partyName">PNC</span> Residents</h1><p>No login. Direct campaign workspace.</p></div><button id="refreshBtn" class="btn" type="button" onclick="location.reload()">Refresh</button></section>
-    <section class="stats"><article class="stat"><span>Total Residents</span><strong id="total">0</strong></article><article class="stat green"><span>Will Vote</span><strong id="will">0</strong></article><article class="stat red"><span>Not Vote</span><strong id="notvote">0</strong></article><article class="stat orange"><span>Reached Pending</span><strong id="pending">0</strong></article><article class="stat red"><span>Need Call / Visit</span><strong id="need">0</strong></article></section>
-    <section class="panel"><div class="search"><label>Search residents<input id="searchInput" type="search" placeholder="Name, ID, phone, house, party"></label><label>House<select id="houseSelect"><option value="">All houses</option></select></label><button id="clearBtn" class="btn" type="button">Clear Search</button></div><div id="status" class="status"></div></section>
-    <section class="panel"><div class="panel-head"><h2>Residents</h2><span id="sectionTotal" class="pill">0 residents</span></div><div id="list" class="list"></div></section>
-  </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260708-4"></script>
-  <script src="js/residents-loader.js?v=loader1"></script>
+  <p>Opening Voters...</p>
+  <a href="voters.html?party=PNC">Open Voters</a>
 </body>
 </html>
