@@ -3,67 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Villimale Campaign Manager</title>
-  <link rel="stylesheet" href="css/style.css?v=20260705-2">
-  <link rel="stylesheet" href="css/shared-header.css?v=20260708-1">
-  <style>#campaignGlobalStatus,.app-header-stats{display:none!important}</style>
+  <title>Villimale Campaign</title>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
-    <nav class="toolbar">
-      <a class="btn light" href="voters.html?party=PNC">Voters</a>
-      <a class="btn light" href="ai-dashboard.html?party=PNC">AI Dashboard</a>
-      <button id="logoutBtn" class="btn dark" type="button">Logout</button>
-    </nav>
-  </header>
-
-  <main class="home-wrap">
-    <section class="home-hero">
-      <p class="eyebrow">Villimale Campaign Manager</p>
-      <h1>Campaign Dashboard</h1>
-      <p>Select your party workspace.</p>
-    </section>
-
-    <section class="party-grid" aria-label="Campaign workspaces">
-      <a class="party-card mdp" href="voters.html?party=MDP">
-        <span class="party-label">MDP</span>
-        <strong>MDP Workspace</strong>
-        <small>Open MDP voters, assignment, call center, vote, D2D, transport, and AI dashboard.</small>
-      </a>
-      <a class="party-card pnc" href="voters.html?party=PNC">
-        <span class="party-label">PNC</span>
-        <strong>PNC Workspace</strong>
-        <small>Open PNC voters, assignment, call center, vote, D2D, transport, and AI dashboard.</small>
-      </a>
-      <a class="party-card admin" href="voters.html?party=ALL">
-        <span class="party-label">Admin</span>
-        <strong>All Voters Workspace</strong>
-        <small>Open all-scope voters, assignment, call center, vote, D2D, transport, and AI dashboard.</small>
-      </a>
-    </section>
-
-    <section class="party-grid" aria-label="Quick links">
-      <a class="party-card admin" href="voters.html?party=PNC">
-        <span class="party-label">Work</span>
-        <strong>Voters Management</strong>
-        <small>Main workspace for search, filters, assignments, calls, and voter updates.</small>
-      </a>
-      <a class="party-card pnc" href="zero-day.html?party=PNC">
-        <span class="party-label">Day</span>
-        <strong>Zero Day</strong>
-        <small>Election-day tracking for will-vote and guaranteed voters.</small>
-      </a>
-    </section>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260708-4"></script>
-  <script src="js/shared-header.js?v=20260708-1"></script>
-  <script>
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      location.href = 'login.html';
-    });
-  </script>
+  <script src="js/index-home-fix.js?v=20260708-1"></script>
 </body>
 </html>
