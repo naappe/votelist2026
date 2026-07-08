@@ -1,10 +1,12 @@
 # Votelist 2026
 
-Static GitHub Pages voter management app for Villimale campaign work. The app uses plain HTML, CSS, JavaScript, Supabase, and GitHub Pages.
+Static GitHub Pages voter management app for Villimale campaign work.
 
-## Stable Backup / Restore Point
+This README is the fast-read file for any AI/developer. It documents hosting files, Supabase database, RPC/functions, restore point, and active frontend scripts.
 
-A stable backup branch exists for quick restore:
+## 1. Stable Backup / Restore Point
+
+Stable backup branch:
 
 ```text
 backup/stable-20260708-voters-fixed
@@ -16,207 +18,174 @@ Stable commit:
 91bf95d3fec0fd4282036acfafae078e65680442
 ```
 
-Full restore notes are in:
+Restore guide:
 
 ```text
 BACKUP-RESTORE.md
 ```
 
-If a future change breaks the website, compare current `main` against that backup branch or restore damaged files from that branch. Do not delete Supabase data while restoring website code.
+If the website is damaged, restore broken files from the backup branch. Do not delete or overwrite Supabase voter data during frontend restore.
 
-## Main Screens
+## 2. Hosting
 
-| File | Purpose | Status |
-|---|---|---|
-| `index.html` | Entry / party selection page | Active |
-| `login.html` | Login page | Active |
-| `voters.html` | Main voter management workspace | Active |
-| `ai-dashboard.html` | AI / information dashboard | Active |
-| `dashboard.html` | Old dashboard URL | Redirects to `voters.html` |
-| `shared.html` | No-login self-assign page for friends | Active |
-| `safe-share.html` | Read-only safe share list | Active |
-| `all-voters.html` | Old all-voters link | Redirects |
-| `zero-day.html` | Old Zero Day page | Redirects |
-
-## Current Structure
-
-```text
-votelist2026/
-├── index.html
-├── login.html
-├── dashboard.html
-├── voters.html
-├── ai-dashboard.html
-├── shared.html
-├── safe-share.html
-├── all-voters.html
-├── zero-day.html
-├── README.md
-├── BACKUP-RESTORE.md
-├── css/
-│   ├── style.css
-│   ├── dashboard-cleanup.css
-│   ├── mobile-modal-fixes.css
-│   ├── voter-hotfix.css
-│   ├── pro-ui.css
-│   ├── voter-list-cards.css
-│   ├── voter-popup-card.css
-│   └── voters-stats.css
-├── js/
-│   ├── app.js
-│   ├── config.js
-│   ├── read-view-public.js
-│   ├── read-only-view.js
-│   ├── voter-url-router.js
-│   ├── voter-info-status.js
-│   ├── voter-info-nav-fix.js
-│   ├── dashboard-result-nav-fix.js
-│   ├── ai-brain-live.js
-│   ├── ai-dashboard-nav.js
-│   ├── ai-chat.js
-│   ├── modal-assignment-panel.js
-│   ├── modal-phone-call.js
-│   ├── vote-save-override.js
-│   ├── assign-share.js
-│   ├── assign-results.js
-│   ├── assigned-person-filter.js
-│   ├── campaign-arrangement.js
-│   ├── dashboard-cleanup.js
-│   ├── d2d-count-fix.js
-│   ├── house-filter-lock.js
-│   ├── house-sync.js
-│   ├── no-jump-fixes.js
-│   ├── pro-ui.js
-│   ├── save-state-fix.js
-│   ├── voter-card-statuses.js
-│   ├── voter-hotfix.js
-│   ├── assign-filter.js
-│   ├── dhafthar-force-filter.js
-│   ├── house-click-filter.js
-│   ├── house-dropdown-group.js
-│   ├── voter-final-cleanup.js
-│   └── zero-day.js
-└── .github/
-    └── workflows/
-        └── pages.yml
-```
-
-## Active JavaScript Ownership
-
-| File | Responsibility |
+| Item | Value |
 |---|---|
-| `js/app.js` | Main logged-in app: auth, Supabase load, stats, filters, popup, and base rendering. |
-| `js/config.js` | Supabase URL/key, table name, login users, shared-page helpers. |
-| `js/voter-url-router.js` | Applies URL filters like `filter=assigned`, `filter=need-call`, and `house=...`. |
-| `js/voter-info-status.js` | Builds the Voters page Information Status panel. |
-| `js/voter-info-nav-fix.js` | Makes Voters page Information Status cards clickable and navigates to matching results. |
-| `js/dashboard-result-nav-fix.js` | Makes AI Dashboard metric cards/insights clickable and navigates to matching Voters results. |
-| `js/read-view-public.js` | Allows `view=read` links to pass the app auth check without username/password. |
-| `js/read-only-view.js` | Owns public gallery rendering: photo, name, ID, house, and mobile only. |
-| `js/modal-assignment-panel.js` | Adds the Assign this voter section to the main popup and saves manual assignee names without auto-stamping the admin email. |
-| `js/modal-phone-call.js` | Converts the phone number in the voter popup header into a `tel:` link so mobile users can tap to call. |
-| `js/vote-save-override.js` | Catches voter popup saves before `app.js` so the selected vote result wins; prevents Will Vote section from forcing `will-vote`, clears stale row cache, and preserves scroll. |
-| `js/assign-share.js` | Creates short public self-assign links and safe read-only share links. |
-| `shared.html` | Public self-assign page. Asks for assigner name only and shows assigned names under each voter. |
-| `safe-share.html` | Read-only safe voter list. Shows photo, name, ID, address, and phone. |
-| `js/assign-results.js` | Adds the admin-only `Assigned Results` button and renders assigned voters. |
-| `js/assigned-person-filter.js` | Adds the Assigned Person dropdown inside Assigned Results so admins can identify who took which voters. |
-| `js/ai-brain-live.js` | Live information status and AI metrics. |
-| `js/ai-chat.js` | Floating AI chat/help panel. |
-| `js/no-jump-fixes.js` | Prevents old save/reload behavior and keeps saves from jumping to the top. |
-| `js/dashboard-cleanup.js` | UI polish, share selection tools, modal guard, and top-house helpers. |
-| `js/d2d-count-fix.js` | Keeps D2D count labels aligned with D2D status. |
-| `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, Top Houses. |
-| `js/house-filter-lock.js` | Keeps selected house/search active while filtering or saving. |
-| `js/pro-ui.js` | Clean card actions, Assign focus, View Profile button, visible meta cleanup. |
-| `js/save-state-fix.js` | Preserves selected filter/search/house/scroll when lists rebuild. |
-| `js/voter-card-statuses.js` | Voter card status display cleanup. |
+| Host | GitHub Pages |
+| Repository | `naappe/votelist2026` |
+| Public URL | `https://naappe.github.io/votelist2026/` |
+| Deploy workflow | `.github/workflows/pages.yml` |
+| App type | Static HTML/CSS/JavaScript |
+| Backend | Supabase |
 
-## Important Current Behavior
+There is no Node/Python server in this repo. All pages run in the browser.
 
-| Feature | Rule |
+## 3. Main Website Files
+
+| File | Purpose |
 |---|---|
-| Primary workspace | Use `voters.html`. `dashboard.html` redirects there and keeps query parameters. |
-| Information Status cards | Clicking Visible, Need Call, Will Vote, or Assigned opens the matching result list. |
-| AI Dashboard cards | Clicking dashboard metrics/insights navigates to matching Voters results. |
-| Voter popup | Card clicks open the main app popup with photo/status blocks. `modal-assignment-panel.js` adds the assignment field inside that same popup. |
-| Tap to call | In the voter popup, tapping the phone number opens the mobile phone dialer through `tel:+960...`. |
-| Vote save | `vote-save-override.js` makes the selected vote result win, so saving Not Vote from Will Vote does not get forced back to Will Vote. |
-| Assigned Results | Admin can click `Assigned Results`, then filter by Assigned Person to identify who assigned each voter. |
-| System email cleanup | `naappe@gmail.com` is treated as a system/default value and should not appear as a real assignee. |
-| Share Read View | Opens with `view=read`, requires no username/password, and renders a public gallery. |
-| Safe share | `safe-share.html` is read-only and shows photo, name, ID, address, and phone. |
-| Self-assign link | `shared.html` asks only for assigner name. No mobile number is required. |
-| Multiple assigners | If two people assign the same voter, both names should show under that voter. |
-| Save from middle of list | Must not refresh the page or jump to the top. |
-| House filter | Must stay selected after saving or changing voter status. |
-| Dhafthar/Sinamale | House grouping belongs to `house-sync.js`. |
+| `index.html` | Entry / party selection |
+| `login.html` | Login page |
+| `voters.html` | Main voter management workspace |
+| `ai-dashboard.html` | AI information dashboard |
+| `dashboard.html` | Old dashboard route, redirects to voters |
+| `shared.html` | Public self-assign page |
+| `safe-share.html` | Public read-only safe voter list |
+| `all-voters.html` | Old route / redirect |
+| `zero-day.html` | Old route / redirect |
 
-## Supabase Access Notes
+## 4. Supabase Database
 
 | Item | Current Setup |
 |---|---|
-| Project | `espezmdpkoixnfchomqb` / `voters` |
-| Main table | `public.full_import` |
+| Supabase project ref | `espezmdpkoixnfchomqb` |
+| Project label | `voters` |
+| Main voter table | `public.full_import` |
 | Share table | `assignment_shares` |
 | RLS | Enabled |
-| Assignment result columns | `vote_assigned_by` and `vote_assigned_at` in `public.full_import`. |
-| Public visible fields | `photo_url`, `name`, `national_id`, `house`, `phone`. |
-| Hidden from safe public UI | Party, campaign statuses, support level, remarks, and admin save fields. |
-| Public assignment save | Allowed only via `public.claim_assignment(...)` and `public.unclaim_assignment(...)`. |
+| Frontend config | `js/config.js` |
 
-## AI Fast-Read Instructions
+### Main table: `public.full_import`
 
-For any future AI/helper:
+Important columns used by the frontend:
+
+| Column | Purpose |
+|---|---|
+| `id` | Internal row id used for updates and assignment |
+| `image_number` | Voter list image/reference number |
+| `photo_url` | Voter photo URL |
+| `name` | Voter name |
+| `national_id` | National ID |
+| `house` | House/address |
+| `lives_in` | Lives-in/location note |
+| `phone` | Phone number |
+| `party` | Party scope such as PNC / MDP |
+| `election_box` | Election box |
+| `phone_status` | need-call, called, no-phone, busy, wrong-number, etc. |
+| `reach_status` | reached / not-reached |
+| `vote_status` | pending / will-vote / no-vote / not-decided |
+| `transport_status` | need-transport / arranged / picked-up / not-needed |
+| `d2d_status` | follow-up / visited / not-home / not-visited |
+| `remarks` | Campaign notes |
+| `support_level` | guaranteed / normal etc. |
+| `vote_assigned_by` | Names of people assigned to the voter |
+| `vote_assigned_at` | Assignment timestamp |
+
+### Share table: `assignment_shares`
+
+Used for short share links.
+
+| Column | Purpose |
+|---|---|
+| `token` | Short token used in URL query `?s=...` |
+| `payload` | JSON payload containing selected voter details |
+
+### RPC/functions used by public assignment page
+
+| Function | Purpose |
+|---|---|
+| `claim_assignment(p_token, p_voter_row_id, p_assignee_name, p_assignee_phone)` | Adds an assignee to a voter from public self-assign page |
+| `unclaim_assignment(p_token, p_voter_row_id, p_assignee_phone)` | Removes the current user's assignment |
+
+Current frontend passes the assigner name and uses the name as the identity key. Public self-assign asks for **name only**, no mobile number.
+
+## 5. Public Privacy Rules
+
+| Page | Shows | Does not show |
+|---|---|---|
+| `safe-share.html` | photo, name, ID, address, phone | party, statuses, remarks, edit buttons |
+| `shared.html` | voter details + assigned names + tick box | admin controls, remarks, campaign edit fields |
+| `view=read` public mode | photo, name, ID, house, mobile | status, remarks, assignment edit fields |
+
+## 6. Active JavaScript Files
+
+| File | Responsibility |
+|---|---|
+| `js/config.js` | Supabase URL/key, table name, app config |
+| `js/app.js` | Main app: auth, load voters, render cards, filters, popup, status saves |
+| `js/voter-url-router.js` | Applies URL filters like `filter=assigned`, `filter=need-call`, `house=...` |
+| `js/voter-info-status.js` | Builds Voters page Information Status panel |
+| `js/voter-info-nav-fix.js` | Makes Voters page Information Status cards clickable |
+| `js/dashboard-result-nav-fix.js` | Makes AI Dashboard result cards clickable |
+| `js/assign-share.js` | Creates self-assign links and safe-share links |
+| `shared.html` | Owns public self-assign UI and save behavior |
+| `safe-share.html` | Owns safe read-only share UI |
+| `js/assign-results.js` | Admin Assigned Results view |
+| `js/assigned-person-filter.js` | Filter Assigned Results by person |
+| `js/modal-assignment-panel.js` | Manual assignment section inside voter popup |
+| `js/modal-phone-call.js` | Tap phone in modal to call |
+| `js/vote-save-override.js` | Ensures selected vote result saves correctly |
+| `js/ai-brain-live.js` | AI/information status metrics |
+| `js/ai-dashboard-nav.js` | Dashboard navigation helpers |
+| `js/ai-chat.js` | Floating AI help/chat |
+| `js/read-view-public.js` | Allows public read links to bypass login |
+| `js/read-only-view.js` | Public read-only gallery renderer |
+| `js/house-sync.js` | House dropdown, Dhafthar/Sinamale grouping, top houses |
+| `js/house-filter-lock.js` | Keeps house/search/filter after saves |
+| `js/save-state-fix.js` | Preserves scroll/filter state |
+| `js/pro-ui.js` | Card action/UI cleanup |
+| `js/dashboard-cleanup.js` | UI cleanup and share tools |
+
+## 7. Current Behavior
+
+| Feature | Rule |
+|---|---|
+| Primary workspace | `voters.html` |
+| Information Status cards | Clicking Visible, Need Call, Will Vote, Assigned opens matching results |
+| AI Dashboard cards | Clicking dashboard metrics opens matching voter result list |
+| Self-assign link | Created from selected voters; public user writes name only |
+| Multiple assigners | If two people assign same voter, both names should show under that voter |
+| Assigned Results | Admin can see who assigned voters and filter by assigned person |
+| Photos in safe share | Shows image only when `photo` exists in payload or `photo_url` is available |
+| Save behavior | Must not reload page or jump to top |
+| System/default assignee | `naappe@gmail.com` is not treated as a real assignee |
+
+## 8. Rules For Future AI/Developer Updates
 
 1. Read `BACKUP-RESTORE.md` first.
-2. Read this `README.md` second.
-3. Use the file ownership table above before editing.
-4. Do not create duplicate logic for the same feature unless the current owner file is broken and the change is documented.
-5. Do not delete Supabase rows while fixing frontend code.
-6. If a mistake happens, restore from `backup/stable-20260708-voters-fixed` or commit `91bf95d3fec0fd4282036acfafae078e65680442`.
+2. Read this README second.
+3. Do not create duplicate logic if an active script already owns the feature.
+4. Do not delete Supabase data while fixing website code.
+5. Do not expose private campaign fields in safe/public pages.
+6. If a change breaks the site, restore from `backup/stable-20260708-voters-fixed`.
+7. After changing hosting files, update this README if database, scripts, pages, or restore point changed.
 
-## Update Log
+## 9. Deployment Notes
+
+GitHub Pages deploys from:
+
+```text
+.github/workflows/pages.yml
+```
+
+After a commit, wait 1–2 minutes and refresh the website. Browser cache may need a hard refresh on mobile.
+
+## 10. Latest Important Updates
 
 | Date | Update |
 |---|---|
-| 2026-07-08 | Created stable backup branch `backup/stable-20260708-voters-fixed` at commit `91bf95d3fec0fd4282036acfafae078e65680442`. |
-| 2026-07-08 | Added `BACKUP-RESTORE.md` with restore instructions for future AI/developer use. |
-| 2026-07-08 | Added `js/voter-info-nav-fix.js` so Voters page Information Status cards navigate to matching results. |
-| 2026-07-08 | Added `js/dashboard-result-nav-fix.js` so AI Dashboard metrics navigate to matching result lists. |
-| 2026-07-08 | Updated `shared.html` so self-assign asks for name only and shows multiple assigner names under each voter. |
-| 2026-07-08 | Updated `safe-share.html` so read-only safe share can show photos when the payload contains photo URLs. |
-| 2026-07-06 | Added `js/modal-phone-call.js` so tapping the voter popup phone number opens the mobile dialer. |
-| 2026-07-06 | Added `js/vote-save-override.js` and loaded it before `app.js` so selected vote results save correctly from any section and stale row cache is cleared. |
-| 2026-07-06 | Corrected Hussain Zahir in Supabase from Will Vote/Pending display to `no-vote`, `reached`, and `follow-up`. |
-| 2026-07-06 | Added `js/modal-assignment-panel.js` so the main popup has an Assign this voter section without bringing back the old popup. |
-| 2026-07-06 | Made `voters.html` the primary workspace, removed the Dashboard nav button, and changed `dashboard.html` into a redirect to Voters. |
-| 2026-07-06 | Added `js/assigned-person-filter.js` so Assigned Results can be filtered by assigned person/team. |
-| 2026-07-06 | Added Supabase protection so `naappe@gmail.com` is cleaned from assignment results and not treated as a real assignee. |
-| 2026-07-06 | Added public self-assign flow with short links, name validation, tick/untick, and privacy rules. |
-| 2026-07-05 | Organized CSS into `css/` and JavaScript into `js/`. |
-
-## Rules For Future Updates
-
-| Feature Area | Put Logic Here |
-|---|---|
-| Main data, stats, filters, and popup status blocks | `js/app.js` |
-| Voters page Information Status panel | `js/voter-info-status.js` |
-| Voters page Information Status result navigation | `js/voter-info-nav-fix.js` |
-| AI Dashboard result navigation | `js/dashboard-result-nav-fix.js` |
-| Popup assignment field/manual assignee save | `js/modal-assignment-panel.js` |
-| Popup tap-to-call phone link | `js/modal-phone-call.js` |
-| Correct vote save override | `js/vote-save-override.js` |
-| Public read-only links | `js/read-view-public.js`, `js/read-only-view.js`, and `safe-share.html` |
-| Admin assignment results | `js/assign-results.js` and `js/assigned-person-filter.js` |
-| House dropdown, Dhafthar/Sinamale, Top Houses | `js/house-sync.js` |
-| House/filter/scroll after save | `js/house-filter-lock.js` and `js/save-state-fix.js` |
-| Self-assign links | `js/assign-share.js` and `shared.html` |
-| Voter card actions and visual cleanup | `js/pro-ui.js` and `css/voter-list-cards.css` |
-| Popup card layout | `css/voter-popup-card.css` |
-
-Do not add a second owner for save, filter, house grouping, voter-card rendering, public gallery rendering, assigned result rendering, vote-result saving, or popup phone links.
-
-## Deployment
-
-GitHub Pages deploys from `.github/workflows/pages.yml`. If GitHub shows `Deployment failed, try again later`, rerun the latest failed Pages job after one or two minutes.
+| 2026-07-08 | Created backup branch `backup/stable-20260708-voters-fixed`. |
+| 2026-07-08 | Added `BACKUP-RESTORE.md`. |
+| 2026-07-08 | Added Voters page result navigation. |
+| 2026-07-08 | Added AI Dashboard result navigation. |
+| 2026-07-08 | Updated `shared.html` so self-assign asks for name only and shows multiple assigner names. |
+| 2026-07-08 | Updated `safe-share.html` so safe share can show voter photos when available. |
