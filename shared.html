@@ -5,463 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Self Assign Voters</title>
   <style>
-    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--dark:#101828;--soft:#eef4ff;--green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fef2f2;--amber-bg:#fffbeb;--amber:#92400e;--shadow:0 16px 40px rgba(16,24,40,.08)}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .wrap{width:min(900px,calc(100% - 24px));margin:14px auto 44px}
-    .top,.tools,.card,.modal-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
-    .top{padding:16px;margin-bottom:12px}
-    h1{margin:0 0 6px;font-size:25px;letter-spacing:-.03em;line-height:1.08}
-    p{margin:0;color:var(--muted);line-height:1.4;font-weight:700}
-    .count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}
-    .tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 180px 140px auto auto auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}
-    label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
-    input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
-    button{border:0;border-radius:11px;min-height:40px;padding:9px 13px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}
-    button.light{background:#fff;color:#1f3b66;border:1px solid #d0d5dd}
-    button.danger{background:var(--red);color:#fff}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .grid{display:grid;gap:10px}
-    .card{display:grid;grid-template-columns:42px 104px 1fr;gap:12px;align-items:center;padding:12px;text-align:left}
-    .check{width:28px;height:28px;accent-color:var(--blue);justify-self:center}
-    .photo{width:104px;height:104px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eef4ff;display:grid;place-items:center;color:#1d4ed8;font-size:26px;font-weight:950;letter-spacing:-.04em}
-    .photo img{width:100%;height:100%;object-fit:cover;display:block}
-    .card-main{min-width:0}
-    .name{font-size:18px;font-weight:950;letter-spacing:-.02em;margin-bottom:8px;line-height:1.15}
-    .line{display:grid;grid-template-columns:66px 1fr;gap:8px;color:#344054;font-size:14px;font-weight:800;line-height:1.35;margin-top:3px;word-break:break-word}
-    .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
-    .status{display:inline-flex;width:max-content;max-width:100%;margin-top:9px;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:950;white-space:normal}
-    .status.done{background:var(--green-bg);color:#166534}
-    .status.full{background:var(--red-bg);color:#991b1b}
-    .status.pending{background:var(--amber-bg);color:var(--amber)}
-    .empty{padding:28px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:14px}
-    .message{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-weight:900;border:1px solid #bfdbfe}
-    .message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-    .modal{position:fixed;inset:0;z-index:20;display:grid;place-items:end center;padding:12px;background:rgba(15,23,42,.45)}
-    .modal[hidden]{display:none}
-    .modal-card{width:min(520px,100%);padding:16px;border-radius:18px;max-height:calc(100vh - 24px);overflow:auto}
-    .modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .modal-head h2{margin:0;font-size:22px;line-height:1.1;letter-spacing:-.02em}
-    .modal-form{display:grid;gap:10px}
-    .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
-    .modal-actions .wide{grid-column:1 / -1}
-    @media(max-width:980px){.tools{grid-template-columns:1fr 1fr 1fr}.tools button{width:100%}}
-    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.card{grid-template-columns:36px 96px 1fr}.photo{width:96px;height:96px}}
-    @media(max-width:560px){.wrap{width:min(100% - 18px,900px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:34px 92px 1fr}.check{width:26px;height:26px}.photo{width:92px;height:112px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}}
+    :root{--bg:#f5f7fb;--card:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;--blue:#2563eb;--dark:#101828;--soft:#eef4ff;--green-bg:#dcfce7;--red-bg:#fef2f2;--amber-bg:#fffbeb;--shadow:0 16px 40px rgba(16,24,40,.08)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{width:min(900px,calc(100% - 24px));margin:14px auto 44px}.top,.tools,.card,.modal-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.top{padding:16px;margin-bottom:12px}h1{margin:0 0 6px;font-size:25px;letter-spacing:-.03em;line-height:1.08}p{margin:0;color:var(--muted);line-height:1.4;font-weight:700}.count{display:inline-flex;margin-top:12px;padding:7px 11px;border-radius:999px;background:var(--soft);color:#1d4ed8;font-size:13px;font-weight:950}.tools{position:sticky;top:8px;z-index:3;display:grid;grid-template-columns:1fr 180px 140px auto auto auto;gap:10px;align-items:end;padding:12px;margin-bottom:12px}label{display:grid;gap:6px;color:#344054;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.04em}input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}button{border:0;border-radius:11px;min-height:40px;padding:9px 13px;font-weight:950;cursor:pointer;background:var(--dark);color:#fff;white-space:nowrap}button.light{background:#fff;color:#1f3b66;border:1px solid #d0d5dd}button:disabled{opacity:.55;cursor:not-allowed}.grid{display:grid;gap:10px}.card{display:grid;grid-template-columns:42px 104px 1fr;gap:12px;align-items:center;padding:12px;text-align:left}.check{width:28px;height:28px;accent-color:var(--blue);justify-self:center}.photo{width:104px;height:104px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eef4ff;display:grid;place-items:center;color:#1d4ed8;font-size:26px;font-weight:950;letter-spacing:-.04em}.photo img{width:100%;height:100%;object-fit:cover;display:block}.card-main{min-width:0}.name{font-size:18px;font-weight:950;letter-spacing:-.02em;margin-bottom:8px;line-height:1.15}.line{display:grid;grid-template-columns:66px 1fr;gap:8px;color:#344054;font-size:14px;font-weight:800;line-height:1.35;margin-top:3px;word-break:break-word}.label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}.status{display:inline-flex;width:max-content;max-width:100%;margin-top:9px;padding:6px 9px;border-radius:999px;background:#f2f4f7;color:#344054;font-size:12px;font-weight:950;white-space:normal}.status.done{background:var(--green-bg);color:#166534}.status.full{background:var(--red-bg);color:#991b1b}.status.pending{background:var(--amber-bg);color:#92400e}.assigners{margin-top:7px;padding:8px 9px;border-radius:12px;background:#f8fafc;border:1px solid #e4e7ec;color:#344054;font-size:12px;font-weight:850;line-height:1.35}.assigners strong{color:#1d4ed8}.empty{padding:28px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:14px}.message{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#eff6ff;color:#1d4ed8;font-weight:900;border:1px solid #bfdbfe}.message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}.modal{position:fixed;inset:0;z-index:20;display:grid;place-items:end center;padding:12px;background:rgba(15,23,42,.45)}.modal[hidden]{display:none}.modal-card{width:min(520px,100%);padding:16px;border-radius:18px;max-height:calc(100vh - 24px);overflow:auto}.modal-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:12px}.modal-head h2{margin:0;font-size:22px;line-height:1.1;letter-spacing:-.02em}.modal-form{display:grid;gap:10px}.modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}@media(max-width:980px){.tools{grid-template-columns:1fr 1fr 1fr}.tools button{width:100%}}@media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.card{grid-template-columns:36px 96px 1fr}.photo{width:96px;height:96px}}@media(max-width:560px){.wrap{width:min(100% - 18px,900px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:34px 92px 1fr}.check{width:26px;height:26px}.photo{width:92px;height:112px}.name{font-size:17px}.line{grid-template-columns:58px 1fr;font-size:13px}.modal-card{padding:14px}.modal-actions{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <main class="wrap">
-    <section class="top">
-      <h1>Self Assign Voters</h1>
-      <p>Tick voters to assign yourself. Untick your own saved voters to remove. Other assigners are kept private.</p>
-      <div id="count" class="count">Loading...</div>
-    </section>
-
+    <section class="top"><h1>Self Assign Voters</h1><p>Tick voters to assign yourself. Only your name is needed. Assigned names are shown under each voter.</p><div id="count" class="count">Loading...</div></section>
     <section class="tools" aria-label="Search and filter voters">
-      <label>Search voters
-        <input id="searchInput" type="search" placeholder="Name, ID, address, mobile">
-      </label>
-      <label>House
-        <select id="houseSelect"><option value="">All houses</option></select>
-      </label>
-      <label>Filter
-        <select id="filterSelect">
-          <option value="all">All</option>
-          <option value="open">Available</option>
-          <option value="mine">My ticks</option>
-          <option value="assigned">Assigned</option>
-          <option value="full">Full</option>
-        </select>
-      </label>
-      <button id="searchBtn" type="button">Search</button>
-      <button id="saveChangesBtn" type="button">Save Changes</button>
-      <button id="clearBtn" class="light" type="button">Clear</button>
+      <label>Search voters<input id="searchInput" type="search" placeholder="Name, ID, address, mobile"></label>
+      <label>House<select id="houseSelect"><option value="">All houses</option></select></label>
+      <label>Filter<select id="filterSelect"><option value="all">All</option><option value="open">Available</option><option value="mine">My ticks</option><option value="assigned">Assigned</option><option value="full">Full</option></select></label>
+      <button id="searchBtn" type="button">Search</button><button id="saveChangesBtn" type="button">Save Changes</button><button id="clearBtn" class="light" type="button">Clear</button>
     </section>
-
-    <div id="message" class="message" hidden></div>
-    <section id="content" class="grid"></section>
+    <div id="message" class="message" hidden></div><section id="content" class="grid"></section>
   </main>
-
-  <section id="identityModal" class="modal" hidden>
-    <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal-head">
-        <div>
-          <h2 id="modalTitle">Save changes</h2>
-          <p id="modalHelp">Write your details once. This phone remembers them for next time.</p>
-        </div>
-        <button id="closeModalBtn" class="light" type="button">Close</button>
-      </div>
-      <div class="modal-form">
-        <label id="nameLabel">Your name
-          <input id="assigneeName" type="text" placeholder="Write your name" autocomplete="name">
-        </label>
-        <label>Your mobile
-          <input id="assigneePhone" type="tel" placeholder="Mobile number" autocomplete="tel" inputmode="tel">
-        </label>
-        <div class="modal-actions">
-          <button id="confirmSaveBtn" type="button">Save</button>
-          <button id="cancelSaveBtn" class="light" type="button">Cancel</button>
-        </div>
-      </div>
-    </article>
-  </section>
-
+  <section id="identityModal" class="modal" hidden><article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><div><h2 id="modalTitle">Save assignment</h2><p id="modalHelp">Write your name. No mobile number is needed.</p></div><button id="closeModalBtn" class="light" type="button">Close</button></div><div class="modal-form"><label id="nameLabel">Your name<input id="assigneeName" type="text" placeholder="Write your name" autocomplete="name"></label><div class="modal-actions"><button id="confirmSaveBtn" type="button">Save</button><button id="cancelSaveBtn" class="light" type="button">Cancel</button></div></div></article></section>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js?v=20260705-11"></script>
   <script>
-    const params = new URLSearchParams(location.search);
-    const token = params.get('s') || '';
-    let rows = [];
-    let client = null;
-    let myAssigned = new Set();
-    let pendingAdd = new Set();
-    let pendingRemove = new Set();
-
-    function decodePayload(value) {
-      try {
-        const padded = String(value || '').replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(String(value || '').length / 4) * 4, '=');
-        return JSON.parse(decodeURIComponent(escape(atob(padded))));
-      } catch (error) {
-        return [];
-      }
-    }
-    function esc(value) {
-      return String(value || '').replace(/[&<>"']/g, (char) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-      }[char]));
-    }
-    function privateCount(row) {
-      if (Number.isFinite(Number(row.assigned_count))) return Math.max(0, Number(row.assigned_count));
-      return String(row.assigned_by || row.vote_assigned_by || '').split(',').map((item) => item.trim()).filter(Boolean).length;
-    }
-    function cleanRows(items) {
-      return (Array.isArray(items) ? items : [])
-        .filter((row) => row && (row.row_id || row.id || row.name || row.house || row.mobile))
-        .map((row) => ({
-          row_id: String(row.row_id || row.db_id || row.internal_id || ''),
-          id: row.id || '',
-          name: row.name || '',
-          house: row.house || '',
-          mobile: row.mobile || row.phone || '',
-          photo: row.photo || row.photo_url || '',
-          assigned_count: privateCount(row)
-        }));
-    }
-    function initials(name) {
-      return String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase() || '?';
-    }
-    function photoHtml(row) {
-      return row.photo ? `<img src="${esc(row.photo)}" alt="${esc(row.name || 'Voter photo')}" loading="lazy">` : esc(initials(row.name));
-    }
-    function assignedCount(row) {
-      return Math.max(0, Number(row.assigned_count || 0));
-    }
-    function rowById(rowId) {
-      return rows.find((row) => row.row_id === String(rowId));
-    }
-    function storageKey(name) {
-      return `self_assign:${token || 'old'}:${name}`;
-    }
-    function loadMyAssigned() {
-      try { myAssigned = new Set(JSON.parse(localStorage.getItem(storageKey('mine')) || '[]').map(String)); } catch { myAssigned = new Set(); }
-    }
-    function saveMyAssigned() {
-      try { localStorage.setItem(storageKey('mine'), JSON.stringify(Array.from(myAssigned))); } catch {}
-    }
-    function isMine(rowId) {
-      return myAssigned.has(String(rowId));
-    }
-    function isChecked(row) {
-      const id = String(row.row_id);
-      if (pendingAdd.has(id)) return true;
-      if (pendingRemove.has(id)) return false;
-      return isMine(id);
-    }
-    function displayCount(row) {
-      const id = String(row.row_id);
-      let count = assignedCount(row);
-      if (pendingAdd.has(id) && !isMine(id)) count += 1;
-      if (pendingRemove.has(id) && isMine(id)) count = Math.max(0, count - 1);
-      return count;
-    }
-    function statusText(row) {
-      const id = String(row.row_id);
-      if (pendingAdd.has(id)) return 'Will assign to you';
-      if (pendingRemove.has(id)) return 'Will remove yours';
-      if (isMine(id)) return 'Assigned to you';
-      const count = assignedCount(row);
-      if (count >= 3) return 'Full';
-      if (count > 0) return 'Assigned';
-      return 'Available';
-    }
-    function statusClass(row) {
-      const id = String(row.row_id);
-      if (pendingAdd.has(id) || pendingRemove.has(id)) return 'pending';
-      const count = assignedCount(row);
-      if (count >= 3) return 'full';
-      if (count > 0 || isMine(id)) return 'done';
-      return '';
-    }
-    function setMessage(text, isError) {
-      const el = document.getElementById('message');
-      el.hidden = !text;
-      el.textContent = text || '';
-      el.className = `message${isError ? ' error' : ''}`;
-    }
-    function nameValue() {
-      return document.getElementById('assigneeName').value.trim();
-    }
-    function phoneValue() {
-      return document.getElementById('assigneePhone').value.trim();
-    }
-    function phoneDigits() {
-      return phoneValue().replace(/[^0-9]/g, '');
-    }
-    function saveIdentity() {
-      try {
-        localStorage.setItem('assigner_name', nameValue());
-        localStorage.setItem('assigner_phone', phoneValue());
-      } catch {}
-    }
-    function loadIdentity() {
-      try {
-        document.getElementById('assigneeName').value = localStorage.getItem('assigner_name') || '';
-        document.getElementById('assigneePhone').value = localStorage.getItem('assigner_phone') || '';
-      } catch {}
-    }
-    function hasIdentityForSave() {
-      return !pendingAdd.size || (nameValue().length >= 2 && phoneDigits().length >= 5);
-    }
-    function hasPhoneForRemove() {
-      return !pendingRemove.size || phoneDigits().length >= 5;
-    }
-    function houseKey(value) {
-      return String(value || '').trim().toLowerCase();
-    }
-    function renderHouseOptions() {
-      const selected = document.getElementById('houseSelect').value;
-      const counts = new Map();
-      rows.forEach((row) => {
-        const house = String(row.house || 'No house').trim();
-        const key = houseKey(house);
-        const current = counts.get(key) || { house, count: 0 };
-        current.count += 1;
-        counts.set(key, current);
-      });
-      const options = Array.from(counts.values()).sort((a, b) => a.house.localeCompare(b.house, undefined, { numeric: true }));
-      document.getElementById('houseSelect').innerHTML = '<option value="">All houses</option>' + options.map((item) => `
-        <option value="${esc(houseKey(item.house))}" ${houseKey(item.house) === selected ? 'selected' : ''}>${esc(item.house)} (${item.count})</option>
-      `).join('');
-    }
-    function filteredRows() {
-      const term = document.getElementById('searchInput').value.trim().toLowerCase();
-      const house = document.getElementById('houseSelect').value;
-      const filter = document.getElementById('filterSelect').value;
-      return rows.filter((row) => {
-        const count = displayCount(row);
-        const mine = isChecked(row);
-        if (house && houseKey(row.house || 'No house') !== house) return false;
-        if (filter === 'open' && count !== 0) return false;
-        if (filter === 'mine' && !mine) return false;
-        if (filter === 'assigned' && count === 0) return false;
-        if (filter === 'full' && count < 3) return false;
-        if (!term) return true;
-        return [row.name, row.id, row.house, row.mobile].some((value) => String(value || '').toLowerCase().includes(term));
-      });
-    }
-    function updateSaveButton() {
-      const total = pendingAdd.size + pendingRemove.size;
-      const button = document.getElementById('saveChangesBtn');
-      button.textContent = total ? `Save ${total} Change${total === 1 ? '' : 's'}` : 'Save Changes';
-      button.disabled = !total;
-    }
-    function renderKeepPosition() {
-      const scrollY = window.scrollY;
-      render();
-      requestAnimationFrame(() => window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' }));
-    }
-    function render() {
-      const visible = filteredRows();
-      document.getElementById('count').textContent = `${visible.length} of ${rows.length} voter${rows.length === 1 ? '' : 's'} showing`;
-      document.getElementById('content').innerHTML = visible.length ? visible.map((row) => {
-        const count = displayCount(row);
-        const fullForOthers = count >= 3 && !isChecked(row);
-        return `
-          <article class="card" data-row-id="${esc(row.row_id)}">
-            <input class="check" type="checkbox" data-toggle-assign="${esc(row.row_id)}" ${isChecked(row) ? 'checked' : ''} ${fullForOthers ? 'disabled' : ''} aria-label="Tick ${esc(row.name || 'voter')}">
-            <div class="photo">${photoHtml(row)}</div>
-            <div class="card-main">
-              <div class="name">${esc(row.name || 'Unknown voter')}</div>
-              <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
-              <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
-              <div class="line"><span class="label">Mobile</span><span>${esc(row.mobile || 'No phone')}</span></div>
-              <span class="status ${statusClass(row)}">${esc(statusText(row))}</span>
-            </div>
-          </article>
-        `;
-      }).join('') : '<div class="empty">No voters match this search.</div>';
-      updateSaveButton();
-    }
-    function toggleRow(rowId, checked) {
-      const id = String(rowId);
-      const row = rowById(id);
-      if (!row) return;
-      if (checked) {
-        if (isMine(id)) pendingRemove.delete(id);
-        else {
-          if (assignedCount(row) >= 3) {
-            setMessage('This voter is already full.', true);
-            return;
-          }
-          pendingAdd.add(id);
-        }
-      } else {
-        pendingAdd.delete(id);
-        if (isMine(id)) pendingRemove.add(id);
-      }
-      setMessage('', false);
-      renderKeepPosition();
-    }
-    function openIdentityModal() {
-      loadIdentity();
-      const addCount = pendingAdd.size;
-      const removeCount = pendingRemove.size;
-      document.getElementById('nameLabel').hidden = addCount === 0;
-      document.getElementById('modalTitle').textContent = 'Save changes';
-      document.getElementById('modalHelp').textContent = addCount
-        ? 'Name and mobile are needed to assign voters to you. This phone remembers them next time.'
-        : 'Mobile is needed only to remove your own assignment.';
-      document.getElementById('identityModal').hidden = false;
-      setTimeout(() => (addCount ? document.getElementById('assigneeName') : document.getElementById('assigneePhone')).focus(), 80);
-    }
-    function closeModal() {
-      document.getElementById('identityModal').hidden = true;
-    }
-    function identityReady() {
-      if (!hasIdentityForSave()) {
-        openIdentityModal();
-        return false;
-      }
-      if (!hasPhoneForRemove()) {
-        openIdentityModal();
-        return false;
-      }
-      return true;
-    }
-    function setBusy(isBusy) {
-      ['saveChangesBtn', 'confirmSaveBtn', 'cancelSaveBtn', 'closeModalBtn', 'searchBtn', 'clearBtn'].forEach((id) => {
-        const button = document.getElementById(id);
-        if (button) button.disabled = isBusy;
-      });
-    }
-    async function saveChanges() {
-      if (!pendingAdd.size && !pendingRemove.size) {
-        setMessage('Tick or untick voters first.', true);
-        return;
-      }
-      loadIdentity();
-      if (!identityReady()) return;
-      saveIdentity();
-      setBusy(true);
-      let saved = 0;
-      let failed = 0;
-
-      for (const rowId of Array.from(pendingAdd)) {
-        try {
-          const { data, error } = await client.rpc('claim_assignment', {
-            p_token: token,
-            p_voter_row_id: Number(rowId),
-            p_assignee_name: nameValue(),
-            p_assignee_phone: phoneValue()
-          });
-          if (error) throw error;
-          const row = Array.isArray(data) ? data[0] : data;
-          rows = rows.map((item) => item.row_id === rowId ? { ...item, assigned_count: Number(row?.assigned_count || item.assigned_count || 0) } : item);
-          myAssigned.add(rowId);
-          pendingAdd.delete(rowId);
-          saved += 1;
-        } catch (error) {
-          failed += 1;
-          setMessage(error.message || 'Some assignments could not be saved.', true);
-        }
-      }
-
-      for (const rowId of Array.from(pendingRemove)) {
-        try {
-          const { data, error } = await client.rpc('unclaim_assignment', {
-            p_token: token,
-            p_voter_row_id: Number(rowId),
-            p_assignee_phone: phoneValue()
-          });
-          if (error) throw error;
-          const row = Array.isArray(data) ? data[0] : data;
-          rows = rows.map((item) => item.row_id === rowId ? { ...item, assigned_count: Number(row?.assigned_count || 0) } : item);
-          myAssigned.delete(rowId);
-          pendingRemove.delete(rowId);
-          saved += 1;
-        } catch (error) {
-          failed += 1;
-          setMessage(error.message || 'Some removals could not be saved.', true);
-        }
-      }
-
-      saveMyAssigned();
-      setBusy(false);
-      closeModal();
-      renderKeepPosition();
-      if (!failed) setMessage(`Saved ${saved} change${saved === 1 ? '' : 's'}.`, false);
-    }
-    async function loadShare() {
-      document.getElementById('searchInput').addEventListener('input', render);
-      document.getElementById('houseSelect').addEventListener('change', render);
-      document.getElementById('filterSelect').addEventListener('change', render);
-      document.getElementById('searchBtn').addEventListener('click', render);
-      document.getElementById('saveChangesBtn').addEventListener('click', saveChanges);
-      document.getElementById('clearBtn').addEventListener('click', () => {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('houseSelect').value = '';
-        document.getElementById('filterSelect').value = 'all';
-        render();
-      });
-      document.getElementById('confirmSaveBtn').addEventListener('click', saveChanges);
-      document.getElementById('cancelSaveBtn').addEventListener('click', closeModal);
-      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-      document.getElementById('identityModal').addEventListener('click', (event) => {
-        if (event.target.id === 'identityModal') closeModal();
-      });
-      document.getElementById('assigneeName').addEventListener('input', saveIdentity);
-      document.getElementById('assigneePhone').addEventListener('input', saveIdentity);
-      document.addEventListener('change', (event) => {
-        const toggle = event.target.closest('[data-toggle-assign]');
-        if (toggle) toggleRow(toggle.dataset.toggleAssign, toggle.checked);
-      });
-
-      loadIdentity();
-      loadMyAssigned();
-      if (!token) {
-        rows = cleanRows(decodePayload(params.get('list')));
-        renderHouseOptions();
-        setMessage('This old link is read-only. Ask for a new assignment link to save names.', true);
-        render();
-        return;
-      }
-      try {
-        client = window.supabase.createClient(window.APP_CONFIG.supabaseUrl, window.APP_CONFIG.supabaseKey);
-        const { data, error } = await client
-          .from('assignment_shares')
-          .select('payload')
-          .eq('token', token)
-          .maybeSingle();
-        if (error) throw error;
-        rows = cleanRows(data?.payload);
-        renderHouseOptions();
-        render();
-      } catch (error) {
-        document.getElementById('count').textContent = 'Could not open link';
-        document.getElementById('content').innerHTML = `<div class="empty">${esc(error.message || 'This assignment link could not be loaded.')}</div>`;
-      }
-    }
+    const params=new URLSearchParams(location.search);const token=params.get('s')||'';let rows=[];let client=null;let myAssigned=new Set();let pendingAdd=new Set();let pendingRemove=new Set();
+    function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+    function clean(v){return String(v||'').trim()}
+    function namesFrom(v){return Array.from(new Set(String(v||'').split(',').map(clean).filter(Boolean).filter(n=>n.toLowerCase()!=='naappe@gmail.com')))}
+    function cleanRows(items){return(Array.isArray(items)?items:[]).filter(r=>r&&(r.row_id||r.id||r.name||r.house||r.mobile)).map(r=>({row_id:String(r.row_id||r.db_id||r.internal_id||''),id:r.id||'',name:r.name||'',house:r.house||'',mobile:r.mobile||r.phone||'',photo:r.photo||r.photo_url||'',assigned_count:Math.max(0,Number(r.assigned_count||0)),assigned_names:namesFrom(r.assigned_names||r.assigned_by||r.vote_assigned_by)}))}
+    function initials(n){return String(n||'?').trim().split(/\s+/).slice(0,2).map(p=>p[0]||'').join('').toUpperCase()||'?'}
+    function photoHtml(r){return r.photo?`<img src="${esc(r.photo)}" alt="${esc(r.name||'Voter photo')}" loading="lazy">`:esc(initials(r.name))}
+    function rowById(id){return rows.find(r=>r.row_id===String(id))}
+    function assignedCount(r){return Math.max(Number(r.assigned_count||0),Array.isArray(r.assigned_names)?r.assigned_names.length:0)}
+    function storageKey(n){return`self_assign:${token||'old'}:${n}`}
+    function nameValue(){return clean(document.getElementById('assigneeName').value)}
+    function assignmentKey(){return nameValue().toLowerCase()}
+    function loadIdentity(){try{document.getElementById('assigneeName').value=localStorage.getItem('assigner_name')||''}catch{}}
+    function saveIdentity(){try{localStorage.setItem('assigner_name',nameValue())}catch{}}
+    function loadMyAssigned(){try{myAssigned=new Set(JSON.parse(localStorage.getItem(storageKey('mine'))||'[]').map(String))}catch{myAssigned=new Set()}}
+    function saveMyAssigned(){try{localStorage.setItem(storageKey('mine'),JSON.stringify(Array.from(myAssigned)))}catch{}}
+    function isMine(id){return myAssigned.has(String(id))}
+    function isChecked(r){const id=String(r.row_id);if(pendingAdd.has(id))return true;if(pendingRemove.has(id))return false;return isMine(id)}
+    function displayCount(r){const id=String(r.row_id);let c=assignedCount(r);if(pendingAdd.has(id)&&!isMine(id))c++;if(pendingRemove.has(id)&&isMine(id))c=Math.max(0,c-1);return c}
+    function statusText(r){const id=String(r.row_id);if(pendingAdd.has(id))return'Will assign to you';if(pendingRemove.has(id))return'Will remove yours';if(isMine(id))return'Assigned to you';const c=assignedCount(r);if(c>=3)return'Full';if(c>0)return'Assigned';return'Available'}
+    function statusClass(r){const id=String(r.row_id);if(pendingAdd.has(id)||pendingRemove.has(id))return'pending';const c=assignedCount(r);if(c>=3)return'full';if(c>0||isMine(id))return'done';return''}
+    function setMessage(t,e){const el=document.getElementById('message');el.hidden=!t;el.textContent=t||'';el.className=`message${e?' error':''}`}
+    function houseKey(v){return String(v||'').trim().toLowerCase()}
+    function renderHouseOptions(){const sel=document.getElementById('houseSelect').value;const m=new Map();rows.forEach(r=>{const h=String(r.house||'No house').trim();const k=houseKey(h);const x=m.get(k)||{house:h,count:0};x.count++;m.set(k,x)});document.getElementById('houseSelect').innerHTML='<option value="">All houses</option>'+Array.from(m.values()).sort((a,b)=>a.house.localeCompare(b.house,undefined,{numeric:true})).map(i=>`<option value="${esc(houseKey(i.house))}" ${houseKey(i.house)===sel?'selected':''}>${esc(i.house)} (${i.count})</option>`).join('')}
+    function filteredRows(){const term=document.getElementById('searchInput').value.trim().toLowerCase();const house=document.getElementById('houseSelect').value;const filter=document.getElementById('filterSelect').value;return rows.filter(r=>{const c=displayCount(r);if(house&&houseKey(r.house||'No house')!==house)return false;if(filter==='open'&&c!==0)return false;if(filter==='mine'&&!isChecked(r))return false;if(filter==='assigned'&&c===0)return false;if(filter==='full'&&c<3)return false;if(!term)return true;return[r.name,r.id,r.house,r.mobile,(r.assigned_names||[]).join(' ')].some(v=>String(v||'').toLowerCase().includes(term))})}
+    function assignerHtml(r){const names=Array.isArray(r.assigned_names)?r.assigned_names:[];if(!names.length&&!pendingAdd.has(String(r.row_id)))return'';const list=pendingAdd.has(String(r.row_id))&&nameValue()?Array.from(new Set([...names,nameValue()])):names;return`<div class="assigners"><strong>Assigned:</strong> ${esc(list.join(', ')||'Pending save')}</div>`}
+    function render(){const visible=filteredRows();document.getElementById('count').textContent=`${visible.length} of ${rows.length} voter${rows.length===1?'':'s'} showing`;document.getElementById('content').innerHTML=visible.length?visible.map(r=>{const full=displayCount(r)>=3&&!isChecked(r);return`<article class="card" data-row-id="${esc(r.row_id)}"><input class="check" type="checkbox" data-toggle-assign="${esc(r.row_id)}" ${isChecked(r)?'checked':''} ${full?'disabled':''} aria-label="Tick ${esc(r.name||'voter')}"><div class="photo">${photoHtml(r)}</div><div class="card-main"><div class="name">${esc(r.name||'Unknown voter')}</div><div class="line"><span class="label">ID</span><span>${esc(r.id||'-')}</span></div><div class="line"><span class="label">Address</span><span>${esc(r.house||'-')}</span></div><div class="line"><span class="label">Mobile</span><span>${esc(r.mobile||'No phone')}</span></div><span class="status ${statusClass(r)}">${esc(statusText(r))}</span>${assignerHtml(r)}</div></article>`}).join(''):'<div class="empty">No voters match this search.</div>';updateSaveButton()}
+    function renderKeepPosition(){const y=window.scrollY;render();requestAnimationFrame(()=>window.scrollTo({top:y,left:0,behavior:'auto'}))}
+    function updateSaveButton(){const t=pendingAdd.size+pendingRemove.size;const b=document.getElementById('saveChangesBtn');b.textContent=t?`Save ${t} Change${t===1?'':'s'}`:'Save Changes';b.disabled=!t}
+    function toggleRow(rowId,checked){const id=String(rowId);const r=rowById(id);if(!r)return;if(checked){if(isMine(id))pendingRemove.delete(id);else{if(assignedCount(r)>=3){setMessage('This voter is already full.',true);return}pendingAdd.add(id)}}else{pendingAdd.delete(id);if(isMine(id))pendingRemove.add(id)}setMessage('',false);renderKeepPosition()}
+    function identityReady(){if(!pendingAdd.size&&!pendingRemove.size)return true;if(nameValue().length>=2)return true;openIdentityModal();return false}
+    function openIdentityModal(){loadIdentity();document.getElementById('modalTitle').textContent='Save assignment';document.getElementById('modalHelp').textContent='Write your name only. No mobile number is needed.';document.getElementById('identityModal').hidden=false;setTimeout(()=>document.getElementById('assigneeName').focus(),80)}
+    function closeModal(){document.getElementById('identityModal').hidden=true}
+    function setBusy(x){['saveChangesBtn','confirmSaveBtn','cancelSaveBtn','closeModalBtn','searchBtn','clearBtn'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=x})}
+    async function refreshAssignments(ids){if(!client||!ids.length)return;try{const{data,error}=await client.from(window.APP_CONFIG.table).select('id,vote_assigned_by').in('id',ids.map(Number));if(error||!data)return;const by=new Map(data.map(r=>[String(r.id),namesFrom(r.vote_assigned_by)]));rows=rows.map(r=>by.has(r.row_id)?{...r,assigned_names:by.get(r.row_id),assigned_count:by.get(r.row_id).length}:r)}catch(e){}}
+    async function saveChanges(){if(!pendingAdd.size&&!pendingRemove.size){setMessage('Tick or untick voters first.',true);return}loadIdentity();if(!identityReady())return;saveIdentity();setBusy(true);let saved=0,failed=0;const touched=[];for(const rowId of Array.from(pendingAdd)){try{const{data,error}=await client.rpc('claim_assignment',{p_token:token,p_voter_row_id:Number(rowId),p_assignee_name:nameValue(),p_assignee_phone:assignmentKey()||nameValue()});if(error)throw error;const row=Array.isArray(data)?data[0]:data;const r=rowById(rowId);const names=Array.from(new Set([...(r?.assigned_names||[]),nameValue()]));rows=rows.map(i=>i.row_id===rowId?{...i,assigned_count:Number(row?.assigned_count||names.length||i.assigned_count||0),assigned_names:names}:i);myAssigned.add(rowId);pendingAdd.delete(rowId);touched.push(rowId);saved++}catch(e){failed++;setMessage(e.message||'Some assignments could not be saved.',true)}}for(const rowId of Array.from(pendingRemove)){try{const{data,error}=await client.rpc('unclaim_assignment',{p_token:token,p_voter_row_id:Number(rowId),p_assignee_phone:assignmentKey()||nameValue()});if(error)throw error;const row=Array.isArray(data)?data[0]:data;rows=rows.map(i=>i.row_id===rowId?{...i,assigned_count:Number(row?.assigned_count||Math.max(0,assignedCount(i)-1)),assigned_names:(i.assigned_names||[]).filter(n=>n.toLowerCase()!==nameValue().toLowerCase())}:i);myAssigned.delete(rowId);pendingRemove.delete(rowId);touched.push(rowId);saved++}catch(e){failed++;setMessage(e.message||'Some removals could not be saved.',true)}}await refreshAssignments(touched);saveMyAssigned();setBusy(false);closeModal();renderKeepPosition();if(!failed)setMessage(`Saved ${saved} change${saved===1?'':'s'}.`,false)}
+    async function loadShare(){['searchInput','houseSelect','filterSelect'].forEach(id=>document.getElementById(id).addEventListener(id==='searchInput'?'input':'change',render));document.getElementById('searchBtn').addEventListener('click',render);document.getElementById('saveChangesBtn').addEventListener('click',saveChanges);document.getElementById('clearBtn').addEventListener('click',()=>{document.getElementById('searchInput').value='';document.getElementById('houseSelect').value='';document.getElementById('filterSelect').value='all';render()});document.getElementById('confirmSaveBtn').addEventListener('click',saveChanges);document.getElementById('cancelSaveBtn').addEventListener('click',closeModal);document.getElementById('closeModalBtn').addEventListener('click',closeModal);document.getElementById('identityModal').addEventListener('click',e=>{if(e.target.id==='identityModal')closeModal()});document.getElementById('assigneeName').addEventListener('input',saveIdentity);document.addEventListener('change',e=>{const t=e.target.closest('[data-toggle-assign]');if(t)toggleRow(t.dataset.toggleAssign,t.checked)});loadIdentity();loadMyAssigned();if(!token){document.getElementById('count').textContent='No link token';document.getElementById('content').innerHTML='<div class="empty">This assignment link is missing its token.</div>';return}try{client=window.supabase.createClient(window.APP_CONFIG.supabaseUrl,window.APP_CONFIG.supabaseKey);const{data,error}=await client.from('assignment_shares').select('payload').eq('token',token).maybeSingle();if(error)throw error;rows=cleanRows(data?.payload);await refreshAssignments(rows.map(r=>r.row_id));renderHouseOptions();render()}catch(e){document.getElementById('count').textContent='Could not open link';document.getElementById('content').innerHTML=`<div class="empty">${esc(e.message||'This assignment link could not be loaded.')}</div>`}}
     loadShare();
   </script>
 </body>
