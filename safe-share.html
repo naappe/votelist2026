@@ -19,21 +19,24 @@
     input,select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:11px;padding:9px 11px;color:var(--ink);font-size:15px;font-weight:800;background:#fff}
     button{border:1px solid #d0d5dd;border-radius:11px;min-height:42px;padding:9px 13px;font-weight:950;cursor:pointer;background:#fff;color:#1f3b66;white-space:nowrap}
     .grid{display:grid;gap:10px}
-    .card{display:grid;gap:8px;padding:14px;text-align:left}
-    .name{font-size:19px;font-weight:950;letter-spacing:-.02em;line-height:1.15}
-    .line{display:grid;grid-template-columns:74px 1fr;gap:8px;color:#344054;font-size:15px;font-weight:800;line-height:1.35;word-break:break-word}
+    .card{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;padding:12px;text-align:left}
+    .photo{width:96px;height:112px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--soft);display:grid;place-items:center;color:#1d4ed8;font-size:24px;font-weight:950;letter-spacing:-.04em}
+    .photo img{width:100%;height:100%;object-fit:cover;display:block}
+    .card-main{min-width:0}
+    .name{font-size:19px;font-weight:950;letter-spacing:-.02em;line-height:1.15;margin-bottom:8px}
+    .line{display:grid;grid-template-columns:74px 1fr;gap:8px;color:#344054;font-size:15px;font-weight:800;line-height:1.35;word-break:break-word;margin-top:3px}
     .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
     .empty,.message{padding:18px;text-align:center;color:var(--muted);font-weight:900;background:var(--card);border:1px solid var(--line);border-radius:14px}
     .message{margin-bottom:12px;text-align:left;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
     .message.error{background:#fef2f2;color:#991b1b;border-color:#fecaca}
-    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.wrap{width:min(100% - 18px,860px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.line{grid-template-columns:64px 1fr;font-size:14px}}
+    @media(max-width:720px){.tools{grid-template-columns:1fr;position:static}.wrap{width:min(100% - 18px,860px);margin-top:10px}.top{padding:14px}h1{font-size:24px}.card{grid-template-columns:88px 1fr}.photo{width:88px;height:108px}.line{grid-template-columns:64px 1fr;font-size:14px}}
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="top">
       <h1>Shared Voter List</h1>
-      <p>Read-only list. Only name, ID, address, and phone are shown.</p>
+      <p>Read-only list. Photo, name, ID, address, and phone are shown.</p>
       <div id="count" class="count">Loading...</div>
     </section>
 
@@ -71,8 +74,17 @@
           id: row.id || row.national_id || '',
           name: row.name || '',
           house: row.house || '',
-          mobile: row.mobile || row.phone || ''
+          mobile: row.mobile || row.phone || '',
+          photo: row.photo || row.photo_url || ''
         }));
+    }
+
+    function initials(name) {
+      return String(name || '?').trim().split(/\s+/).slice(0, 2).map((part) => part[0] || '').join('').toUpperCase() || '?';
+    }
+
+    function photoHtml(row) {
+      return row.photo ? `<img src="${esc(row.photo)}" alt="${esc(row.name || 'Voter photo')}" loading="lazy">` : esc(initials(row.name));
     }
 
     function houseKey(value) {
@@ -117,10 +129,13 @@
       document.getElementById('count').textContent = `${visible.length} of ${rows.length} voter${rows.length === 1 ? '' : 's'} showing`;
       document.getElementById('content').innerHTML = visible.length ? visible.map((row) => `
         <article class="card">
-          <div class="name">${esc(row.name || 'Unknown voter')}</div>
-          <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
-          <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
-          <div class="line"><span class="label">Phone</span><span>${esc(row.mobile || 'No phone')}</span></div>
+          <div class="photo">${photoHtml(row)}</div>
+          <div class="card-main">
+            <div class="name">${esc(row.name || 'Unknown voter')}</div>
+            <div class="line"><span class="label">ID</span><span>${esc(row.id || '-')}</span></div>
+            <div class="line"><span class="label">Address</span><span>${esc(row.house || '-')}</span></div>
+            <div class="line"><span class="label">Phone</span><span>${esc(row.mobile || 'No phone')}</span></div>
+          </div>
         </article>
       `).join('') : '<div class="empty">No voters match this search.</div>';
     }
