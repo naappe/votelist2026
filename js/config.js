@@ -1,7 +1,7 @@
 window.APP_CONFIG = {
   supabaseUrl: 'https://espezmdpkoixnfchomqb.supabase.co',
   supabaseKey: 'sb_publishable_xP8z74zcMuCkj6xlu1bJ3w_Kudqbcu1',
-  table: 'full_import',
+  table: 'campaign',
   loginUsers: {
     admin: { username: 'admin', email: 'naappe@gmail.com' },
     pnc: { username: 'pnc2026', email: 'pnc2026@villimaledhaaira.local' }
