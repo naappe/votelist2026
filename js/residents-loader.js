@@ -1,19 +1,25 @@
 document.addEventListener('DOMContentLoaded', async function () {
   const params = new URLSearchParams(location.search);
   const party = (params.get('party') || 'PNC').toUpperCase();
-  const section = (params.get('section') || 'voters').toLowerCase() === 'residents' ? 'voters' : (params.get('section') || 'voters').toLowerCase();
+  const rawSection = (params.get('section') || 'voters').toLowerCase();
+  const section = rawSection === 'residents' ? 'voters' : rawSection;
   const cfg = window.APP_CONFIG || {};
   const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
   const status = document.getElementById('status');
   const list = document.getElementById('list');
   const total = document.getElementById('total');
   const partyName = document.getElementById('partyName');
+  const searchInput = document.getElementById('searchInput');
+  const houseSelect = document.getElementById('houseSelect');
+  const clearBtn = document.getElementById('clearBtn');
   let rows = [];
   let current = null;
+  let currentFilter = 'all';
 
   if (partyName) partyName.textContent = party === 'ALL' ? 'All' : party;
   buildNav();
   installEditor();
+  setupFilters();
   await loadRows();
 
   function buildNav() {
@@ -23,9 +29,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     nav.innerHTML = links.map(function (item) {
       const key = item[0];
       const label = item[1];
-      const href = 'residents.html?party=' + encodeURIComponent(party) + '&section=' + encodeURIComponent(key) + '&v=edit1';
+      const href = 'residents.html?party=' + encodeURIComponent(party) + '&section=' + encodeURIComponent(key) + '&v=filter1';
       return '<a class="btn ' + (key === section ? 'active' : '') + '" href="' + href + '">' + label + '</a>';
-    }).join('') + '<a class="btn" href="index.html?v=edit1">Logout</a>';
+    }).join('') + '<a class="btn" href="index.html?v=filter1">Logout</a>';
   }
 
   async function loadRows() {
@@ -46,23 +52,101 @@ document.addEventListener('DOMContentLoaded', async function () {
       from += size;
     }
     rows = out;
+    buildHouseOptions();
     updateStats(rows);
-    render(rows);
-    if (status) { status.textContent = 'Loaded ' + rows.length.toLocaleString('en-US') + ' residents. Click a card to update.'; status.className = 'status'; }
+    applyFilter('all');
+    if (status) { status.textContent = 'Loaded ' + rows.length.toLocaleString('en-US') + ' residents. Click stats to filter. Click a card to update.'; status.className = 'status'; }
+  }
+
+  function setupFilters() {
+    bindStat('total', 'all');
+    bindStat('will', 'will-vote');
+    bindStat('notvote', 'not-vote');
+    bindStat('pending', 'pending');
+    bindStat('need', 'need-call');
+    if (searchInput) searchInput.addEventListener('input', function () { applyFilter(currentFilter); });
+    if (houseSelect) houseSelect.addEventListener('change', function () { applyFilter(currentFilter); });
+    if (clearBtn) clearBtn.addEventListener('click', function () {
+      if (searchInput) searchInput.value = '';
+      if (houseSelect) houseSelect.value = '';
+      applyFilter('all');
+    });
+  }
+
+  function bindStat(id, filter) {
+    const el = document.getElementById(id)?.closest('.stat');
+    if (!el) return;
+    el.dataset.filter = filter;
+    el.style.cursor = 'pointer';
+    el.title = 'Click to filter';
+    el.addEventListener('click', function () { applyFilter(filter); });
+  }
+
+  function buildHouseOptions() {
+    if (!houseSelect) return;
+    const selected = houseSelect.value;
+    const counts = new Map();
+    rows.forEach(function (r) {
+      const house = String(r.house || 'Unknown').trim() || 'Unknown';
+      counts.set(house, (counts.get(house) || 0) + 1);
+    });
+    const options = Array.from(counts.keys()).sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); });
+    houseSelect.innerHTML = '<option value="">All houses</option>' + options.map(function (h) {
+      return '<option value="' + esc(h) + '">' + esc(h) + ' (' + (counts.get(h) || 0).toLocaleString('en-US') + ')</option>';
+    }).join('');
+    if (selected) houseSelect.value = selected;
   }
 
   function updateStats(data) {
     if (total) total.textContent = data.length.toLocaleString('en-US');
     const will = document.getElementById('will'); if (will) will.textContent = data.filter(r => r.vote_status === 'will-vote').length.toLocaleString('en-US');
     const notvote = document.getElementById('notvote'); if (notvote) notvote.textContent = data.filter(r => r.vote_status === 'no-vote').length.toLocaleString('en-US');
-    const pending = document.getElementById('pending'); if (pending) pending.textContent = data.filter(r => r.reach_status === 'reached' && r.vote_status !== 'will-vote' && r.vote_status !== 'no-vote').length.toLocaleString('en-US');
-    const need = document.getElementById('need'); if (need) need.textContent = data.filter(r => r.reach_status !== 'reached' || r.phone_status === 'need-call').length.toLocaleString('en-US');
-    const sectionTotal = document.getElementById('sectionTotal'); if (sectionTotal) sectionTotal.textContent = data.length.toLocaleString('en-US') + ' residents';
+    const pending = document.getElementById('pending'); if (pending) pending.textContent = data.filter(r => r.reach_status === 'not-reached').length.toLocaleString('en-US');
+    const need = document.getElementById('need'); if (need) need.textContent = data.filter(r => r.phone_status === 'need-call' || r.d2d_status === 'not-visited').length.toLocaleString('en-US');
+  }
+
+  function applyFilter(filter) {
+    currentFilter = filter || 'all';
+    let data = rows.slice();
+    if (currentFilter === 'will-vote') data = data.filter(r => r.vote_status === 'will-vote');
+    if (currentFilter === 'not-vote') data = data.filter(r => r.vote_status === 'no-vote');
+    if (currentFilter === 'pending') data = data.filter(r => r.reach_status === 'not-reached');
+    if (currentFilter === 'need-call') data = data.filter(r => r.phone_status === 'need-call' || r.d2d_status === 'not-visited');
+    const term = String(searchInput?.value || '').trim().toLowerCase();
+    if (term) {
+      data = data.filter(function (r) {
+        return [r.name, r.national_id, r.house, r.phone, r.party, r.election_box, r.remarks].some(function (v) {
+          return String(v || '').toLowerCase().includes(term);
+        });
+      });
+    }
+    const house = String(houseSelect?.value || '').trim().toLowerCase();
+    if (house) data = data.filter(r => String(r.house || 'Unknown').trim().toLowerCase() === house);
+    render(data);
+    updateCount(data.length);
+    highlightStat(currentFilter);
+  }
+
+  function updateCount(count) {
+    const el = document.getElementById('sectionTotal');
+    if (el) el.textContent = count.toLocaleString('en-US') + ' of ' + rows.length.toLocaleString('en-US') + ' residents';
+  }
+
+  function highlightStat(filter) {
+    document.querySelectorAll('.stat').forEach(function (el) {
+      el.classList.toggle('active', el.dataset.filter === filter);
+      el.style.outline = el.dataset.filter === filter ? '2px solid #1f3b66' : '';
+      el.style.outlineOffset = el.dataset.filter === filter ? '2px' : '';
+    });
   }
 
   function render(data) {
     if (!list) return;
     list.innerHTML = '';
+    if (!data.length) {
+      list.innerHTML = '<div class="empty">No residents match this filter.</div>';
+      return;
+    }
     data.forEach(function (r) {
       const card = document.createElement('article');
       card.className = 'resident-card';
@@ -88,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   function installEditor() {
     if (document.getElementById('editModal')) return;
     const css = document.createElement('style');
-    css.textContent = '.edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:99;display:none;align-items:end;justify-content:center;padding:12px}.edit-modal.open{display:flex}.edit-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid #dbe4f0;border-radius:20px;padding:16px;box-shadow:0 24px 60px rgba(15,23,42,.22)}.edit-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.edit-head h2{margin:0;font-size:22px}.edit-form{display:grid;gap:10px}.edit-form label{font-size:12px;font-weight:950;color:#334155;text-transform:uppercase;letter-spacing:.04em}.edit-form select,.edit-form textarea{width:100%;margin-top:6px;border:1px solid #cbd5e1;border-radius:12px;padding:10px;font:inherit;font-weight:800}.edit-form textarea{min-height:88px}.edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}.resident-card{cursor:pointer}.resident-card:hover{border-color:#93c5fd;box-shadow:0 14px 30px rgba(15,23,42,.1)}';
+    css.textContent = '.edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:99;display:none;align-items:end;justify-content:center;padding:12px}.edit-modal.open{display:flex}.edit-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid #dbe4f0;border-radius:20px;padding:16px;box-shadow:0 24px 60px rgba(15,23,42,.22)}.edit-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.edit-head h2{margin:0;font-size:22px}.edit-form{display:grid;gap:10px}.edit-form label{font-size:12px;font-weight:950;color:#334155;text-transform:uppercase;letter-spacing:.04em}.edit-form select,.edit-form textarea{width:100%;margin-top:6px;border:1px solid #cbd5e1;border-radius:12px;padding:10px;font:inherit;font-weight:800}.edit-form textarea{min-height:88px}.edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}.resident-card{cursor:pointer}.resident-card:hover{border-color:#93c5fd;box-shadow:0 14px 30px rgba(15,23,42,.1)}.stat.active{background:#eff6ff}';
     document.head.appendChild(css);
     const modal = document.createElement('section');
     modal.id = 'editModal';
@@ -135,7 +219,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     const result = await client.from('campaign').update(patch).eq('id', current.id).select().single();
     if (result.error) { if (status) { status.textContent = 'Save failed: ' + result.error.message; status.className = 'status error'; } return; }
     rows = rows.map(r => String(r.id) === String(current.id) ? Object.assign({}, r, result.data || patch) : r);
-    updateStats(rows); render(rows); closeEditor();
+    updateStats(rows); applyFilter(currentFilter); closeEditor();
     if (status) { status.textContent = 'Saved update for ' + (result.data?.name || current.name || 'resident') + '.'; status.className = 'status'; }
   }
+
+  function esc(v) { return String(v || '').replace(/[&<>"]/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m]; }); }
+  window.applyFilter = applyFilter;
+  window.residentRows = function () { return rows; };
 });
