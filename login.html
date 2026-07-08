@@ -3,24 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Login | Villimale Campaign Manager</title>
+  <title>Login | Villimale Campaign</title>
   <link rel="stylesheet" href="css/style.css?v=20260705-13">
 </head>
 <body data-page="login">
   <header class="topbar">
-    <a class="brand" href="index.html" aria-label="Villimale Campaign Manager home"><span class="brand-mark"></span><span>Villimale Campaign Manager</span></a>
+    <a class="brand" href="index.html?v=login2" aria-label="Villimale Campaign home"><span class="brand-mark"></span><span>Villimale Campaign</span></a>
   </header>
 
   <main class="login-wrap">
     <section class="login-card">
       <p class="eyebrow">Secure access</p>
-      <h1>Admin Login</h1>
-      <p class="muted">Use your campaign username and password to open the live Supabase dashboard.</p>
+      <h1>Campaign Login</h1>
+      <p class="muted">Use admin, pnc2026, or mdp2026 with the Supabase password.</p>
 
       <form id="loginForm" class="form">
         <label>
           Username
-          <input name="username" autocomplete="username" placeholder="admin" required>
+          <input name="username" autocomplete="username" placeholder="admin / pnc2026 / mdp2026" required>
         </label>
         <label>
           Password
@@ -33,7 +33,8 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js?v=20260707-1"></script>
-  <script src="js/app.js?v=20260706-16"></script>
+  <script src="js/config.js?v=20260708-4"></script>
+  <script src="js/login-users-override.js?v=20260708-1"></script>
+  <script src="js/app.js?v=20260708-login1"></script>
 </body>
 </html>
