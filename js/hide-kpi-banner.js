@@ -4,7 +4,7 @@
   if (!window.__campaignHeaderLoading) {
     window.__campaignHeaderLoading = true;
     const headerScript = document.createElement('script');
-    headerScript.src = 'js/campaign-header.js?v=20260708-1';
+    headerScript.src = 'js/campaign-header.js?v=20260708-5';
     document.head.appendChild(headerScript);
   }
 
@@ -20,6 +20,16 @@
     return pageUrl('assign');
   }
 
+  function forceBrandHome() {
+    document.querySelectorAll('.brand,.campaign-brand').forEach(function (brand) {
+      brand.setAttribute('href', 'index.html');
+      brand.onclick = function (event) {
+        event.preventDefault();
+        location.href = 'index.html';
+      };
+    });
+  }
+
   function redirectAssignedFilter() {
     const params = new URLSearchParams(location.search);
     if (params.get('filter') === 'assigned') {
@@ -30,7 +40,6 @@
   function hideKpiBanner() {
     const summary = document.getElementById('summary');
     if (!summary) return;
-
     if (!summary.hidden) summary.hidden = true;
     if (summary.getAttribute('aria-hidden') !== 'true') summary.setAttribute('aria-hidden', 'true');
     if (summary.style.getPropertyValue('display') !== 'none') {
@@ -39,11 +48,10 @@
   }
 
   function moveAssignedClicks() {
-    document.querySelectorAll('a[href*="filter=assigned"]').forEach((link) => {
+    document.querySelectorAll('a[href*="filter=assigned"]').forEach(function (link) {
       link.href = assignedUrl();
     });
-
-    document.querySelectorAll('[data-section="assigned"],[data-filter="assigned"],[data-open-assigned],#assignedResultsBtn').forEach((el) => {
+    document.querySelectorAll('[data-section="assigned"],[data-filter="assigned"],[data-open-assigned],#assignedResultsBtn').forEach(function (el) {
       el.onclick = function (event) {
         event.preventDefault();
         location.href = assignedUrl();
@@ -54,12 +62,10 @@
   function hideAssignmentControls() {
     const shareButton = document.getElementById('shareViewBtn');
     const assignedButton = document.getElementById('assignedResultsBtn');
-
     if (shareButton) {
       shareButton.setAttribute('aria-hidden', 'true');
       shareButton.style.setProperty('display', 'none', 'important');
     }
-
     if (assignedButton) {
       assignedButton.setAttribute('aria-hidden', 'false');
       assignedButton.style.removeProperty('display');
@@ -69,7 +75,6 @@
         location.href = assignedUrl();
       };
     }
-
     const grid = document.querySelector('[aria-label="Search voters"] .form.search-grid');
     if (grid) {
       grid.classList.remove('assigned-results-ready');
@@ -82,6 +87,7 @@
     hideKpiBanner();
     moveAssignedClicks();
     hideAssignmentControls();
+    forceBrandHome();
   }
 
   if (document.readyState === 'loading') {
@@ -91,7 +97,6 @@
   }
 
   window.addEventListener('load', run, { once: true });
-  [100, 300, 800, 1600, 3000, 6000].forEach((delay) => setTimeout(run, delay));
-
+  [100, 300, 800, 1600, 3000, 6000].forEach(function (delay) { setTimeout(run, delay); });
   new MutationObserver(run).observe(document.documentElement, { childList: true, subtree: true });
 })();
