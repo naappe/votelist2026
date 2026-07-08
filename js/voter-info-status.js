@@ -76,10 +76,10 @@
         <a class="btn light compact" href="${esc(scopedUrl('ai-dashboard.html'))}">AI Dashboard</a>
       </div>
       <div class="voter-info-metrics">
-        ${metric('Visible', m.visible)}
-        ${metric('Need Call', m.needCall)}
-        ${metric('Will Vote', m.willVote)}
-        ${metric('Assigned', m.assigned)}
+        ${metric('Visible', m.visible, 'all')}
+        ${metric('Need Call', m.needCall, 'need-call')}
+        ${metric('Will Vote', m.willVote, 'will-vote')}
+        ${metric('Assigned', m.assigned, 'assigned')}
       </div>
       <div class="voter-info-foot">
         <span>${esc(m.scope)} scope</span>
@@ -127,8 +127,8 @@
     return parts.join(' | ');
   }
 
-  function metric(label, value) {
-    return `<div class="voter-info-metric"><strong>${esc(formatNumber(value))}</strong><span>${esc(label)}</span></div>`;
+  function metric(label, value, filter) {
+    return `<button type="button" class="voter-info-metric" data-info-filter="${esc(filter)}" aria-label="Show ${esc(label)} voters"><strong>${esc(formatNumber(value))}</strong><span>${esc(label)}</span></button>`;
   }
 
   function readRows() {
@@ -214,7 +214,7 @@
     style.id = 'voterInfoStatusStyles';
     style.textContent = `
       .voter-info-status{margin:0 0 12px!important;padding:14px!important;background:#fff!important;border:1px solid #e4e7ec!important;box-shadow:0 14px 34px rgba(16,24,40,.05)!important}
-      .voter-info-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.voter-info-head h2{margin:0 0 4px!important;font-size:22px!important;line-height:1.12!important}.voter-info-head p{margin:0!important;color:#667085!important;font-size:13px!important}.voter-info-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.voter-info-metric{border:1px solid #e4e7ec;border-radius:12px;background:#f8fafc;padding:10px 11px;display:grid;gap:2px}.voter-info-metric strong{font-size:19px;line-height:1;font-weight:900;color:#101828}.voter-info-metric span{font-size:10px;font-weight:900;color:#475467;text-transform:uppercase;letter-spacing:.02em}.voter-info-foot{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.voter-info-foot span{display:inline-flex;align-items:center;min-height:24px;border-radius:999px;background:#eff6ff;color:#1d4ed8;padding:4px 8px;font-size:11px;font-weight:850}
+      .voter-info-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.voter-info-head h2{margin:0 0 4px!important;font-size:22px!important;line-height:1.12!important}.voter-info-head p{margin:0!important;color:#667085!important;font-size:13px!important}.voter-info-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.voter-info-metric{border:1px solid #e4e7ec;border-radius:12px;background:#f8fafc;padding:10px 11px;display:grid;gap:2px;text-align:left;cursor:pointer}.voter-info-metric strong{font-size:19px;line-height:1;font-weight:900;color:#101828}.voter-info-metric span{font-size:10px;font-weight:900;color:#475467;text-transform:uppercase;letter-spacing:.02em}.voter-info-metric:hover{border-color:#93c5fd!important;box-shadow:0 12px 26px rgba(15,23,42,.12)!important}.voter-info-foot{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.voter-info-foot span{display:inline-flex;align-items:center;min-height:24px;border-radius:999px;background:#eff6ff;color:#1d4ed8;padding:4px 8px;font-size:11px;font-weight:850}
       @media(max-width:760px){.voter-info-status{padding:12px!important;margin-bottom:10px!important}.voter-info-head{display:grid}.voter-info-head .btn{width:100%}.voter-info-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.voter-info-metric{padding:9px}.voter-info-metric strong{font-size:18px}.voter-info-foot{gap:6px}.voter-info-foot span{font-size:10px}}
     `;
     document.head.appendChild(style);
