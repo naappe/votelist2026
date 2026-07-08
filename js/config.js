@@ -23,6 +23,39 @@ window.APP_CONFIG = {
   const nativeCreateClient = window.supabase.createClient.bind(window.supabase);
   const clients = new Map();
 
+  function patchAssignmentShareReads(client) {
+    if (!client || client.__villimaleAssignmentShareRpcReady) return client;
+    const nativeFrom = client.from.bind(client);
+    client.from = function secureVillimaleFrom(table) {
+      const builder = nativeFrom(table);
+      if (String(table) !== 'assignment_shares') return builder;
+
+      const nativeSelect = builder.select?.bind(builder);
+      builder.select = function secureAssignmentShareSelect(columns, options) {
+        const selected = String(columns || '').replace(/\s+/g, '').toLowerCase();
+        if (selected !== 'payload') return nativeSelect ? nativeSelect(columns, options) : builder;
+        let tokenValue = '';
+        const chain = {
+          eq(column, value) {
+            if (String(column) === 'token') tokenValue = String(value || '');
+            return chain;
+          },
+          async maybeSingle() {
+            if (!tokenValue) return { data: null, error: null };
+            const result = await client.rpc('get_assignment_share', { p_token: tokenValue });
+            if (result.error) return { data: null, error: result.error };
+            const row = Array.isArray(result.data) ? result.data[0] : result.data;
+            return { data: row ? { payload: row.payload } : null, error: null };
+          }
+        };
+        return chain;
+      };
+      return builder;
+    };
+    client.__villimaleAssignmentShareRpcReady = true;
+    return client;
+  }
+
   window.__villimaleGetSupabaseClient = function getVillimaleSupabaseClient(url, key, options) {
     const config = window.APP_CONFIG || {};
     const finalUrl = url || config.supabaseUrl;
@@ -32,7 +65,7 @@ window.APP_CONFIG = {
     const cacheKey = `${finalUrl}|${finalKey}`;
     if (!options && clients.has(cacheKey)) return clients.get(cacheKey);
 
-    const client = nativeCreateClient(finalUrl, finalKey, options);
+    const client = patchAssignmentShareReads(nativeCreateClient(finalUrl, finalKey, options));
     if (!options && finalUrl === config.supabaseUrl && finalKey === config.supabaseKey) {
       clients.set(cacheKey, client);
       window.__villimaleSupabaseClient = client;
@@ -45,7 +78,7 @@ window.APP_CONFIG = {
     if (!options && url === config.supabaseUrl && key === config.supabaseKey) {
       return window.__villimaleGetSupabaseClient(url, key);
     }
-    return nativeCreateClient(url, key, options);
+    return patchAssignmentShareReads(nativeCreateClient(url, key, options));
   };
 
   window.__villimaleSupabaseFactoryReady = true;
