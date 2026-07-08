@@ -4,12 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Villimale Campaign</title>
-  <script>
-    location.replace('residents.html?party=PNC&v=root1');
-  </script>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#071226;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.topbar{background:#fff;border-bottom:1px solid #dbe4f0;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px}.brand{display:flex;align-items:center;gap:10px;color:#071226;text-decoration:none;font-size:18px;font-weight:950}.mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#2563eb,#14b8a6)}.page{width:min(1050px,calc(100% - 28px));margin:44px auto}.hero{background:#fff;border:1px solid #dbe4f0;border-radius:24px;padding:30px;box-shadow:0 18px 48px rgba(15,23,42,.08);margin-bottom:18px}.eyebrow{margin:0 0 8px;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:950}.hero h1{margin:0;font-size:42px;letter-spacing:-.05em;line-height:1.05}.hero p{margin:12px 0 0;color:#64748b;font-size:18px;font-weight:750}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{min-height:210px;border-radius:24px;padding:24px;color:#fff;text-decoration:none;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 18px 48px rgba(15,23,42,.08);position:relative;overflow:hidden}.card:after{content:"";position:absolute;right:-48px;bottom:-70px;width:210px;height:210px;border-radius:999px;background:rgba(255,255,255,.18)}.card span{font-size:13px;text-transform:uppercase;letter-spacing:.12em;font-weight:950}.card strong{font-size:34px;letter-spacing:-.05em;line-height:1.05}.card small{font-size:15px;line-height:1.45;font-weight:800;opacity:.9}.mdp{background:linear-gradient(135deg,#f59e0b,#ea580c)}.pnc{background:linear-gradient(135deg,#14b8a6,#0f766e)}.admin{background:linear-gradient(135deg,#1f3b66,#0f172a)}@media(max-width:760px){.page{margin:20px auto}.hero h1{font-size:34px}.grid{grid-template-columns:1fr}.card{min-height:170px}}
+  </style>
 </head>
 <body>
-  <p>Opening Residents...</p>
-  <a href="residents.html?party=PNC&v=root1">Open Residents</a>
+  <header class="topbar"><a class="brand" href="index.html?v=home-selector1"><span class="mark"></span><span>Villimale Campaign</span></a></header>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Campaign Home</p>
+      <h1>Select workspace</h1>
+      <p>Choose the party or admin scope. No login screen.</p>
+    </section>
+    <section class="grid" aria-label="Workspaces">
+      <a class="card pnc" href="residents.html?party=PNC&v=home-selector1"><span>PNC</span><strong>PNC Residents</strong><small>Open PNC residents and campaign workspace.</small></a>
+      <a class="card mdp" href="residents.html?party=MDP&v=home-selector1"><span>MDP</span><strong>MDP Residents</strong><small>Open MDP residents and campaign workspace.</small></a>
+      <a class="card admin" href="residents.html?party=ALL&v=home-selector1"><span>Admin</span><strong>All Residents</strong><small>Open full residents scope.</small></a>
+    </section>
+  </main>
 </body>
 </html>
