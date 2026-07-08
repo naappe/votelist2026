@@ -83,7 +83,8 @@
       id: row.id || '',
       name: row.name || '',
       house: row.house || '',
-      mobile: row.mobile || ''
+      mobile: row.mobile || '',
+      photo: row.photo || ''
     }));
   }
 
@@ -129,10 +130,10 @@
       url.hash = '';
       url.searchParams.set('s', shareToken);
       const link = url.toString();
-      const safeMessage = `Safe voter list copied for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`;
+      const safeMessage = `Safe voter list copied for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. It shows photo, name, ID, address, and phone.`;
       const assignMessage = `Self-assign link copied for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
       const fallbackMessage = safeListMode
-        ? `Safe voter list ready for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. It shows only name, ID, address, and phone.`
+        ? `Safe voter list ready for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. It shows photo, name, ID, address, and phone.`
         : `Self-assign link ready for ${payloadRows.length} voter${payloadRows.length === 1 ? '' : 's'}. Friends can write their name and save.`;
 
       try {
