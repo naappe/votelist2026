@@ -1,6 +1,13 @@
 (function () {
   if (document.body.dataset.view !== 'management') return;
 
+  if (!window.__campaignHeaderLoading) {
+    window.__campaignHeaderLoading = true;
+    const headerScript = document.createElement('script');
+    headerScript.src = 'js/campaign-header.js?v=20260708-1';
+    document.head.appendChild(headerScript);
+  }
+
   function partyValue() {
     return new URLSearchParams(location.search).get('party') || 'PNC';
   }
@@ -18,28 +25,6 @@
     if (params.get('filter') === 'assigned') {
       location.replace(assignedUrl());
     }
-  }
-
-  function ensureWorkspaceNav() {
-    const nav = document.querySelector('.toolbar');
-    const ai = document.getElementById('aiDashboardLink');
-    if (!nav || !ai || document.getElementById('callLink')) return;
-
-    const links = [
-      ['callLink', 'Call', 'call'],
-      ['voteLink', 'Vote', 'vote'],
-      ['d2dLink', 'D2D', 'd2d'],
-      ['transportLink', 'Transport', 'transport']
-    ];
-
-    links.forEach(([id, label, page]) => {
-      const a = document.createElement('a');
-      a.id = id;
-      a.className = 'btn light';
-      a.href = pageUrl(page);
-      a.textContent = label;
-      ai.before(a);
-    });
   }
 
   function hideKpiBanner() {
@@ -94,7 +79,6 @@
 
   function run() {
     redirectAssignedFilter();
-    ensureWorkspaceNav();
     hideKpiBanner();
     moveAssignedClicks();
     hideAssignmentControls();
