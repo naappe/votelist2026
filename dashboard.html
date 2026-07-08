@@ -1,18 +1,1 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Opening Voters | Villimale Campaign Manager</title>
-  <meta http-equiv="refresh" content="0; url=voters.html">
-  <script>
-    const target = new URL('voters.html', location.href);
-    target.search = location.search;
-    target.hash = location.hash;
-    location.replace(target.toString());
-  </script>
-</head>
-<body>
-  <p>Opening Voters...</p>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Residents | Villimale Campaign</title><script>const p=new URLSearchParams(location.search).get('party')||'PNC';location.replace('residents.html?party='+encodeURIComponent(p)+'&v=clean-all1');</script></head><body><p>Opening Residents...</p><a id="go" href="residents.html?party=PNC&v=clean-all1">Open Residents</a><script>document.getElementById('go').href='residents.html?party='+encodeURIComponent(new URLSearchParams(location.search).get('party')||'PNC')+'&v=clean-all1';</script></body></html>
