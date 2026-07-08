@@ -5,6 +5,25 @@ document.addEventListener('DOMContentLoaded', async function () {
   const section = rawSection === 'residents' ? 'voters' : rawSection;
   const cfg = window.APP_CONFIG || {};
   const client = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+
+  const sectionTitles = {
+    voters: 'All Residents',
+    assign: 'Unassigned Residents',
+    calls: 'Need Call',
+    votes: 'Pending Votes',
+    visits: 'Need Visit',
+    transport: 'Need Transport',
+    insights: 'Insights'
+  };
+
+  const sectionFilter = {
+    assign: function (r) { return !String(r.vote_assigned_by || '').trim(); },
+    calls: function (r) { return r.phone_status === 'need-call'; },
+    votes: function (r) { return r.vote_status === 'pending'; },
+    visits: function (r) { return r.d2d_status === 'not-visited'; },
+    transport: function (r) { return r.transport_status === 'need-transport'; }
+  }[section] || null;
+
   const status = document.getElementById('status');
   const list = document.getElementById('list');
   const total = document.getElementById('total');
@@ -12,12 +31,14 @@ document.addEventListener('DOMContentLoaded', async function () {
   const searchInput = document.getElementById('searchInput');
   const houseSelect = document.getElementById('houseSelect');
   const clearBtn = document.getElementById('clearBtn');
+  let allRows = [];
   let rows = [];
   let current = null;
   let currentFilter = 'all';
 
   if (partyName) partyName.textContent = party === 'ALL' ? 'All' : party;
   buildNav();
+  setSectionTitle();
   installEditor();
   setupFilters();
   await loadRows();
@@ -29,33 +50,44 @@ document.addEventListener('DOMContentLoaded', async function () {
     nav.innerHTML = links.map(function (item) {
       const key = item[0];
       const label = item[1];
-      const href = 'residents.html?party=' + encodeURIComponent(party) + '&section=' + encodeURIComponent(key) + '&v=filter1';
+      const href = 'residents.html?party=' + encodeURIComponent(party) + '&section=' + encodeURIComponent(key) + '&v=section1';
       return '<a class="btn ' + (key === section ? 'active' : '') + '" href="' + href + '">' + label + '</a>';
-    }).join('') + '<a class="btn" href="index.html?v=filter1">Logout</a>';
+    }).join('') + '<a class="btn" href="index.html?v=section1">Logout</a>';
+  }
+
+  function setSectionTitle() {
+    const title = sectionTitles[section] || 'Residents';
+    const h2 = document.querySelector('.panel-head h2');
+    if (h2) h2.textContent = title;
+    const hero = document.querySelector('.hero h1');
+    if (hero && partyName) hero.innerHTML = '<span id="partyName">' + (party === 'ALL' ? 'All' : party) + '</span> ' + title;
   }
 
   async function loadRows() {
-    if (status) status.textContent = 'Loading residents...';
+    setStatus('Loading ' + (sectionTitles[section] || 'residents') + '...');
     let out = [];
     let from = 0;
     const size = 1000;
     while (true) {
-      let query = client.from('campaign').select('id,name,national_id,house,phone,party,election_box,photo_url,vote_status,phone_status,reach_status,d2d_status,transport_status,support_level,remarks').range(from, from + size - 1);
+      let query = client.from('campaign')
+        .select('id,name,national_id,house,phone,party,election_box,photo_url,vote_status,phone_status,reach_status,d2d_status,transport_status,support_level,remarks,vote_assigned_by,vote_assigned_at')
+        .range(from, from + size - 1);
       if (party !== 'ALL') query = query.eq('party', party);
       const result = await query;
       if (result.error) {
-        if (status) { status.textContent = 'Supabase error: ' + result.error.message; status.className = 'status error'; }
+        setStatus('Supabase error: ' + result.error.message, true);
         return;
       }
       out = out.concat(result.data || []);
       if (!result.data || result.data.length < size) break;
       from += size;
     }
-    rows = out;
+    allRows = out;
+    rows = sectionFilter ? allRows.filter(sectionFilter) : allRows.slice();
     buildHouseOptions();
     updateStats(rows);
     applyFilter('all');
-    if (status) { status.textContent = 'Loaded ' + rows.length.toLocaleString('en-US') + ' residents. Click stats to filter. Click a card to update.'; status.className = 'status'; }
+    setStatus('Loaded ' + rows.length.toLocaleString('en-US') + ' ' + (sectionTitles[section] || 'residents').toLowerCase() + ' from ' + allRows.length.toLocaleString('en-US') + ' total.');
   }
 
   function setupFilters() {
@@ -99,23 +131,29 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   function updateStats(data) {
     if (total) total.textContent = data.length.toLocaleString('en-US');
-    const will = document.getElementById('will'); if (will) will.textContent = data.filter(r => r.vote_status === 'will-vote').length.toLocaleString('en-US');
-    const notvote = document.getElementById('notvote'); if (notvote) notvote.textContent = data.filter(r => r.vote_status === 'no-vote').length.toLocaleString('en-US');
-    const pending = document.getElementById('pending'); if (pending) pending.textContent = data.filter(r => r.reach_status === 'not-reached').length.toLocaleString('en-US');
-    const need = document.getElementById('need'); if (need) need.textContent = data.filter(r => r.phone_status === 'need-call' || r.d2d_status === 'not-visited').length.toLocaleString('en-US');
+    setText('will', data.filter(r => r.vote_status === 'will-vote').length);
+    setText('notvote', data.filter(r => r.vote_status === 'no-vote' || r.vote_status === 'not-vote').length);
+    setText('pending', data.filter(r => r.reach_status === 'reached' && !['will-vote','no-vote','not-vote'].includes(r.vote_status)).length);
+    setText('need', data.filter(r => r.reach_status !== 'reached' || r.phone_status === 'need-call' || r.d2d_status === 'not-visited').length);
+  }
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = Number(value || 0).toLocaleString('en-US');
   }
 
   function applyFilter(filter) {
     currentFilter = filter || 'all';
     let data = rows.slice();
     if (currentFilter === 'will-vote') data = data.filter(r => r.vote_status === 'will-vote');
-    if (currentFilter === 'not-vote') data = data.filter(r => r.vote_status === 'no-vote');
-    if (currentFilter === 'pending') data = data.filter(r => r.reach_status === 'not-reached');
-    if (currentFilter === 'need-call') data = data.filter(r => r.phone_status === 'need-call' || r.d2d_status === 'not-visited');
+    if (currentFilter === 'not-vote') data = data.filter(r => r.vote_status === 'no-vote' || r.vote_status === 'not-vote');
+    if (currentFilter === 'pending') data = data.filter(r => r.reach_status === 'reached' && !['will-vote','no-vote','not-vote'].includes(r.vote_status));
+    if (currentFilter === 'need-call') data = data.filter(r => r.reach_status !== 'reached' || r.phone_status === 'need-call' || r.d2d_status === 'not-visited');
+
     const term = String(searchInput?.value || '').trim().toLowerCase();
     if (term) {
       data = data.filter(function (r) {
-        return [r.name, r.national_id, r.house, r.phone, r.party, r.election_box, r.remarks].some(function (v) {
+        return [r.name, r.national_id, r.house, r.phone, r.party, r.election_box, r.remarks, r.vote_assigned_by].some(function (v) {
           return String(v || '').toLowerCase().includes(term);
         });
       });
@@ -129,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   function updateCount(count) {
     const el = document.getElementById('sectionTotal');
-    if (el) el.textContent = count.toLocaleString('en-US') + ' of ' + rows.length.toLocaleString('en-US') + ' residents';
+    if (el) el.textContent = count.toLocaleString('en-US') + ' of ' + rows.length.toLocaleString('en-US') + ' ' + (sectionTitles[section] || 'residents').toLowerCase();
   }
 
   function highlightStat(filter) {
@@ -144,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!list) return;
     list.innerHTML = '';
     if (!data.length) {
-      list.innerHTML = '<div class="empty">No residents match this filter.</div>';
+      list.innerHTML = '<div class="empty">No residents match this section/filter.</div>';
       return;
     }
     data.forEach(function (r) {
@@ -164,7 +202,9 @@ document.addEventListener('DOMContentLoaded', async function () {
       const h = document.createElement('h3'); h.textContent = r.name || 'Unknown';
       const p = document.createElement('p'); p.textContent = (r.house || '-') + ' · Box ' + (r.election_box || '-') + ' · ' + (r.phone || 'No phone');
       const chips = document.createElement('div'); chips.className = 'chips';
-      [r.party || '-', r.vote_status || 'pending', r.phone_status || 'need-call', r.reach_status || 'not-reached', r.d2d_status || 'not-visited', r.transport_status || 'not-needed'].forEach(function (x) { const s = document.createElement('span'); s.textContent = x; chips.appendChild(s); });
+      [r.party || '-', r.vote_status || 'pending', r.phone_status || 'need-call', r.reach_status || 'not-reached', r.d2d_status || 'not-visited', r.transport_status || 'not-needed', r.vote_assigned_by ? 'Assigned: ' + r.vote_assigned_by : 'Unassigned'].forEach(function (x) {
+        const s = document.createElement('span'); s.textContent = x; chips.appendChild(s);
+      });
       info.appendChild(h); info.appendChild(p); info.appendChild(chips); card.appendChild(photo); card.appendChild(info); list.appendChild(card);
     });
   }
@@ -172,12 +212,12 @@ document.addEventListener('DOMContentLoaded', async function () {
   function installEditor() {
     if (document.getElementById('editModal')) return;
     const css = document.createElement('style');
-    css.textContent = '.edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:99;display:none;align-items:end;justify-content:center;padding:12px}.edit-modal.open{display:flex}.edit-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid #dbe4f0;border-radius:20px;padding:16px;box-shadow:0 24px 60px rgba(15,23,42,.22)}.edit-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.edit-head h2{margin:0;font-size:22px}.edit-form{display:grid;gap:10px}.edit-form label{font-size:12px;font-weight:950;color:#334155;text-transform:uppercase;letter-spacing:.04em}.edit-form select,.edit-form textarea{width:100%;margin-top:6px;border:1px solid #cbd5e1;border-radius:12px;padding:10px;font:inherit;font-weight:800}.edit-form textarea{min-height:88px}.edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}.resident-card{cursor:pointer}.resident-card:hover{border-color:#93c5fd;box-shadow:0 14px 30px rgba(15,23,42,.1)}.stat.active{background:#eff6ff}';
+    css.textContent = '.edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:99;display:none;align-items:end;justify-content:center;padding:12px}.edit-modal.open{display:flex}.edit-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid #dbe4f0;border-radius:20px;padding:16px;box-shadow:0 24px 60px rgba(15,23,42,.22)}.edit-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.edit-head h2{margin:0;font-size:22px}.edit-form{display:grid;gap:10px}.edit-form label{font-size:12px;font-weight:950;color:#334155;text-transform:uppercase;letter-spacing:.04em}.edit-form input,.edit-form select,.edit-form textarea{width:100%;margin-top:6px;border:1px solid #cbd5e1;border-radius:12px;padding:10px;font:inherit;font-weight:800}.edit-form textarea{min-height:88px}.edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}.resident-card{cursor:pointer}.resident-card:hover{border-color:#93c5fd;box-shadow:0 14px 30px rgba(15,23,42,.1)}.stat.active{background:#eff6ff}';
     document.head.appendChild(css);
     const modal = document.createElement('section');
     modal.id = 'editModal';
     modal.className = 'edit-modal';
-    modal.innerHTML = '<article class="edit-card"><div class="edit-head"><div><h2 id="editName">Update resident</h2><p id="editMeta"></p></div><button id="editClose" class="btn" type="button">Close</button></div><form id="editForm" class="edit-form"><label>Vote Status<select id="editVote"><option value="pending">Pending</option><option value="not-decided">Not Decided</option><option value="will-vote">Will Vote</option><option value="no-vote">Not Vote</option></select></label><label>Phone Status<select id="editPhone"><option value="need-call">Need Call</option><option value="called">Called</option><option value="busy">Busy</option><option value="switched-off">Switched Off</option><option value="disconnected">Disconnected</option><option value="wrong-number">Wrong Number</option><option value="out-of-range">Out Of Range</option><option value="no-phone">No Phone</option></select></label><label>Reach Status<select id="editReach"><option value="not-reached">Not Reached</option><option value="reached">Reached</option></select></label><label>D2D Status<select id="editD2D"><option value="not-visited">Not Visited</option><option value="visited">Visited</option><option value="not-home">Not Home</option><option value="follow-up">Follow Up</option></select></label><label>Transport Status<select id="editTransport"><option value="not-needed">Not Needed</option><option value="need-transport">Need Transport</option><option value="arranged">Arranged</option><option value="picked-up">Picked Up</option></select></label><label>Support Level<select id="editSupport"><option value="normal">Normal</option><option value="guaranteed">Guaranteed</option></select></label><label>Remarks<textarea id="editRemarks" placeholder="Write remarks"></textarea></label><div class="edit-actions"><button class="btn active" type="submit">Save Update</button><button id="editCancel" class="btn" type="button">Cancel</button></div></form></article>';
+    modal.innerHTML = '<article class="edit-card"><div class="edit-head"><div><h2 id="editName">Update resident</h2><p id="editMeta"></p></div><button id="editClose" class="btn" type="button">Close</button></div><form id="editForm" class="edit-form"><label>Vote Status<select id="editVote"><option value="pending">Pending</option><option value="not-decided">Not Decided</option><option value="will-vote">Will Vote</option><option value="no-vote">Not Vote</option></select></label><label>Phone Status<select id="editPhone"><option value="need-call">Need Call</option><option value="called">Called</option><option value="busy">Busy</option><option value="switched-off">Switched Off</option><option value="disconnected">Disconnected</option><option value="wrong-number">Wrong Number</option><option value="out-of-range">Out Of Range</option><option value="no-phone">No Phone</option></select></label><label>Reach Status<select id="editReach"><option value="not-reached">Not Reached</option><option value="reached">Reached</option></select></label><label>D2D Status<select id="editD2D"><option value="not-visited">Not Visited</option><option value="visited">Visited</option><option value="not-home">Not Home</option><option value="follow-up">Follow Up</option></select></label><label>Transport Status<select id="editTransport"><option value="not-needed">Not Needed</option><option value="need-transport">Need Transport</option><option value="arranged">Arranged</option><option value="picked-up">Picked Up</option></select></label><label>Support Level<select id="editSupport"><option value="normal">Normal</option><option value="guaranteed">Guaranteed</option></select></label><label>Assigned By<input id="editAssigned" type="text" placeholder="Name or comma separated names"></label><label>Remarks<textarea id="editRemarks" placeholder="Write remarks"></textarea></label><div class="edit-actions"><button class="btn active" type="submit">Save Update</button><button id="editCancel" class="btn" type="button">Cancel</button></div></form></article>';
     document.body.appendChild(modal);
     document.getElementById('editClose').onclick = closeEditor;
     document.getElementById('editCancel').onclick = closeEditor;
@@ -186,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   function openEditor(id) {
-    current = rows.find(r => String(r.id) === String(id));
+    current = allRows.find(r => String(r.id) === String(id));
     if (!current) return;
     document.getElementById('editName').textContent = current.name || 'Update resident';
     document.getElementById('editMeta').textContent = (current.house || '-') + ' · ' + (current.phone || 'No phone');
@@ -196,6 +236,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('editD2D').value = current.d2d_status || 'not-visited';
     document.getElementById('editTransport').value = current.transport_status || 'not-needed';
     document.getElementById('editSupport').value = current.support_level || 'normal';
+    document.getElementById('editAssigned').value = current.vote_assigned_by || '';
     document.getElementById('editRemarks').value = current.remarks || '';
     document.getElementById('editModal').classList.add('open');
   }
@@ -205,6 +246,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   async function saveEditor(e) {
     e.preventDefault();
     if (!current) return;
+    const assigned = document.getElementById('editAssigned').value.trim();
     const patch = {
       vote_status: document.getElementById('editVote').value,
       phone_status: document.getElementById('editPhone').value,
@@ -212,18 +254,27 @@ document.addEventListener('DOMContentLoaded', async function () {
       d2d_status: document.getElementById('editD2D').value,
       transport_status: document.getElementById('editTransport').value,
       support_level: document.getElementById('editSupport').value,
+      vote_assigned_by: assigned || null,
+      vote_assigned_at: assigned ? new Date().toISOString() : null,
       remarks: document.getElementById('editRemarks').value
     };
     if (patch.vote_status === 'will-vote' || patch.vote_status === 'no-vote' || patch.support_level === 'guaranteed' || patch.phone_status === 'called') patch.reach_status = 'reached';
-    if (status) status.textContent = 'Saving update...';
+    setStatus('Saving update...');
     const result = await client.from('campaign').update(patch).eq('id', current.id).select().single();
-    if (result.error) { if (status) { status.textContent = 'Save failed: ' + result.error.message; status.className = 'status error'; } return; }
-    rows = rows.map(r => String(r.id) === String(current.id) ? Object.assign({}, r, result.data || patch) : r);
-    updateStats(rows); applyFilter(currentFilter); closeEditor();
-    if (status) { status.textContent = 'Saved update for ' + (result.data?.name || current.name || 'resident') + '.'; status.className = 'status'; }
+    if (result.error) { setStatus('Save failed: ' + result.error.message, true); return; }
+    allRows = allRows.map(r => String(r.id) === String(current.id) ? Object.assign({}, r, result.data || patch) : r);
+    rows = sectionFilter ? allRows.filter(sectionFilter) : allRows.slice();
+    buildHouseOptions(); updateStats(rows); applyFilter(currentFilter); closeEditor();
+    setStatus('Saved update for ' + (result.data?.name || current.name || 'resident') + '.');
   }
 
-  function esc(v) { return String(v || '').replace(/[&<>"]/g, function (m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[m]; }); }
-  window.applyFilter = applyFilter;
-  window.residentRows = function () { return rows; };
+  function setStatus(text, isError) {
+    if (!status) return;
+    status.textContent = text || '';
+    status.className = isError ? 'status error' : 'status';
+  }
+
+  function esc(value) {
+    return String(value || '').replace(/[&<>"]/g, function (m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]; });
+  }
 });
