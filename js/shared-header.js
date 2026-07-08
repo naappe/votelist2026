@@ -14,8 +14,9 @@
       if(t==='D2D')el.textContent='Visits';
       if(t==='AI Dashboard')el.textContent='Insights';
     });
+    document.querySelectorAll('#logoutBtn,.logout-link,a[href*="login.html"]').forEach(function(el){el.style.setProperty('display','none','important')});
     document.querySelectorAll('.brand,.campaign-brand').forEach(function(a){
-      a.setAttribute('href','index.html?v=clean1');
+      a.setAttribute('href','index.html?v=nologin1');
       var spans=a.querySelectorAll('span');
       if(spans.length>1)spans[spans.length-1].textContent='Villimale Campaign';
     });
@@ -28,12 +29,12 @@
     document.querySelectorAll('a[href*=".html"]').forEach(function(a){
       if(a.getAttribute('href').indexOf('login.html')>-1)return;
       var u=new URL(a.getAttribute('href'),location.href);
-      if(['voters.html','assign.html','call.html','vote.html','d2d.html','transport.html','ai-dashboard.html'].indexOf(u.pathname.split('/').pop())>-1){u.searchParams.set('party',p);u.searchParams.set('v','clean1');a.href=u.pathname.split('/').pop()+u.search;}
+      if(['voters.html','assign.html','call.html','vote.html','d2d.html','transport.html','ai-dashboard.html'].indexOf(u.pathname.split('/').pop())>-1){u.searchParams.set('party',p);u.searchParams.set('v','nologin1');a.href=u.pathname.split('/').pop()+u.search;}
     });
     renameNav();
   }
   function load(src,key){if(window[key])return;window[key]=true;var s=document.createElement('script');s.src=src;document.head.appendChild(s)}
-  load('js/campaign-header.js?v=clean1','__sharedCampaignHeader');
+  load('js/campaign-header.js?v=nologin1','__sharedCampaignHeader');
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fixPartyLinks,{once:true});else fixPartyLinks();
   window.addEventListener('load',fixPartyLinks,{once:true});
   [100,400,900,1800,3500].forEach(function(t){setTimeout(fixPartyLinks,t)});
