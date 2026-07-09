@@ -39,9 +39,24 @@
     if(!cards.length)return;
     cards.forEach(cleanCard);
     cards.sort(function(a,b){
-      return text(a,'h3').localeCompare(text(b,'h3'),undefined,{sensitivity:'base'});
+      var addrA=clean(a.dataset.cleanAddress || 'Unknown');
+      var addrB=clean(b.dataset.cleanAddress || 'Unknown');
+      var addressCompare=addrA.localeCompare(addrB,undefined,{sensitivity:'base',numeric:true});
+      if(addressCompare!==0)return addressCompare;
+      return text(a,'h3').localeCompare(text(b,'h3'),undefined,{sensitivity:'base',numeric:true});
     });
-    cards.forEach(function(c){list.appendChild(c);});
+    var lastAddress='';
+    cards.forEach(function(c){
+      var addr=clean(c.dataset.cleanAddress || 'Unknown') || 'Unknown';
+      if(addr!==lastAddress){
+        var header=document.createElement('div');
+        header.className='address-break';
+        header.textContent=addr;
+        list.appendChild(header);
+        lastAddress=addr;
+      }
+      list.appendChild(c);
+    });
     var pill=document.getElementById('sectionTotal');
     if(pill&&/Showing/i.test(pill.textContent||''))pill.textContent=cards.length.toLocaleString('en-US')+' residents';
   }
@@ -54,6 +69,7 @@
     var phone=clean(row.phone)||phoneFromText(old?old.textContent:'')||'No phone';
     var nid=clean(row.national_id)||'-';
     var house=shortAddress(clean(row.house)||houseFromText(old?old.textContent:''));
+    card.dataset.cleanAddress=house||'Unknown';
 
     if(old)old.remove();
     var details=info.querySelector('.voter-details-lines');
@@ -80,7 +96,7 @@
     if(document.getElementById('simpleCardCleanupStyles'))return;
     var s=document.createElement('style');
     s.id='simpleCardCleanupStyles';
-    s.textContent='.voter-details-lines{display:grid;gap:3px;margin:6px 0 8px;color:#64748b;font-weight:900;font-size:14px}.voter-details-lines b{color:#334155}@media(max-width:850px){.voter-details-lines{font-size:13px}.nav{scroll-behavior:smooth!important}}';
+    s.textContent='.voter-details-lines{display:grid;gap:3px;margin:6px 0 8px;color:#64748b;font-weight:900;font-size:14px}.voter-details-lines b{color:#334155}.address-break{grid-column:1/-1;margin:12px 0 4px;padding:7px 12px;border-radius:14px;background:#eef4ff;color:#1f3b66;border:1px solid #dbeafe;font-size:13px;font-weight:950;letter-spacing:.02em}@media(max-width:850px){.voter-details-lines{font-size:13px}.address-break{font-size:13px;padding:7px 10px;margin:10px 0 4px}.nav{scroll-behavior:smooth!important}}';
     document.head.appendChild(s);
   }
 })();
