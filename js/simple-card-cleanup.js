@@ -39,22 +39,9 @@
     if(!cards.length)return;
     cards.forEach(cleanCard);
     cards.sort(function(a,b){
-      var an=addressOf(a),bn=addressOf(b);
-      if(an!==bn)return an.localeCompare(bn,undefined,{sensitivity:'base'});
       return text(a,'h3').localeCompare(text(b,'h3'),undefined,{sensitivity:'base'});
     });
-    var last='';
-    cards.forEach(function(c){
-      var addr=addressOf(c)||'Unknown';
-      if(addr!==last){
-        var br=document.createElement('div');
-        br.className='address-break';
-        br.textContent=addr;
-        list.appendChild(br);
-        last=addr;
-      }
-      list.appendChild(c);
-    });
+    cards.forEach(function(c){list.appendChild(c);});
     var pill=document.getElementById('sectionTotal');
     if(pill&&/Showing/i.test(pill.textContent||''))pill.textContent=cards.length.toLocaleString('en-US')+' residents';
   }
@@ -67,7 +54,6 @@
     var phone=clean(row.phone)||phoneFromText(old?old.textContent:'')||'No phone';
     var nid=clean(row.national_id)||'-';
     var house=shortAddress(clean(row.house)||houseFromText(old?old.textContent:''));
-    card.dataset.addressGroup=house||'Unknown';
 
     if(old)old.remove();
     var details=info.querySelector('.voter-details-lines');
@@ -83,7 +69,6 @@
     if(addr)addr.remove();
   }
 
-  function addressOf(card){return clean(card.dataset.addressGroup);}
   function text(el,sel){return clean(el.querySelector(sel)?.textContent);}
   function clean(v){return String(v||'').trim();}
   function esc(v){return String(v||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -95,7 +80,7 @@
     if(document.getElementById('simpleCardCleanupStyles'))return;
     var s=document.createElement('style');
     s.id='simpleCardCleanupStyles';
-    s.textContent='.voter-details-lines{display:grid;gap:3px;margin:6px 0 8px;color:#64748b;font-weight:900;font-size:14px}.voter-details-lines b{color:#334155}.address-break{grid-column:1/-1;margin:12px 0 2px;padding:8px 12px;border-radius:14px;background:#eef4ff;color:#1647bb;border:1px solid #d7e6ff;font-size:14px;font-weight:950;letter-spacing:.02em;position:sticky;top:88px;z-index:4}@media(max-width:850px){.voter-details-lines{font-size:13px}.address-break{top:118px;font-size:13px;padding:8px 10px}.nav{scroll-behavior:smooth!important}}';
+    s.textContent='.voter-details-lines{display:grid;gap:3px;margin:6px 0 8px;color:#64748b;font-weight:900;font-size:14px}.voter-details-lines b{color:#334155}@media(max-width:850px){.voter-details-lines{font-size:13px}.nav{scroll-behavior:smooth!important}}';
     document.head.appendChild(s);
   }
 })();
